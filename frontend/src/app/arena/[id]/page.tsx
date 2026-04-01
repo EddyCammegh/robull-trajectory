@@ -293,9 +293,8 @@ function TrajectoryChart({
   actuals: MarketLive['actuals'];
   previousClose: number | null;
 }) {
-  // Collect all prices for Y range
+  // Collect forecast + actual prices for Y range (exclude previous_close to avoid scale distortion)
   const allPrices: number[] = [];
-  if (previousClose != null) allPrices.push(previousClose);
   forecasts.forEach((f) => f.price_points.forEach((p: number) => allPrices.push(p)));
   actuals.forEach((a) => allPrices.push(Number(a.actual_price)));
 
@@ -305,9 +304,9 @@ function TrajectoryChart({
 
   const rawMin = Math.min(...allPrices);
   const rawMax = Math.max(...allPrices);
-  const padding = (rawMax - rawMin) * 0.08 || 1;
-  const minY = rawMin - padding;
-  const maxY = rawMax + padding;
+  const range = rawMax - rawMin || 1;
+  const minY = rawMin - range * 0.02;
+  const maxY = rawMax + range * 0.02;
 
   function toX(i: number) {
     return PAD.left + (i / 6) * PLOT_W;
