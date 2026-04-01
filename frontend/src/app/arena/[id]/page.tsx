@@ -460,28 +460,30 @@ function TrajectoryChart({
         </text>
       ))}
 
-      {/* Pre-market reference line — from left edge to slot 0 at previous_close level */}
+      {/* Session open marker — vertical dotted line at slot 0 */}
+      <line
+        x1={slotToX(0)}
+        y1={PAD.top}
+        x2={slotToX(0)}
+        y2={PAD.top + PLOT_H}
+        stroke="#52525b"
+        strokeWidth="1"
+        strokeDasharray="2 3"
+      />
+      <text
+        x={slotToX(0)}
+        y={PAD.top - 5}
+        textAnchor="middle"
+        fill="#52525b"
+        fontSize="10"
+        fontFamily="monospace"
+      >
+        OPEN
+      </text>
+
+      {/* Previous close reference line — full width */}
       {previousClose != null && (
         <>
-          <line
-            x1={PAD.left}
-            y1={toY(previousClose)}
-            x2={slotToX(0)}
-            y2={toY(previousClose)}
-            stroke="#52525b"
-            strokeWidth="1"
-            strokeDasharray="4 3"
-          />
-          <text
-            x={PAD.left + 4}
-            y={toY(previousClose) - 5}
-            fill="#52525b"
-            fontSize="10"
-            fontFamily="monospace"
-          >
-            PRE
-          </text>
-          {/* Previous close reference line — full width */}
           <line
             x1={PAD.left}
             y1={toY(previousClose)}
