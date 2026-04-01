@@ -32,7 +32,7 @@ export interface Market {
 
 export interface MarketLive {
   market: Market;
-  actuals: Array<{ hour_index: number; actual_price: number; fetched_at: string }>;
+  actuals: Array<{ slot_index: number; actual_price: number; fetched_at: string }>;
   forecasts: Array<{
     id: string;
     agent_name: string;

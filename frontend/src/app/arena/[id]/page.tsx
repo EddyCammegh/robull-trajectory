@@ -11,6 +11,17 @@ const FORECAST_COLORS = [
   '#38bdf8', '#fbbf24', '#4ade80', '#f87171',
 ];
 
+// 78 five-minute slots from 9:30am to 4pm ET
+const TOTAL_SLOTS = 78;
+// Slots per hour (for mapping forecast hour indices to slot positions)
+const SLOTS_PER_HOUR = 12;
+// Forecast hours map to slot positions: hour 0 → slot 6 (10am), hour 1 → slot 18 (11am), etc.
+function forecastHourToSlot(hourIndex: number): number {
+  return (hourIndex + 1) * SLOTS_PER_HOUR;
+}
+// X-axis label positions in slot space
+const LABEL_SLOTS = TIME_LABELS.map((_, i) => forecastHourToSlot(i));
+
 export default function ArenaPage({ params }: { params: { id: string } }) {
   const [data, setData] = useState<MarketLive | null>(null);
   const [loading, setLoading] = useState(true);
@@ -176,7 +187,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                   market.open_price != null ? `$${Number(market.open_price).toFixed(2)}` : '—'
                 } />
                 <InfoRow label="Forecasts" value={String(forecasts.length)} />
-                <InfoRow label="Data Points" value={`${actuals.length} / 7`} />
+                <InfoRow label="Data Points" value={`${actuals.length} / ${TOTAL_SLOTS}`} />
               </dl>
             </div>
 
@@ -222,17 +233,21 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
               )}
             </div>
 
-            {/* Actual prices */}
+            {/* Actual prices — show latest price per hour */}
             {actuals.length > 0 && (
               <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-5">
-                <h2 className="text-sm font-medium text-zinc-400 mb-3">Actual Prices</h2>
+                <h2 className="text-sm font-medium text-zinc-400 mb-3">Latest Prices</h2>
                 <div className="space-y-1.5">
-                  {actuals.map((a) => (
-                    <div key={a.hour_index} className="flex justify-between text-sm">
-                      <span className="text-zinc-500">{TIME_LABELS[a.hour_index]}</span>
-                      <span className="font-mono">${Number(a.actual_price).toFixed(2)}</span>
-                    </div>
-                  ))}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-zinc-500">Slots filled</span>
+                    <span className="font-mono">{actuals.length} / {TOTAL_SLOTS}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-zinc-500">Latest</span>
+                    <span className="font-mono">
+                      ${Number(actuals[actuals.length - 1].actual_price).toFixed(2)}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
@@ -291,6 +306,10 @@ const PAD = { top: 20, right: 20, bottom: 35, left: 65 };
 const PLOT_W = CHART_W - PAD.left - PAD.right;
 const PLOT_H = CHART_H - PAD.top - PAD.bottom;
 
+function slotToX(slot: number): number {
+  return PAD.left + (slot / (TOTAL_SLOTS - 1)) * PLOT_W;
+}
+
 function TrajectoryChart({
   forecasts,
   actuals,
@@ -302,7 +321,7 @@ function TrajectoryChart({
   previousClose: number | null;
   livePrice: number | null;
 }) {
-  // Collect forecast + actual prices for Y range, include previous_close in min so anchor is visible
+  // Collect all prices for Y range
   const allPrices: number[] = [];
   forecasts.forEach((f) => f.price_points.forEach((p: number) => allPrices.push(p)));
   actuals.forEach((a) => allPrices.push(Number(a.actual_price)));
@@ -318,23 +337,20 @@ function TrajectoryChart({
   const minY = rawMin - range * 0.02;
   const maxY = rawMax + range * 0.02;
 
-  function toX(i: number) {
-    return PAD.left + (i / 6) * PLOT_W;
-  }
   function toY(p: number) {
     return PAD.top + PLOT_H - ((p - minY) / (maxY - minY)) * PLOT_H;
   }
 
-  // Y-axis tick values
   const yTicks = generateTicks(minY, maxY, 5);
 
-  // Sort actuals by hour_index for drawing the line in order
-  const sortedActuals = [...actuals].sort((a, b) => a.hour_index - b.hour_index);
+  // Sort actuals by slot_index
+  const sortedActuals = [...actuals].sort((a, b) => a.slot_index - b.slot_index);
   const lastActual = sortedActuals.length > 0 ? sortedActuals[sortedActuals.length - 1] : null;
+  const lastActualSlot = lastActual?.slot_index ?? -1;
 
   return (
     <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} className="w-full" preserveAspectRatio="xMidYMid meet">
-      {/* Grid lines */}
+      {/* Horizontal grid lines */}
       {yTicks.map((tick) => (
         <line
           key={tick}
@@ -346,12 +362,13 @@ function TrajectoryChart({
           strokeWidth="1"
         />
       ))}
-      {TIME_LABELS.map((_, i) => (
+      {/* Vertical grid lines at hour marks */}
+      {LABEL_SLOTS.map((slot, i) => (
         <line
           key={i}
-          x1={toX(i)}
+          x1={slotToX(slot)}
           y1={PAD.top}
-          x2={toX(i)}
+          x2={slotToX(slot)}
           y2={PAD.top + PLOT_H}
           stroke="#27272a"
           strokeWidth="1"
@@ -377,7 +394,7 @@ function TrajectoryChart({
       {TIME_LABELS.map((label, i) => (
         <text
           key={i}
-          x={toX(i)}
+          x={slotToX(LABEL_SLOTS[i])}
           y={CHART_H - 8}
           textAnchor="middle"
           fill="#71717a"
@@ -411,20 +428,21 @@ function TrajectoryChart({
         </>
       )}
 
-      {/* Forecast lines — dimmed where actuals exist, brighter ahead */}
+      {/* Forecast lines — 7 price points mapped to hourly slot positions */}
       {forecasts.map((f, fi) => {
         const color = FORECAST_COLORS[fi % FORECAST_COLORS.length];
-        const lastActualHour = lastActual?.hour_index ?? -1;
+
+        // Map each forecast point to its slot position
+        const forecastPoints = f.price_points.map((p: number, i: number) => ({
+          x: slotToX(forecastHourToSlot(i)),
+          y: toY(p),
+          slot: forecastHourToSlot(i),
+        }));
 
         // Segment where actuals exist (dimmed)
-        const coveredPoints = f.price_points
-          .map((p: number, i: number) => ({ x: toX(i), y: toY(p), i }))
-          .filter((pt) => pt.i <= lastActualHour);
-
-        // Segment ahead of actuals (brighter)
-        const aheadPoints = f.price_points
-          .map((p: number, i: number) => ({ x: toX(i), y: toY(p), i }))
-          .filter((pt) => pt.i >= lastActualHour);
+        const coveredPoints = forecastPoints.filter((pt) => pt.slot <= lastActualSlot);
+        // Segment ahead of actuals (brighter) — include overlap point for continuity
+        const aheadPoints = forecastPoints.filter((pt) => pt.slot >= lastActualSlot);
 
         return (
           <g key={f.id}>
@@ -448,10 +466,9 @@ function TrajectoryChart({
                 opacity="0.55"
               />
             )}
-            {/* Full line if no actuals yet */}
-            {lastActualHour < 0 && (
+            {lastActualSlot < 0 && (
               <polyline
-                points={f.price_points.map((p: number, i: number) => `${toX(i)},${toY(p)}`).join(' ')}
+                points={forecastPoints.map((pt) => `${pt.x},${pt.y}`).join(' ')}
                 fill="none"
                 stroke={color}
                 strokeWidth="1.5"
@@ -463,14 +480,14 @@ function TrajectoryChart({
         );
       })}
 
-      {/* Actual price line (solid white) — starts from previous_close at hour 0 */}
+      {/* Actual price line (solid white) — starts from previous_close at slot 0 */}
       {(sortedActuals.length > 0 || previousClose != null) && (() => {
         const pts: string[] = [];
         if (previousClose != null) {
-          pts.push(`${toX(0)},${toY(previousClose)}`);
+          pts.push(`${slotToX(0)},${toY(previousClose)}`);
         }
         sortedActuals.forEach((a) => {
-          pts.push(`${toX(a.hour_index)},${toY(Number(a.actual_price))}`);
+          pts.push(`${slotToX(a.slot_index)},${toY(Number(a.actual_price))}`);
         });
         if (pts.length < 2) return null;
         return (
@@ -489,7 +506,7 @@ function TrajectoryChart({
       {lastActual && (
         <>
           <circle
-            cx={toX(lastActual.hour_index)}
+            cx={slotToX(lastActual.slot_index)}
             cy={toY(Number(lastActual.actual_price))}
             r="5"
             fill="none"
@@ -498,7 +515,7 @@ function TrajectoryChart({
             className="pulse-dot"
           />
           <circle
-            cx={toX(lastActual.hour_index)}
+            cx={slotToX(lastActual.slot_index)}
             cy={toY(Number(lastActual.actual_price))}
             r="3"
             fill="#4ade80"

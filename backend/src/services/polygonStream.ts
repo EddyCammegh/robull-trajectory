@@ -132,14 +132,14 @@ async function handleAggregate(msg: {
 
     if (etMinutes < marketOpen || etMinutes >= marketClose) return;
 
-    const hourIndex = Math.min(Math.floor((etMinutes - marketOpen) / 60), 6);
+    const slotIndex = Math.min(Math.floor((etMinutes - marketOpen) / 5), 77);
 
-    console.log(`[Polygon] Upserting actual: market=${marketRow.id} hour=${hourIndex} price=$${price} instrument=${instrument}`);
+    console.log(`[Polygon] Upserting actual: market=${marketRow.id} slot=${slotIndex} price=$${price} instrument=${instrument}`);
     await pool.query(
-      `INSERT INTO trajectory_actuals (market_id, hour_index, actual_price)
+      `INSERT INTO trajectory_actuals (market_id, slot_index, actual_price)
        VALUES ($1, $2, $3)
-       ON CONFLICT (market_id, hour_index) DO UPDATE SET actual_price = $3, fetched_at = NOW()`,
-      [marketRow.id, hourIndex, price]
+       ON CONFLICT (market_id, slot_index) DO UPDATE SET actual_price = $3, fetched_at = NOW()`,
+      [marketRow.id, slotIndex, price]
     );
   } catch (err) {
     console.error(`[Polygon] Error storing actual for ${instrument}:`, err);

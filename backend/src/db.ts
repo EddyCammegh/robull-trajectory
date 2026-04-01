@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { readFileSync } from 'fs';
+import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 export const pool = new Pool({
@@ -15,19 +15,20 @@ export async function runMigrations(): Promise<void> {
     )
   `);
 
-  const migrationFile = '001_initial.sql';
-  const { rowCount } = await pool.query(
-    'SELECT 1 FROM _migrations WHERE name = $1',
-    [migrationFile]
-  );
+  const migrationsDir = join(__dirname, '..', 'migrations');
+  const files = readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort();
 
-  if (rowCount === 0) {
-    const sql = readFileSync(
-      join(__dirname, '..', 'migrations', migrationFile),
-      'utf-8'
+  for (const file of files) {
+    const { rowCount } = await pool.query(
+      'SELECT 1 FROM _migrations WHERE name = $1',
+      [file]
     );
-    await pool.query(sql);
-    await pool.query('INSERT INTO _migrations (name) VALUES ($1)', [migrationFile]);
-    console.log(`Migration ${migrationFile} applied`);
+
+    if (rowCount === 0) {
+      const sql = readFileSync(join(migrationsDir, file), 'utf-8');
+      await pool.query(sql);
+      await pool.query('INSERT INTO _migrations (name) VALUES ($1)', [file]);
+      console.log(`Migration ${file} applied`);
+    }
   }
 }

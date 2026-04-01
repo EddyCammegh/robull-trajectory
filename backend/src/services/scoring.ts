@@ -23,8 +23,8 @@ export function calculateMAPE(
 
 export async function scoreMarket(marketId: string): Promise<void> {
   const actuals = await pool.query(
-    `SELECT hour_index, actual_price FROM trajectory_actuals
-     WHERE market_id = $1 ORDER BY hour_index`,
+    `SELECT slot_index, actual_price FROM trajectory_actuals
+     WHERE market_id = $1 ORDER BY slot_index`,
     [marketId]
   );
 

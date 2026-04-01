@@ -274,10 +274,10 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     );
 
     const actuals = await pool.query(
-      `SELECT hour_index, actual_price, fetched_at
+      `SELECT slot_index, actual_price, fetched_at
        FROM trajectory_actuals
        WHERE market_id = $1
-       ORDER BY hour_index`,
+       ORDER BY slot_index`,
       [id]
     );
 
@@ -313,19 +313,18 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     const ticker = symbolMap[instrument] || instrument;
     const date = new Date(trading_date).toISOString().slice(0, 10);
 
-    const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/hour/${date}/${date}?adjusted=true&sort=asc&apiKey=${polygonKey}`;
+    const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/5/minute/${date}/${date}?adjusted=true&sort=asc&apiKey=${polygonKey}`;
     const res = await fetch(url);
     const data = await res.json();
 
     if (!data.results || data.results.length === 0) {
-      return reply.status(404).send({ error: 'No hourly data from Polygon', raw: data });
+      return reply.status(404).send({ error: 'No 5-minute data from Polygon', raw: data });
     }
 
     const marketOpen = 9 * 60 + 30; // 9:30 AM ET
-    const stored: Array<{ hour_index: number; actual_price: number }> = [];
+    const stored: Array<{ slot_index: number; actual_price: number }> = [];
 
     for (const bar of data.results) {
-      // bar.t is epoch ms — convert to ET hour
       const barDate = new Date(bar.t);
       const etParts = new Intl.DateTimeFormat('en-US', {
         timeZone: 'America/New_York',
@@ -338,17 +337,17 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
       const etMinute = parseInt(etParts.find((p: any) => p.type === 'minute')!.value, 10);
       const etMinutes = etHour * 60 + etMinute;
 
-      const hourIndex = Math.floor((etMinutes - marketOpen) / 60);
-      if (hourIndex < 0 || hourIndex > 6) continue;
+      const slotIndex = Math.floor((etMinutes - marketOpen) / 5);
+      if (slotIndex < 0 || slotIndex > 77) continue;
 
       await pool.query(
-        `INSERT INTO trajectory_actuals (market_id, hour_index, actual_price)
+        `INSERT INTO trajectory_actuals (market_id, slot_index, actual_price)
          VALUES ($1, $2, $3)
-         ON CONFLICT (market_id, hour_index) DO UPDATE SET actual_price = $3, fetched_at = NOW()`,
-        [id, hourIndex, bar.c]
+         ON CONFLICT (market_id, slot_index) DO UPDATE SET actual_price = $3, fetched_at = NOW()`,
+        [id, slotIndex, bar.c]
       );
 
-      stored.push({ hour_index: hourIndex, actual_price: bar.c });
+      stored.push({ slot_index: slotIndex, actual_price: bar.c });
     }
 
     return reply.send({ market_id: id, instrument, date, stored });
@@ -396,10 +395,10 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     );
 
     const actualsResult = await pool.query(
-      `SELECT hour_index, actual_price, fetched_at
+      `SELECT slot_index, actual_price, fetched_at
        FROM trajectory_actuals
        WHERE market_id = $1
-       ORDER BY hour_index`,
+       ORDER BY slot_index`,
       [id]
     );
 

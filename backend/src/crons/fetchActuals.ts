@@ -6,38 +6,30 @@ export async function fetchActualPrices(): Promise<void> {
   if (!isOpen) return;
 
   const markets = await pool.query(
-    `SELECT id, instrument, created_at FROM trajectory_markets
+    `SELECT id, instrument FROM trajectory_markets
      WHERE trading_date = CURRENT_DATE AND status = 'live'`
   );
 
+  const now = new Date();
+  const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const etMinutes = et.getHours() * 60 + et.getMinutes();
+  const marketOpen = 9 * 60 + 30;
+  const slotIndex = Math.min(Math.floor((etMinutes - marketOpen) / 5), 77);
+
+  if (slotIndex < 0) return;
+
   for (const market of markets.rows) {
     try {
-      const createdAt = new Date(market.created_at);
-      const now = new Date();
-      const hoursElapsed = Math.floor(
-        (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60)
+      const price = await fetchPrice(market.instrument);
+
+      await pool.query(
+        `INSERT INTO trajectory_actuals (market_id, slot_index, actual_price)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (market_id, slot_index) DO UPDATE SET actual_price = $3, fetched_at = NOW()`,
+        [market.id, slotIndex, price]
       );
 
-      // Fetch for each hour that has elapsed (0-6)
-      for (let h = 0; h <= Math.min(hoursElapsed, 6); h++) {
-        const existing = await pool.query(
-          'SELECT id FROM trajectory_actuals WHERE market_id = $1 AND hour_index = $2',
-          [market.id, h]
-        );
-
-        if (existing.rows.length > 0) continue;
-
-        const price = await fetchPrice(market.instrument);
-
-        await pool.query(
-          `INSERT INTO trajectory_actuals (market_id, hour_index, actual_price)
-           VALUES ($1, $2, $3)
-           ON CONFLICT (market_id, hour_index) DO NOTHING`,
-          [market.id, h, price]
-        );
-
-        console.log(`Fetched actual price for ${market.instrument} hour ${h}: ${price}`);
-      }
+      console.log(`Fetched actual price for ${market.instrument} slot ${slotIndex}: ${price}`);
     } catch (err) {
       console.error(`Error fetching actuals for ${market.instrument}:`, err);
     }
