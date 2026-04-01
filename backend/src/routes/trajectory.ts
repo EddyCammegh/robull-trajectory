@@ -41,6 +41,15 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
 
   // POST /v1/trajectory/markets/refresh-prices — refresh previous_close for today's markets
   app.post('/markets/refresh-prices', async (_request, reply) => {
+    const polygonKey = process.env.POLYGON_API_KEY;
+    if (!polygonKey) {
+      return reply.status(500).send({ error: 'POLYGON_API_KEY not set' });
+    }
+
+    const symbolMap: Record<string, string> = {
+      QQQ: 'QQQ', NVDA: 'NVDA', AAPL: 'AAPL', TSLA: 'TSLA', GOLD: 'GLD',
+    };
+
     const markets = await pool.query(
       `SELECT id, instrument FROM trajectory_markets WHERE trading_date = CURRENT_DATE`
     );
@@ -55,8 +64,16 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
       }
 
       let price: number | null = null;
+      const ticker = symbolMap[m.instrument] || m.instrument;
       try {
-        price = await fetchPrice(m.instrument);
+        const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=${polygonKey}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.results?.[0]?.c != null) {
+          price = data.results[0].c;
+        } else {
+          console.error(`No Polygon prev close for ${ticker}:`, JSON.stringify(data));
+        }
       } catch (err) {
         console.error(`Failed to fetch price for ${m.instrument}:`, err);
       }
