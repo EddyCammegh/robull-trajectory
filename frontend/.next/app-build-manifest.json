@@ -1,0 +1,35 @@
+{
+  "pages": {
+    "/_not-found/page": [
+      "static/chunks/webpack-a3c37fcbf859f6f9.js",
+      "static/chunks/fd9d1056-9f91b5e418130764.js",
+      "static/chunks/117-6d3152f80147ba9e.js",
+      "static/chunks/main-app-660e49c4d895fb6b.js",
+      "static/chunks/app/_not-found/page-4b9eb8aab41bf6df.js"
+    ],
+    "/layout": [
+      "static/chunks/webpack-a3c37fcbf859f6f9.js",
+      "static/chunks/fd9d1056-9f91b5e418130764.js",
+      "static/chunks/117-6d3152f80147ba9e.js",
+      "static/chunks/main-app-660e49c4d895fb6b.js",
+      "static/css/42c427b260243bc9.css",
+      "static/chunks/app/layout-651a8ec455dbe0fe.js"
+    ],
+    "/arena/[id]/page": [
+      "static/chunks/webpack-a3c37fcbf859f6f9.js",
+      "static/chunks/fd9d1056-9f91b5e418130764.js",
+      "static/chunks/117-6d3152f80147ba9e.js",
+      "static/chunks/main-app-660e49c4d895fb6b.js",
+      "static/chunks/933-85110f406ef2387c.js",
+      "static/chunks/app/arena/[id]/page-672d44c4b44ff8a4.js"
+    ],
+    "/page": [
+      "static/chunks/webpack-a3c37fcbf859f6f9.js",
+      "static/chunks/fd9d1056-9f91b5e418130764.js",
+      "static/chunks/117-6d3152f80147ba9e.js",
+      "static/chunks/main-app-660e49c4d895fb6b.js",
+      "static/chunks/933-85110f406ef2387c.js",
+      "static/chunks/app/page-a52066691f80148f.js"
+    ]
+  }
+}
