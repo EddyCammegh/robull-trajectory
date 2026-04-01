@@ -5,7 +5,7 @@ interface InstrumentConfig {
 }
 
 export const INSTRUMENTS: Record<string, InstrumentConfig> = {
-  SPX: { symbol: 'SPX', type: 'stock', apiSymbol: 'SPY' },
+  QQQ: { symbol: 'QQQ', type: 'stock', apiSymbol: 'QQQ' },
   NVDA: { symbol: 'NVDA', type: 'stock', apiSymbol: 'NVDA' },
   AAPL: { symbol: 'AAPL', type: 'stock', apiSymbol: 'AAPL' },
   TSLA: { symbol: 'TSLA', type: 'stock', apiSymbol: 'TSLA' },
