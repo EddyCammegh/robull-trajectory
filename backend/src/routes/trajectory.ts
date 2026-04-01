@@ -288,6 +288,72 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     });
   });
 
+  // POST /v1/trajectory/markets/:id/backfill-actuals — backfill hourly actuals from Polygon
+  app.post('/markets/:id/backfill-actuals', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const polygonKey = process.env.POLYGON_API_KEY;
+    if (!polygonKey) {
+      return reply.status(500).send({ error: 'POLYGON_API_KEY not set' });
+    }
+
+    const symbolMap: Record<string, string> = {
+      QQQ: 'QQQ', NVDA: 'NVDA', AAPL: 'AAPL', TSLA: 'TSLA', GOLD: 'GLD',
+    };
+
+    const market = await pool.query(
+      'SELECT id, instrument, trading_date FROM trajectory_markets WHERE id = $1',
+      [id]
+    );
+
+    if (market.rows.length === 0) {
+      return reply.status(404).send({ error: 'Market not found' });
+    }
+
+    const { instrument, trading_date } = market.rows[0];
+    const ticker = symbolMap[instrument] || instrument;
+    const date = new Date(trading_date).toISOString().slice(0, 10);
+
+    const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/hour/${date}/${date}?adjusted=true&sort=asc&apiKey=${polygonKey}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data.results || data.results.length === 0) {
+      return reply.status(404).send({ error: 'No hourly data from Polygon', raw: data });
+    }
+
+    const marketOpen = 9 * 60 + 30; // 9:30 AM ET
+    const stored: Array<{ hour_index: number; actual_price: number }> = [];
+
+    for (const bar of data.results) {
+      // bar.t is epoch ms — convert to ET hour
+      const barDate = new Date(bar.t);
+      const etParts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: false,
+      }).formatToParts(barDate);
+
+      const etHour = parseInt(etParts.find((p: any) => p.type === 'hour')!.value, 10);
+      const etMinute = parseInt(etParts.find((p: any) => p.type === 'minute')!.value, 10);
+      const etMinutes = etHour * 60 + etMinute;
+
+      const hourIndex = Math.floor((etMinutes - marketOpen) / 60);
+      if (hourIndex < 0 || hourIndex > 6) continue;
+
+      await pool.query(
+        `INSERT INTO trajectory_actuals (market_id, hour_index, actual_price)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (market_id, hour_index) DO UPDATE SET actual_price = $3, fetched_at = NOW()`,
+        [id, hourIndex, bar.c]
+      );
+
+      stored.push({ hour_index: hourIndex, actual_price: bar.c });
+    }
+
+    return reply.send({ market_id: id, instrument, date, stored });
+  });
+
   // GET /v1/trajectory/markets/:id/live — live market view with current MAPE rankings
   app.get('/markets/:id/live', async (request, reply) => {
     const { id } = request.params as { id: string };
