@@ -452,24 +452,36 @@ function TrajectoryChart({
         </>
       )}
 
-      {/* Forecast lines — smooth cubic bezier */}
+      {/* Forecast lines — straight dashed polylines */}
       {forecasts.map((f, fi) => {
         const color = FORECAST_COLORS[fi % FORECAST_COLORS.length];
+        const allPts = f.price_points.map((p: number, i: number) =>
+          `${slotToX(forecastHourToSlot(i))},${toY(p)}`
+        );
 
-        const forecastPoints = f.price_points.map((p: number, i: number) => ({
-          x: slotToX(forecastHourToSlot(i)),
-          y: toY(p),
-          slot: forecastHourToSlot(i),
-        }));
+        if (lastActualSlot < 0) {
+          return (
+            <polyline
+              key={f.id}
+              points={allPts.join(' ')}
+              fill="none"
+              stroke={color}
+              strokeWidth="1"
+              strokeDasharray="5 3"
+              opacity="0.55"
+            />
+          );
+        }
 
-        const coveredPoints = forecastPoints.filter((pt) => pt.slot <= lastActualSlot);
-        const aheadPoints = forecastPoints.filter((pt) => pt.slot >= lastActualSlot);
+        const forecastSlots = f.price_points.map((_: number, i: number) => forecastHourToSlot(i));
+        const coveredPts = allPts.filter((_, i) => forecastSlots[i] <= lastActualSlot);
+        const aheadPts = allPts.filter((_, i) => forecastSlots[i] >= lastActualSlot);
 
         return (
           <g key={f.id}>
-            {coveredPoints.length >= 2 && (
-              <path
-                d={smoothPath(coveredPoints)}
+            {coveredPts.length >= 2 && (
+              <polyline
+                points={coveredPts.join(' ')}
                 fill="none"
                 stroke={color}
                 strokeWidth="1"
@@ -477,19 +489,9 @@ function TrajectoryChart({
                 opacity="0.2"
               />
             )}
-            {aheadPoints.length >= 2 && (
-              <path
-                d={smoothPath(aheadPoints)}
-                fill="none"
-                stroke={color}
-                strokeWidth="1"
-                strokeDasharray="5 3"
-                opacity="0.55"
-              />
-            )}
-            {lastActualSlot < 0 && (
-              <path
-                d={smoothPath(forecastPoints)}
+            {aheadPts.length >= 2 && (
+              <polyline
+                points={aheadPts.join(' ')}
                 fill="none"
                 stroke={color}
                 strokeWidth="1"
