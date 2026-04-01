@@ -37,6 +37,33 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     return reply.status(201).send({ created, date: today });
   });
 
+  // POST /v1/trajectory/markets/refresh-prices — refresh previous_close for today's markets
+  app.post('/markets/refresh-prices', async (_request, reply) => {
+    const markets = await pool.query(
+      `SELECT id, instrument FROM trajectory_markets WHERE trading_date = CURRENT_DATE`
+    );
+
+    const updated: Array<{ id: string; instrument: string; previous_close: number | null }> = [];
+
+    for (const m of markets.rows) {
+      let price: number | null = null;
+      try {
+        price = await fetchPrice(m.instrument);
+      } catch (err) {
+        console.error(`Failed to fetch price for ${m.instrument}:`, err);
+      }
+
+      await pool.query(
+        `UPDATE trajectory_markets SET previous_close = $1 WHERE id = $2`,
+        [price, m.id]
+      );
+
+      updated.push({ id: m.id, instrument: m.instrument, previous_close: price });
+    }
+
+    return reply.send({ updated });
+  });
+
   // GET /v1/trajectory/markets — today's open markets
   app.get('/markets', async (_request, reply) => {
     const result = await pool.query(`
