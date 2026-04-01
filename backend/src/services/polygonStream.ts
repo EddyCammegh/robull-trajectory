@@ -116,7 +116,11 @@ async function handleAggregate(msg: {
       [instrument]
     );
 
-    if (market.rows.length === 0) return;
+    if (market.rows.length === 0) {
+      console.log(`[Polygon] No live market found for ${instrument} today`);
+      return;
+    }
+    console.log(`[Polygon] Found ${market.rows.length} market(s) for ${instrument}:`, market.rows.map((r: any) => r.id));
 
     const marketRow = market.rows[0];
     const now = new Date();
