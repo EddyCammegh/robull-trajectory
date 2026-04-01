@@ -68,6 +68,12 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
               <div className="text-lg font-semibold">${Number(market.previous_close).toFixed(2)}</div>
             </div>
           )}
+          {market.live_price != null && (
+            <div className="text-right">
+              <div className="text-xs text-green-400">Live</div>
+              <div className="text-lg font-semibold text-green-400">${Number(market.live_price).toFixed(2)}</div>
+            </div>
+          )}
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
@@ -79,6 +85,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                 forecasts={forecasts}
                 actuals={actuals}
                 previousClose={market.previous_close != null ? Number(market.previous_close) : null}
+                livePrice={market.live_price != null ? Number(market.live_price) : null}
               />
             </div>
 
@@ -288,10 +295,12 @@ function TrajectoryChart({
   forecasts,
   actuals,
   previousClose,
+  livePrice,
 }: {
   forecasts: MarketLive['forecasts'];
   actuals: MarketLive['actuals'];
   previousClose: number | null;
+  livePrice: number | null;
 }) {
   // Collect forecast + actual prices for Y range (exclude previous_close to avoid scale distortion)
   const allPrices: number[] = [];
@@ -398,6 +407,30 @@ function TrajectoryChart({
             fontFamily="monospace"
           >
             PC
+          </text>
+        </>
+      )}
+
+      {/* Live price reference line */}
+      {livePrice != null && (
+        <>
+          <line
+            x1={PAD.left}
+            y1={toY(livePrice)}
+            x2={CHART_W - PAD.right}
+            y2={toY(livePrice)}
+            stroke="#4ade80"
+            strokeWidth="1"
+            strokeDasharray="6 4"
+          />
+          <text
+            x={CHART_W - PAD.right + 4}
+            y={toY(livePrice) + 4}
+            fill="#4ade80"
+            fontSize="10"
+            fontFamily="monospace"
+          >
+            LIVE
           </text>
         </>
       )}
