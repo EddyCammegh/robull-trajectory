@@ -102,7 +102,10 @@ async function handleAggregate(msg: {
   latestPrices.set(instrument, { price, timestamp: msg.t });
 
   const { isOpen } = getMarketStatus();
-  if (!isOpen) return;
+  if (!isOpen) {
+    console.log(`[Polygon] Market closed, skipping store for ${instrument} ($${price})`);
+    return;
+  }
 
   try {
     const market = await pool.query(
@@ -125,6 +128,7 @@ async function handleAggregate(msg: {
 
     const hourIndex = Math.min(Math.floor((etMinutes - marketOpen) / 60), 6);
 
+    console.log(`[Polygon] Upserting actual: market=${marketRow.id} hour=${hourIndex} price=$${price} instrument=${instrument}`);
     await pool.query(
       `INSERT INTO trajectory_actuals (market_id, hour_index, actual_price)
        VALUES ($1, $2, $3)
@@ -132,6 +136,6 @@ async function handleAggregate(msg: {
       [marketRow.id, hourIndex, price]
     );
   } catch (err) {
-    console.error(`Error storing actual for ${instrument}:`, err);
+    console.error(`[Polygon] Error storing actual for ${instrument}:`, err);
   }
 }
