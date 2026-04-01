@@ -16,17 +16,16 @@ export async function fetchStockPrice(symbol: string): Promise<number> {
   const apiKey = process.env.ALPHA_VANTAGE_KEY;
   if (!apiKey) throw new Error('ALPHA_VANTAGE_KEY not set');
 
-  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=60min&apikey=${apiKey}`;
+  const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`;
   const res = await fetch(url);
   const data = await res.json();
 
-  const timeSeries = data['Time Series (60min)'];
-  if (!timeSeries) {
-    throw new Error(`No intraday data for ${symbol}: ${JSON.stringify(data)}`);
+  const quote = data['Global Quote'];
+  if (!quote || !quote['05. price']) {
+    throw new Error(`No quote data for ${symbol}: ${JSON.stringify(data)}`);
   }
 
-  const latestTimestamp = Object.keys(timeSeries).sort().reverse()[0];
-  return parseFloat(timeSeries[latestTimestamp]['4. close']);
+  return parseFloat(quote['05. price']);
 }
 
 export async function fetchCryptoPrice(symbol: string): Promise<number> {
