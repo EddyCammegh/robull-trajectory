@@ -112,7 +112,7 @@ async function handleAggregate(msg: {
   try {
     const market = await pool.query(
       `SELECT id, created_at FROM trajectory_markets
-       WHERE instrument = $1 AND trading_date = CURRENT_DATE AND status = 'live'`,
+       WHERE instrument = $1 AND trading_date = CURRENT_DATE AND status IN ('accepting', 'live')`,
       [instrument]
     );
 
