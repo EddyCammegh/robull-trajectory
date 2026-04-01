@@ -462,19 +462,27 @@ function TrajectoryChart({
         );
       })}
 
-      {/* Actual price line (solid white) */}
-      {sortedActuals.length > 0 && (
-        <polyline
-          points={sortedActuals
-            .map((a) => `${toX(a.hour_index)},${toY(Number(a.actual_price))}`)
-            .join(' ')}
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      )}
+      {/* Actual price line (solid white) — starts from previous_close at hour 0 */}
+      {(sortedActuals.length > 0 || previousClose != null) && (() => {
+        const pts: string[] = [];
+        if (previousClose != null) {
+          pts.push(`${toX(0)},${toY(previousClose)}`);
+        }
+        sortedActuals.forEach((a) => {
+          pts.push(`${toX(a.hour_index)},${toY(Number(a.actual_price))}`);
+        });
+        if (pts.length < 2) return null;
+        return (
+          <polyline
+            points={pts.join(' ')}
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        );
+      })()}
 
       {/* Pulsing dot at leading edge of actual line */}
       {lastActual && (
