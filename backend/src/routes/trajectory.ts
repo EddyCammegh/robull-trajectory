@@ -1,8 +1,42 @@
 import { FastifyPluginAsync } from 'fastify';
 import { pool } from '../db.js';
 import { authenticateAgent } from './agents.js';
+import { INSTRUMENTS, fetchPrice } from '../services/prices.js';
 
 export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
+  // POST /v1/trajectory/markets/create-today — manually create today's markets
+  app.post('/markets/create-today', async (_request, reply) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const created: Array<{ id: string; instrument: string; previous_close: number | null }> = [];
+
+    for (const key of Object.keys(INSTRUMENTS)) {
+      const existing = await pool.query(
+        'SELECT id FROM trajectory_markets WHERE instrument = $1 AND trading_date = $2',
+        [key, today]
+      );
+
+      if (existing.rows.length > 0) continue;
+
+      let previousClose: number | null = null;
+      try {
+        previousClose = await fetchPrice(key);
+      } catch (err) {
+        console.error(`Failed to fetch previous close for ${key}:`, err);
+      }
+
+      const result = await pool.query(
+        `INSERT INTO trajectory_markets (instrument, trading_date, previous_close, status)
+         VALUES ($1, $2, $3, 'accepting')
+         RETURNING id`,
+        [key, today, previousClose]
+      );
+
+      created.push({ id: result.rows[0].id, instrument: key, previous_close: previousClose });
+    }
+
+    return reply.status(201).send({ created, date: today });
+  });
+
   // GET /v1/trajectory/markets — today's open markets
   app.get('/markets', async (_request, reply) => {
     const result = await pool.query(`
