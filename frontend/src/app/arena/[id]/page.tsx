@@ -14,13 +14,14 @@ const FORECAST_COLORS = [
 // 78 five-minute slots from 9:30am to 4pm ET
 const TOTAL_SLOTS = 78;
 // Slots per hour (for mapping forecast hour indices to slot positions)
-const SLOTS_PER_HOUR = 12;
-// Forecast hours map to slot positions: hour 0 → slot 6 (10am), hour 1 → slot 18 (11am), etc.
+// Forecast price points map to these slot positions:
+// 10am=slot6, 11am=slot18, 12pm=slot30, 1pm=slot42, 2pm=slot54, 3pm=slot66, 4pm=slot77
+const FORECAST_SLOTS = [6, 18, 30, 42, 54, 66, 77];
 function forecastHourToSlot(hourIndex: number): number {
-  return (hourIndex + 1) * SLOTS_PER_HOUR;
+  return FORECAST_SLOTS[hourIndex];
 }
-// X-axis label positions in slot space
-const LABEL_SLOTS = TIME_LABELS.map((_, i) => forecastHourToSlot(i));
+// X-axis label positions match forecast slots
+const LABEL_SLOTS = FORECAST_SLOTS;
 
 export default function ArenaPage({ params }: { params: { id: string } }) {
   const [data, setData] = useState<MarketLive | null>(null);
