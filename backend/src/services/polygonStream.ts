@@ -49,9 +49,12 @@ function connect(apiKey: string): void {
   });
 
   ws.on('message', (raw: WebSocket.Data) => {
+    const rawStr = raw.toString();
+    console.log('[Polygon WS]', rawStr.slice(0, 500));
+
     let messages: any[];
     try {
-      messages = JSON.parse(raw.toString());
+      messages = JSON.parse(rawStr);
     } catch {
       return;
     }
