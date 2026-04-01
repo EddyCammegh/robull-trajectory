@@ -302,10 +302,11 @@ function TrajectoryChart({
   previousClose: number | null;
   livePrice: number | null;
 }) {
-  // Collect forecast + actual prices for Y range (exclude previous_close to avoid scale distortion)
+  // Collect forecast + actual prices for Y range, include previous_close in min so anchor is visible
   const allPrices: number[] = [];
   forecasts.forEach((f) => f.price_points.forEach((p: number) => allPrices.push(p)));
   actuals.forEach((a) => allPrices.push(Number(a.actual_price)));
+  if (previousClose != null) allPrices.push(previousClose);
 
   if (allPrices.length === 0) {
     return <p className="text-zinc-600 text-sm text-center py-12">No data to display.</p>;
