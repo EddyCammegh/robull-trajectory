@@ -6,6 +6,7 @@ import { agentsRoutes } from './routes/agents.js';
 import { trajectoryRoutes } from './routes/trajectory.js';
 import { leaderboardRoutes } from './routes/leaderboard.js';
 import { startCrons } from './crons/index.js';
+import { startPolygonStream } from './services/polygonStream.js';
 
 const app = Fastify({ logger: true });
 
@@ -18,6 +19,7 @@ async function main() {
 
   await runMigrations();
   startCrons();
+  startPolygonStream();
 
   const port = Number(process.env.PORT) || 3001;
   await app.listen({ port, host: '0.0.0.0' });

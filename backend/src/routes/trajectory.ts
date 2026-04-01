@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { pool } from '../db.js';
 import { authenticateAgent } from './agents.js';
 import { INSTRUMENTS, fetchPrice } from '../services/prices.js';
+import { getLatestPrice } from '../services/polygonStream.js';
 
 export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
   // POST /v1/trajectory/markets/create-today — manually create today's markets
@@ -90,7 +91,12 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
       ORDER BY m.instrument
     `);
 
-    return reply.send({ markets: result.rows });
+    const markets = result.rows.map((m: any) => ({
+      ...m,
+      live_price: getLatestPrice(m.instrument),
+    }));
+
+    return reply.send({ markets });
   });
 
   // POST /v1/trajectory/forecast — submit a forecast
