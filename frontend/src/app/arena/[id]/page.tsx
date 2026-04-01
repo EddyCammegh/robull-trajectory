@@ -327,10 +327,9 @@ function TrajectoryChart({
   // Y-axis tick values
   const yTicks = generateTicks(minY, maxY, 5);
 
-  // Leading edge of actuals for pulse dot
-  const lastActual = actuals.length > 0
-    ? actuals.reduce((a, b) => a.hour_index > b.hour_index ? a : b)
-    : null;
+  // Sort actuals by hour_index for drawing the line in order
+  const sortedActuals = [...actuals].sort((a, b) => a.hour_index - b.hour_index);
+  const lastActual = sortedActuals.length > 0 ? sortedActuals[sortedActuals.length - 1] : null;
 
   return (
     <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} className="w-full" preserveAspectRatio="xMidYMid meet">
@@ -411,53 +410,62 @@ function TrajectoryChart({
         </>
       )}
 
-      {/* Live price reference line */}
-      {livePrice != null && (
-        <>
-          <line
-            x1={PAD.left}
-            y1={toY(livePrice)}
-            x2={CHART_W - PAD.right}
-            y2={toY(livePrice)}
-            stroke="#4ade80"
-            strokeWidth="1"
-            strokeDasharray="6 4"
-          />
-          <text
-            x={CHART_W - PAD.right + 4}
-            y={toY(livePrice) + 4}
-            fill="#4ade80"
-            fontSize="10"
-            fontFamily="monospace"
-          >
-            LIVE
-          </text>
-        </>
-      )}
-
-      {/* Forecast lines (dashed) */}
+      {/* Forecast lines — dimmed where actuals exist, brighter ahead */}
       {forecasts.map((f, fi) => {
-        const points = f.price_points
-          .map((p: number, i: number) => `${toX(i)},${toY(p)}`)
-          .join(' ');
+        const color = FORECAST_COLORS[fi % FORECAST_COLORS.length];
+        const lastActualHour = lastActual?.hour_index ?? -1;
+
+        // Segment where actuals exist (dimmed)
+        const coveredPoints = f.price_points
+          .map((p: number, i: number) => ({ x: toX(i), y: toY(p), i }))
+          .filter((pt) => pt.i <= lastActualHour);
+
+        // Segment ahead of actuals (brighter)
+        const aheadPoints = f.price_points
+          .map((p: number, i: number) => ({ x: toX(i), y: toY(p), i }))
+          .filter((pt) => pt.i >= lastActualHour);
+
         return (
-          <polyline
-            key={f.id}
-            points={points}
-            fill="none"
-            stroke={FORECAST_COLORS[fi % FORECAST_COLORS.length]}
-            strokeWidth="1.5"
-            strokeDasharray="5 3"
-            opacity="0.55"
-          />
+          <g key={f.id}>
+            {coveredPoints.length >= 2 && (
+              <polyline
+                points={coveredPoints.map((pt) => `${pt.x},${pt.y}`).join(' ')}
+                fill="none"
+                stroke={color}
+                strokeWidth="1.5"
+                strokeDasharray="5 3"
+                opacity="0.2"
+              />
+            )}
+            {aheadPoints.length >= 2 && (
+              <polyline
+                points={aheadPoints.map((pt) => `${pt.x},${pt.y}`).join(' ')}
+                fill="none"
+                stroke={color}
+                strokeWidth="1.5"
+                strokeDasharray="5 3"
+                opacity="0.55"
+              />
+            )}
+            {/* Full line if no actuals yet */}
+            {lastActualHour < 0 && (
+              <polyline
+                points={f.price_points.map((p: number, i: number) => `${toX(i)},${toY(p)}`).join(' ')}
+                fill="none"
+                stroke={color}
+                strokeWidth="1.5"
+                strokeDasharray="5 3"
+                opacity="0.55"
+              />
+            )}
+          </g>
         );
       })}
 
       {/* Actual price line (solid white) */}
-      {actuals.length > 0 && (
+      {sortedActuals.length > 0 && (
         <polyline
-          points={[...actuals]
-            .sort((a, b) => a.hour_index - b.hour_index)
+          points={sortedActuals
             .map((a) => `${toX(a.hour_index)},${toY(Number(a.actual_price))}`)
             .join(' ')}
           fill="none"
@@ -471,7 +479,6 @@ function TrajectoryChart({
       {/* Pulsing dot at leading edge of actual line */}
       {lastActual && (
         <>
-          {/* Pulse ring */}
           <circle
             cx={toX(lastActual.hour_index)}
             cy={toY(Number(lastActual.actual_price))}
@@ -481,7 +488,6 @@ function TrajectoryChart({
             strokeWidth="2"
             className="pulse-dot"
           />
-          {/* Solid center dot */}
           <circle
             cx={toX(lastActual.hour_index)}
             cy={toY(Number(lastActual.actual_price))}
