@@ -505,20 +505,27 @@ function TrajectoryChart({
         </>
       )}
 
-      {/* Forecast lines — single continuous dashed polylines */}
-      {forecasts.map((f, fi) => (
-        <polyline
-          key={f.id}
-          points={f.price_points
-            .map((p: number, i: number) => `${slotToX(forecastSlots[i])},${toY(p)}`)
-            .join(' ')}
-          fill="none"
-          stroke={FORECAST_COLORS[fi % FORECAST_COLORS.length]}
-          strokeWidth="1"
-          strokeDasharray="5 3"
-          opacity="0.6"
-        />
-      ))}
+      {/* Forecast lines — anchored to previous_close at slot 0 */}
+      {forecasts.map((f, fi) => {
+        const pts: string[] = [];
+        if (previousClose != null) {
+          pts.push(`${slotToX(0)},${toY(previousClose)}`);
+        }
+        f.price_points.forEach((p: number, i: number) => {
+          pts.push(`${slotToX(forecastSlots[i])},${toY(p)}`);
+        });
+        return (
+          <polyline
+            key={f.id}
+            points={pts.join(' ')}
+            fill="none"
+            stroke={FORECAST_COLORS[fi % FORECAST_COLORS.length]}
+            strokeWidth="1"
+            strokeDasharray="5 3"
+            opacity="0.6"
+          />
+        );
+      })}
 
       {/* Actual price line — smooth cubic bezier, solid white */}
       {actualPoints.length >= 2 && (
