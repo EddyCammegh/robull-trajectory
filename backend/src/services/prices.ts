@@ -52,27 +52,32 @@ export async function fetchPrice(instrument: string): Promise<number> {
 
 export function getMarketStatus(): { isOpen: boolean; nextCloseMs: number | null } {
   const now = new Date();
-  const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const etParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+    weekday: 'short',
+  }).formatToParts(now);
 
-  const day = et.getDay();
-  if (day === 0 || day === 6) {
+  const weekday = etParts.find((p) => p.type === 'weekday')!.value;
+  const hour = parseInt(etParts.find((p) => p.type === 'hour')!.value, 10);
+  const minute = parseInt(etParts.find((p) => p.type === 'minute')!.value, 10);
+
+  const weekdays = new Set(['Mon', 'Tue', 'Wed', 'Thu', 'Fri']);
+  if (!weekdays.has(weekday)) {
     return { isOpen: false, nextCloseMs: null };
   }
 
-  const hours = et.getHours();
-  const minutes = et.getMinutes();
-  const timeMinutes = hours * 60 + minutes;
-
-  const openMinutes = 9 * 60 + 30; // 9:30 AM
-  const closeMinutes = 16 * 60;     // 4:00 PM
+  const timeMinutes = hour * 60 + minute;
+  const openMinutes = 9 * 60 + 30; // 9:30 AM ET
+  const closeMinutes = 16 * 60;     // 4:00 PM ET
 
   const isOpen = timeMinutes >= openMinutes && timeMinutes < closeMinutes;
 
   let nextCloseMs: number | null = null;
   if (isOpen) {
-    const closeToday = new Date(et);
-    closeToday.setHours(16, 0, 0, 0);
-    nextCloseMs = closeToday.getTime() - et.getTime();
+    nextCloseMs = (closeMinutes - timeMinutes) * 60 * 1000;
   }
 
   return { isOpen, nextCloseMs };
