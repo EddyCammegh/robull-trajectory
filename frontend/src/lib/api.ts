@@ -27,6 +27,7 @@ export interface Market {
   event_label: string | null;
   created_at: string;
   submission_count: string;
+  live_price: number | null;
 }
 
 export interface MarketLive {

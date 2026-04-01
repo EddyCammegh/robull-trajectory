@@ -65,6 +65,16 @@ export default function HomePage() {
                 </span>
               </div>
 
+              {/* Live price */}
+              {m.live_price != null && (
+                <div className="text-sm text-zinc-400 mb-1">
+                  Live:{' '}
+                  <span className="text-green-400 font-medium">
+                    ${Number(m.live_price).toFixed(2)}
+                  </span>
+                </div>
+              )}
+
               {/* Forecast count */}
               <div className="text-sm text-zinc-400">
                 Forecasts:{' '}
