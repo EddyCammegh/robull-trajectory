@@ -18,6 +18,7 @@
     "typescript": "^5.8.3",
     "tsx": "^4.19.4",
     "@types/node": "^22.15.3",
-    "@types/pg": "^8.11.13"
+    "@types/pg": "^8.11.13",
+    "@types/node-cron": "^3.0.11"
   }
 }
