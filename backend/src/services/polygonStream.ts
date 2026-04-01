@@ -114,13 +114,16 @@ async function handleAggregate(msg: {
     if (market.rows.length === 0) return;
 
     const marketRow = market.rows[0];
-    const createdAt = new Date(marketRow.created_at);
     const now = new Date();
-    const hourIndex = Math.floor(
-      (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60)
-    );
+    const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    const etMinutes = et.getHours() * 60 + et.getMinutes();
 
-    if (hourIndex < 0 || hourIndex > 6) return;
+    const marketOpen = 9 * 60 + 30;  // 9:30 AM ET
+    const marketClose = 16 * 60;      // 4:00 PM ET
+
+    if (etMinutes < marketOpen || etMinutes >= marketClose) return;
+
+    const hourIndex = Math.min(Math.floor((etMinutes - marketOpen) / 60), 6);
 
     await pool.query(
       `INSERT INTO trajectory_actuals (market_id, hour_index, actual_price)
