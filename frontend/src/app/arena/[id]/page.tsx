@@ -255,23 +255,6 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {/* Pulse animation */}
-      <style jsx global>{`
-        @keyframes pulse-dot {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          50% {
-            transform: scale(2.2);
-            opacity: 0.3;
-          }
-        }
-        .pulse-dot {
-          animation: pulse-dot 1.5s ease-in-out infinite;
-          transform-origin: center;
-        }
-      `}</style>
     </main>
   );
 }
@@ -308,6 +291,34 @@ const PLOT_H = CHART_H - PAD.top - PAD.bottom;
 
 function slotToX(slot: number): number {
   return PAD.left + (slot / (TOTAL_SLOTS - 1)) * PLOT_W;
+}
+
+// Build a smooth cubic bezier SVG path through an array of {x, y} points
+function smoothPath(points: { x: number; y: number }[]): string {
+  if (points.length === 0) return '';
+  if (points.length === 1) return `M${points[0].x},${points[0].y}`;
+  if (points.length === 2) {
+    return `M${points[0].x},${points[0].y}L${points[1].x},${points[1].y}`;
+  }
+
+  const tension = 0.3;
+  let d = `M${points[0].x},${points[0].y}`;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[Math.max(0, i - 1)];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[Math.min(points.length - 1, i + 2)];
+
+    const cp1x = p1.x + (p2.x - p0.x) * tension;
+    const cp1y = p1.y + (p2.y - p0.y) * tension;
+    const cp2x = p2.x - (p3.x - p1.x) * tension;
+    const cp2y = p2.y - (p3.y - p1.y) * tension;
+
+    d += `C${cp1x},${cp1y},${cp2x},${cp2y},${p2.x},${p2.y}`;
+  }
+
+  return d;
 }
 
 function TrajectoryChart({
@@ -347,6 +358,19 @@ function TrajectoryChart({
   const sortedActuals = [...actuals].sort((a, b) => a.slot_index - b.slot_index);
   const lastActual = sortedActuals.length > 0 ? sortedActuals[sortedActuals.length - 1] : null;
   const lastActualSlot = lastActual?.slot_index ?? -1;
+
+  // Build actual line points (starting from previous_close at slot 0)
+  const actualPoints: { x: number; y: number }[] = [];
+  if (previousClose != null) {
+    actualPoints.push({ x: slotToX(0), y: toY(previousClose) });
+  }
+  sortedActuals.forEach((a) => {
+    actualPoints.push({ x: slotToX(a.slot_index), y: toY(Number(a.actual_price)) });
+  });
+
+  // Pulse dot position
+  const dotX = lastActual ? slotToX(lastActual.slot_index) : 0;
+  const dotY = lastActual ? toY(Number(lastActual.actual_price)) : 0;
 
   return (
     <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} className="w-full" preserveAspectRatio="xMidYMid meet">
@@ -428,50 +452,47 @@ function TrajectoryChart({
         </>
       )}
 
-      {/* Forecast lines — 7 price points mapped to hourly slot positions */}
+      {/* Forecast lines — smooth cubic bezier */}
       {forecasts.map((f, fi) => {
         const color = FORECAST_COLORS[fi % FORECAST_COLORS.length];
 
-        // Map each forecast point to its slot position
         const forecastPoints = f.price_points.map((p: number, i: number) => ({
           x: slotToX(forecastHourToSlot(i)),
           y: toY(p),
           slot: forecastHourToSlot(i),
         }));
 
-        // Segment where actuals exist (dimmed)
         const coveredPoints = forecastPoints.filter((pt) => pt.slot <= lastActualSlot);
-        // Segment ahead of actuals (brighter) — include overlap point for continuity
         const aheadPoints = forecastPoints.filter((pt) => pt.slot >= lastActualSlot);
 
         return (
           <g key={f.id}>
             {coveredPoints.length >= 2 && (
-              <polyline
-                points={coveredPoints.map((pt) => `${pt.x},${pt.y}`).join(' ')}
+              <path
+                d={smoothPath(coveredPoints)}
                 fill="none"
                 stroke={color}
-                strokeWidth="1.5"
+                strokeWidth="1"
                 strokeDasharray="5 3"
                 opacity="0.2"
               />
             )}
             {aheadPoints.length >= 2 && (
-              <polyline
-                points={aheadPoints.map((pt) => `${pt.x},${pt.y}`).join(' ')}
+              <path
+                d={smoothPath(aheadPoints)}
                 fill="none"
                 stroke={color}
-                strokeWidth="1.5"
+                strokeWidth="1"
                 strokeDasharray="5 3"
                 opacity="0.55"
               />
             )}
             {lastActualSlot < 0 && (
-              <polyline
-                points={forecastPoints.map((pt) => `${pt.x},${pt.y}`).join(' ')}
+              <path
+                d={smoothPath(forecastPoints)}
                 fill="none"
                 stroke={color}
-                strokeWidth="1.5"
+                strokeWidth="1"
                 strokeDasharray="5 3"
                 opacity="0.55"
               />
@@ -480,47 +501,37 @@ function TrajectoryChart({
         );
       })}
 
-      {/* Actual price line (solid white) — starts from previous_close at slot 0 */}
-      {(sortedActuals.length > 0 || previousClose != null) && (() => {
-        const pts: string[] = [];
-        if (previousClose != null) {
-          pts.push(`${slotToX(0)},${toY(previousClose)}`);
-        }
-        sortedActuals.forEach((a) => {
-          pts.push(`${slotToX(a.slot_index)},${toY(Number(a.actual_price))}`);
-        });
-        if (pts.length < 2) return null;
-        return (
-          <polyline
-            points={pts.join(' ')}
-            fill="none"
-            stroke="#ffffff"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        );
-      })()}
+      {/* Actual price line — smooth cubic bezier, solid white */}
+      {actualPoints.length >= 2 && (
+        <path
+          d={smoothPath(actualPoints)}
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
 
       {/* Pulsing dot at leading edge of actual line */}
       {lastActual && (
-        <>
-          <circle
-            cx={slotToX(lastActual.slot_index)}
-            cy={toY(Number(lastActual.actual_price))}
-            r="5"
-            fill="none"
-            stroke="#4ade80"
-            strokeWidth="2"
-            className="pulse-dot"
-          />
-          <circle
-            cx={slotToX(lastActual.slot_index)}
-            cy={toY(Number(lastActual.actual_price))}
-            r="3"
-            fill="#4ade80"
-          />
-        </>
+        <g>
+          {/* Pulse ring — translated to dot center so scale animates from correct origin */}
+          <g transform={`translate(${dotX},${dotY})`}>
+            <circle cx="0" cy="0" r="4" fill="none" stroke="#4ade80" strokeWidth="1.5">
+              <animate attributeName="opacity" values="0.8;0" dur="1.5s" repeatCount="indefinite" />
+              <animateTransform
+                attributeName="transform"
+                type="scale"
+                values="1;2.2"
+                dur="1.5s"
+                repeatCount="indefinite"
+              />
+            </circle>
+          </g>
+          {/* Solid center dot */}
+          <circle cx={dotX} cy={dotY} r="2.5" fill="#4ade80" />
+        </g>
       )}
     </svg>
   );
