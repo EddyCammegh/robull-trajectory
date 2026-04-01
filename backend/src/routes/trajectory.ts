@@ -3,6 +3,7 @@ import { pool } from '../db.js';
 import { authenticateAgent } from './agents.js';
 import { INSTRUMENTS, fetchPrice } from '../services/prices.js';
 import { getLatestPrice } from '../services/polygonStream.js';
+import { calculateMAPE } from '../services/scoring.js';
 
 export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
   // POST /v1/trajectory/markets/create-today — manually create today's markets
@@ -231,6 +232,94 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
       market: market.rows[0],
       actuals: actuals.rows,
       forecasts: forecasts.rows,
+    });
+  });
+
+  // GET /v1/trajectory/markets/:id/live — live market view with current MAPE rankings
+  app.get('/markets/:id/live', async (request, reply) => {
+    const { id } = request.params as { id: string };
+
+    const marketResult = await pool.query(
+      `SELECT id, instrument, session, trading_date, previous_close, open_price, status,
+              event_type, event_label, created_at
+       FROM trajectory_markets WHERE id = $1`,
+      [id]
+    );
+
+    if (marketResult.rows.length === 0) {
+      return reply.status(404).send({ error: 'Market not found' });
+    }
+
+    const market = marketResult.rows[0];
+
+    const forecastsResult = await pool.query(
+      `SELECT
+        f.id,
+        f.agent_id,
+        a.name AS agent_name,
+        a.model,
+        a.org,
+        a.country_code,
+        f.price_points,
+        f.reasoning,
+        f.catalyst,
+        f.direction,
+        f.risk,
+        f.confidence,
+        f.mape_score,
+        f.rank,
+        f.gns_won,
+        f.submitted_at
+      FROM trajectory_forecasts f
+      JOIN agents a ON a.id = f.agent_id
+      WHERE f.market_id = $1`,
+      [id]
+    );
+
+    const actualsResult = await pool.query(
+      `SELECT hour_index, actual_price, fetched_at
+       FROM trajectory_actuals
+       WHERE market_id = $1
+       ORDER BY hour_index`,
+      [id]
+    );
+
+    const actuals = actualsResult.rows;
+    const actualPrices = actuals.map((a: any) => parseFloat(a.actual_price));
+
+    // Calculate live MAPE for each forecast against available actuals
+    const forecasts = forecastsResult.rows.map((f: any) => {
+      let live_mape: number | null = null;
+
+      if (actualPrices.length > 0) {
+        const predicted = (f.price_points as number[]).slice(0, actualPrices.length);
+        try {
+          live_mape = calculateMAPE(predicted, actualPrices);
+        } catch {
+          live_mape = null;
+        }
+      }
+
+      return { ...f, live_mape };
+    });
+
+    // Rank by live MAPE (lowest first)
+    const withMape = forecasts.filter((f: any) => f.live_mape != null);
+    withMape.sort((a: any, b: any) => a.live_mape - b.live_mape);
+    withMape.forEach((f: any, i: number) => { f.live_rank = i + 1; });
+
+    const withoutMape = forecasts.filter((f: any) => f.live_mape == null);
+    withoutMape.forEach((f: any) => { f.live_rank = null; });
+
+    const rankedForecasts = [...withMape, ...withoutMape];
+
+    return reply.send({
+      market: {
+        ...market,
+        live_price: getLatestPrice(market.instrument),
+      },
+      actuals,
+      forecasts: rankedForecasts,
     });
   });
 
