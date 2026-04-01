@@ -67,7 +67,7 @@ export function getMarkets() {
 }
 
 export function getMarketLive(id: string) {
-  return request<MarketLive>(`/v1/trajectory/markets/${id}/results`);
+  return request<MarketLive>(`/v1/trajectory/markets/${id}/live`);
 }
 
 export function getLeaderboard() {
