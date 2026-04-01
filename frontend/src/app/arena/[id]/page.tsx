@@ -460,9 +460,28 @@ function TrajectoryChart({
         </text>
       ))}
 
-      {/* Previous close reference line */}
+      {/* Pre-market reference line — from left edge to slot 0 at previous_close level */}
       {previousClose != null && (
         <>
+          <line
+            x1={PAD.left}
+            y1={toY(previousClose)}
+            x2={slotToX(0)}
+            y2={toY(previousClose)}
+            stroke="#52525b"
+            strokeWidth="1"
+            strokeDasharray="4 3"
+          />
+          <text
+            x={PAD.left + 4}
+            y={toY(previousClose) - 5}
+            fill="#52525b"
+            fontSize="10"
+            fontFamily="monospace"
+          >
+            PRE
+          </text>
+          {/* Previous close reference line — full width */}
           <line
             x1={PAD.left}
             y1={toY(previousClose)}
@@ -484,55 +503,20 @@ function TrajectoryChart({
         </>
       )}
 
-      {/* Forecast lines — straight dashed polylines */}
-      {forecasts.map((f, fi) => {
-        const color = FORECAST_COLORS[fi % FORECAST_COLORS.length];
-        const pts = f.price_points.map((p: number, i: number) =>
-          `${slotToX(forecastSlots[i])},${toY(p)}`
-        );
-
-        if (lastActualSlot < 0) {
-          return (
-            <polyline
-              key={f.id}
-              points={pts.join(' ')}
-              fill="none"
-              stroke={color}
-              strokeWidth="1"
-              strokeDasharray="5 3"
-              opacity="0.55"
-            />
-          );
-        }
-
-        const coveredPts = pts.filter((_, i) => forecastSlots[i] <= lastActualSlot);
-        const aheadPts = pts.filter((_, i) => forecastSlots[i] >= lastActualSlot);
-
-        return (
-          <g key={f.id}>
-            {coveredPts.length >= 2 && (
-              <polyline
-                points={coveredPts.join(' ')}
-                fill="none"
-                stroke={color}
-                strokeWidth="1"
-                strokeDasharray="5 3"
-                opacity="0.2"
-              />
-            )}
-            {aheadPts.length >= 2 && (
-              <polyline
-                points={aheadPts.join(' ')}
-                fill="none"
-                stroke={color}
-                strokeWidth="1"
-                strokeDasharray="5 3"
-                opacity="0.55"
-              />
-            )}
-          </g>
-        );
-      })}
+      {/* Forecast lines — single continuous dashed polylines */}
+      {forecasts.map((f, fi) => (
+        <polyline
+          key={f.id}
+          points={f.price_points
+            .map((p: number, i: number) => `${slotToX(forecastSlots[i])},${toY(p)}`)
+            .join(' ')}
+          fill="none"
+          stroke={FORECAST_COLORS[fi % FORECAST_COLORS.length]}
+          strokeWidth="1"
+          strokeDasharray="5 3"
+          opacity="0.6"
+        />
+      ))}
 
       {/* Actual price line — smooth cubic bezier, solid white */}
       {actualPoints.length >= 2 && (
