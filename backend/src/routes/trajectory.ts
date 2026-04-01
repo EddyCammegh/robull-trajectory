@@ -45,7 +45,13 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
 
     const updated: Array<{ id: string; instrument: string; previous_close: number | null }> = [];
 
-    for (const m of markets.rows) {
+    for (let i = 0; i < markets.rows.length; i++) {
+      const m = markets.rows[i];
+
+      if (i > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 15000));
+      }
+
       let price: number | null = null;
       try {
         price = await fetchPrice(m.instrument);
