@@ -4,24 +4,43 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { getMarketLive, type MarketLive } from '@/lib/api';
 
-const TIME_LABELS = ['10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
 const FORECAST_COLORS = [
   '#f5e642', '#60a5fa', '#34d399', '#f472b6',
   '#a78bfa', '#fb923c', '#94a3b8', '#e879f9',
   '#38bdf8', '#fbbf24', '#4ade80', '#f87171',
 ];
 
-// 78 five-minute slots from 9:30am to 4pm ET
-const TOTAL_SLOTS = 78;
-// Slots per hour (for mapping forecast hour indices to slot positions)
-// Forecast price points map to these slot positions:
-// 10am=slot6, 11am=slot18, 12pm=slot30, 1pm=slot42, 2pm=slot54, 3pm=slot66, 4pm=slot77
-const FORECAST_SLOTS = [6, 18, 30, 42, 54, 66, 77];
-function forecastHourToSlot(hourIndex: number): number {
-  return FORECAST_SLOTS[hourIndex];
-}
-// X-axis label positions match forecast slots
-const LABEL_SLOTS = FORECAST_SLOTS;
+const SESSIONS: Record<string, {
+  labels: string[];
+  totalSlots: number;
+  forecastSlots: number[];
+  openLabel: string;
+}> = {
+  US: {
+    labels: ['9:30', '10:30', '11:30', '12:30', '1:30', '2:30', '3:30', '4:00'],
+    totalSlots: 78,
+    forecastSlots: [6, 18, 30, 42, 54, 66, 77],
+    openLabel: '9:30am ET',
+  },
+  CRYPTO: {
+    labels: ['12am', '3am', '6am', '9am', '12pm', '3pm', '6pm', '9pm'],
+    totalSlots: 288,
+    forecastSlots: [36, 72, 108, 144, 180, 216, 252],
+    openLabel: '24h UTC',
+  },
+  ASIAN: {
+    labels: ['9:00', '10:00', '11:00', '12:00', '1:00', '2:00', '3:00'],
+    totalSlots: 42,
+    forecastSlots: [6, 12, 18, 24, 30, 36, 41],
+    openLabel: '9:00am JST',
+  },
+  EUROPEAN: {
+    labels: ['8:00', '9:00', '10:00', '11:00', '12:00', '1:00', '2:00', '3:00', '4:30'],
+    totalSlots: 102,
+    forecastSlots: [6, 18, 30, 42, 54, 66, 78],
+    openLabel: '8:00am GMT',
+  },
+};
 
 export default function ArenaPage({ params }: { params: { id: string } }) {
   const [data, setData] = useState<MarketLive | null>(null);
@@ -49,6 +68,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
   if (!data) return null;
 
   const { market, actuals, forecasts } = data;
+  const session = SESSIONS[market.session] ?? SESSIONS.US;
   const rankedForecasts = [...forecasts]
     .filter((f) => f.mape_score != null)
     .sort((a, b) => (a.mape_score ?? Infinity) - (b.mape_score ?? Infinity));
@@ -98,6 +118,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                 actuals={actuals}
                 previousClose={market.previous_close != null ? Number(market.previous_close) : null}
                 livePrice={market.live_price != null ? Number(market.live_price) : null}
+                session={session}
               />
             </div>
 
@@ -161,7 +182,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                             key={i}
                             className="text-xs bg-zinc-900 text-zinc-400 px-2 py-0.5 rounded font-mono"
                           >
-                            {TIME_LABELS[i]}: ${p.toFixed(2)}
+                            {session.labels[i] ?? `H${i}`}: ${p.toFixed(2)}
                           </span>
                         ))}
                       </div>
@@ -188,7 +209,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                   market.open_price != null ? `$${Number(market.open_price).toFixed(2)}` : '—'
                 } />
                 <InfoRow label="Forecasts" value={String(forecasts.length)} />
-                <InfoRow label="Data Points" value={`${actuals.length} / ${TOTAL_SLOTS}`} />
+                <InfoRow label="Data Points" value={`${actuals.length} / ${session.totalSlots}`} />
               </dl>
             </div>
 
@@ -241,7 +262,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-sm">
                     <span className="text-zinc-500">Slots filled</span>
-                    <span className="font-mono">{actuals.length} / {TOTAL_SLOTS}</span>
+                    <span className="font-mono">{actuals.length} / {session.totalSlots}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-zinc-500">Latest</span>
@@ -290,11 +311,8 @@ const PAD = { top: 20, right: 20, bottom: 35, left: 65 };
 const PLOT_W = CHART_W - PAD.left - PAD.right;
 const PLOT_H = CHART_H - PAD.top - PAD.bottom;
 
-function slotToX(slot: number): number {
-  return PAD.left + (slot / (TOTAL_SLOTS - 1)) * PLOT_W;
-}
+type SessionConfig = typeof SESSIONS[keyof typeof SESSIONS];
 
-// Build a smooth cubic bezier SVG path through an array of {x, y} points
 function smoothPath(points: { x: number; y: number }[]): string {
   if (points.length === 0) return '';
   if (points.length === 1) return `M${points[0].x},${points[0].y}`;
@@ -327,12 +345,25 @@ function TrajectoryChart({
   actuals,
   previousClose,
   livePrice,
+  session,
 }: {
   forecasts: MarketLive['forecasts'];
   actuals: MarketLive['actuals'];
   previousClose: number | null;
   livePrice: number | null;
+  session: SessionConfig;
 }) {
+  const { totalSlots, forecastSlots, labels } = session;
+
+  function slotToX(slot: number): number {
+    return PAD.left + (slot / (totalSlots - 1)) * PLOT_W;
+  }
+
+  // Evenly space labels and grid lines across the plot
+  function labelToX(labelIndex: number): number {
+    return PAD.left + (labelIndex / (labels.length - 1)) * PLOT_W;
+  }
+
   // Collect all prices for Y range
   const allPrices: number[] = [];
   forecasts.forEach((f) => f.price_points.forEach((p: number) => allPrices.push(p)));
@@ -387,13 +418,13 @@ function TrajectoryChart({
           strokeWidth="1"
         />
       ))}
-      {/* Vertical grid lines at hour marks */}
-      {LABEL_SLOTS.map((slot, i) => (
+      {/* Vertical grid lines at label positions */}
+      {labels.map((_, i) => (
         <line
           key={i}
-          x1={slotToX(slot)}
+          x1={labelToX(i)}
           y1={PAD.top}
-          x2={slotToX(slot)}
+          x2={labelToX(i)}
           y2={PAD.top + PLOT_H}
           stroke="#27272a"
           strokeWidth="1"
@@ -416,10 +447,10 @@ function TrajectoryChart({
       ))}
 
       {/* X-axis labels */}
-      {TIME_LABELS.map((label, i) => (
+      {labels.map((label, i) => (
         <text
           key={i}
-          x={slotToX(LABEL_SLOTS[i])}
+          x={labelToX(i)}
           y={CHART_H - 8}
           textAnchor="middle"
           fill="#71717a"
@@ -456,15 +487,15 @@ function TrajectoryChart({
       {/* Forecast lines — straight dashed polylines */}
       {forecasts.map((f, fi) => {
         const color = FORECAST_COLORS[fi % FORECAST_COLORS.length];
-        const allPts = f.price_points.map((p: number, i: number) =>
-          `${slotToX(forecastHourToSlot(i))},${toY(p)}`
+        const pts = f.price_points.map((p: number, i: number) =>
+          `${slotToX(forecastSlots[i])},${toY(p)}`
         );
 
         if (lastActualSlot < 0) {
           return (
             <polyline
               key={f.id}
-              points={allPts.join(' ')}
+              points={pts.join(' ')}
               fill="none"
               stroke={color}
               strokeWidth="1"
@@ -474,9 +505,8 @@ function TrajectoryChart({
           );
         }
 
-        const forecastSlots = f.price_points.map((_: number, i: number) => forecastHourToSlot(i));
-        const coveredPts = allPts.filter((_, i) => forecastSlots[i] <= lastActualSlot);
-        const aheadPts = allPts.filter((_, i) => forecastSlots[i] >= lastActualSlot);
+        const coveredPts = pts.filter((_, i) => forecastSlots[i] <= lastActualSlot);
+        const aheadPts = pts.filter((_, i) => forecastSlots[i] >= lastActualSlot);
 
         return (
           <g key={f.id}>
@@ -519,7 +549,6 @@ function TrajectoryChart({
       {/* Pulsing dot at leading edge of actual line */}
       {lastActual && (
         <g>
-          {/* Pulse ring — translated to dot center so scale animates from correct origin */}
           <g transform={`translate(${dotX},${dotY})`}>
             <circle cx="0" cy="0" r="4" fill="none" stroke="#4ade80" strokeWidth="1.5">
               <animate attributeName="opacity" values="0.8;0" dur="1.5s" repeatCount="indefinite" />
@@ -532,7 +561,6 @@ function TrajectoryChart({
               />
             </circle>
           </g>
-          {/* Solid center dot */}
           <circle cx={dotX} cy={dotY} r="2.5" fill="#4ade80" />
         </g>
       )}
