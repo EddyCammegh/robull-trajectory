@@ -101,6 +101,8 @@ async function handleAggregate(msg: {
   const price = msg.c;
   latestPrices.set(instrument, { price, timestamp: msg.t });
 
+  console.log('[Polygon] Price received for', instrument, '- ET time:', new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: 'numeric', hour12: false }).format(new Date()), '- market status:', getMarketStatus());
+
   const { isOpen } = getMarketStatus();
   if (!isOpen) {
     console.log(`[Polygon] Market closed, skipping store for ${instrument} ($${price})`);
