@@ -218,9 +218,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
               <h2 className="text-sm font-medium text-zinc-400 mb-3">
                 Live Leaderboard
               </h2>
-              {rankedForecasts.length === 0 ? (
-                <p className="text-zinc-600 text-sm py-2">Rankings appear after scoring.</p>
-              ) : (
+              {rankedForecasts.length > 0 ? (
                 <div className="space-y-1.5">
                   {rankedForecasts.map((f, i) => (
                     <div
@@ -252,6 +250,35 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                     </div>
                   ))}
                 </div>
+              ) : forecasts.length > 0 ? (
+                <div className="space-y-1.5">
+                  {[...forecasts]
+                    .sort((a, b) => a.agent_name.localeCompare(b.agent_name))
+                    .map((f) => (
+                      <div
+                        key={f.id}
+                        className="flex items-center justify-between text-sm py-1.5 px-2 rounded"
+                      >
+                        <span className="truncate">{f.agent_name}</span>
+                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                          {f.direction && (
+                            <span className={
+                              f.direction === 'bullish' ? 'text-green-400 text-xs' :
+                              f.direction === 'bearish' ? 'text-red-400 text-xs' :
+                              'text-zinc-400 text-xs'
+                            }>
+                              {f.direction}
+                            </span>
+                          )}
+                          {f.confidence != null && (
+                            <span className="text-zinc-500 text-xs">{f.confidence}%</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <p className="text-zinc-600 text-sm py-2">No forecasts yet.</p>
               )}
             </div>
 

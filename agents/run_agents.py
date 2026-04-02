@@ -3,8 +3,10 @@ import json
 import time
 import requests
 import anthropic
+import openai
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 ROBULL_API_URL = os.environ.get("ROBULL_API_URL", "https://robull-trajectory-production.up.railway.app")
 
 AGENT_KEYS = {
@@ -43,6 +45,7 @@ AGENT_KEYS = {
 COHORTS = {
     "NEWS": {
         "agents": ["KRONOS", "ATLAS", "CIPHER", "MERIDIAN", "HELIX"],
+        "provider": "sonnet",
         "focus": (
             "Search for the latest news, earnings reports, analyst commentary, "
             "and market sentiment for this instrument today. Look for breaking news, "
@@ -52,6 +55,7 @@ COHORTS = {
     },
     "FUND": {
         "agents": ["NEXUS", "VEGA", "ARBITRON", "PRISM", "SOLACE"],
+        "provider": "sonnet",
         "focus": (
             "Search for analyst price targets, ratings changes, valuation metrics, "
             "and fundamental outlook for this instrument. Look for recent upgrades/downgrades, "
@@ -61,6 +65,7 @@ COHORTS = {
     },
     "OPT": {
         "agents": ["AXIOM", "DELTA", "QUASAR", "FORGE", "ONYX"],
+        "provider": "haiku",
         "focus": (
             "Search for options flow, unusual options activity, put/call ratios, "
             "and implied volatility for this instrument. Look for large block trades, "
@@ -70,6 +75,7 @@ COHORTS = {
     },
     "MACRO": {
         "agents": ["SPECTER", "LYNX", "TITAN", "ZENITH", "ECHO"],
+        "provider": "openai",
         "focus": (
             "Search for Fed policy signals, interest rate expectations, sector rotation trends, "
             "and economic data releases today. Look for CPI/PPI data, jobs reports, Fed speeches, "
@@ -79,6 +85,7 @@ COHORTS = {
     },
     "TECH": {
         "agents": ["NOVA", "RAZOR", "ORBIT", "FLUX", "APEX"],
+        "provider": "openai",
         "focus": (
             "Search for technical analysis on this instrument: key support and resistance levels, "
             "moving average positions (50-day, 200-day), RSI, MACD signals, volume patterns, "
@@ -174,17 +181,16 @@ def parse_forecast_json(text):
     return json.loads(last_json)
 
 
-def call_claude(prompt):
+def call_claude(prompt, model="claude-sonnet-4-6"):
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
     response = client.messages.create(
-        model="claude-sonnet-4-6",
+        model=model,
         max_tokens=2000,
-        tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 5}],
+        tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 2}],
         messages=[{"role": "user", "content": prompt}],
     )
 
-    # Extract text from response
     text_parts = []
     for block in response.content:
         if block.type == "text":
@@ -193,24 +199,57 @@ def call_claude(prompt):
     return "\n".join(text_parts)
 
 
-def call_claude_with_retry(prompt):
+def call_claude_with_retry(prompt, model="claude-sonnet-4-6"):
     try:
-        return call_claude(prompt)
+        return call_claude(prompt, model)
     except anthropic.RateLimitError:
         print("    Rate limited (429), waiting 60s and retrying...")
         time.sleep(60)
-        return call_claude(prompt)
+        return call_claude(prompt, model)
 
 
-def run_agent(agent_name, api_key, market, cohort_focus):
+def call_openai(prompt):
+    client = openai.OpenAI(api_key=OPENAI_API_KEY)
+
+    response = client.responses.create(
+        model="gpt-4o",
+        tools=[{"type": "web_search_preview"}],
+        input=prompt,
+    )
+
+    text_parts = []
+    for item in response.output:
+        if item.type == "message":
+            for content in item.content:
+                if content.type == "output_text":
+                    text_parts.append(content.text)
+
+    return "\n".join(text_parts)
+
+
+def call_openai_with_retry(prompt):
+    try:
+        return call_openai(prompt)
+    except openai.RateLimitError:
+        print("    Rate limited (429), waiting 60s and retrying...")
+        time.sleep(60)
+        return call_openai(prompt)
+
+
+def run_agent(agent_name, api_key, market, cohort_focus, provider="sonnet"):
     instrument = market["instrument"]
     market_id = market["id"]
 
-    print(f"  [{agent_name}] Forecasting {instrument}...")
+    print(f"  [{agent_name}] Forecasting {instrument} ({provider})...")
 
     try:
         prompt = build_prompt(market, cohort_focus)
-        response_text = call_claude_with_retry(prompt)
+        if provider == "openai":
+            response_text = call_openai_with_retry(prompt)
+        elif provider == "haiku":
+            response_text = call_claude_with_retry(prompt, model="claude-haiku-4-5-20251001")
+        else:
+            response_text = call_claude_with_retry(prompt)
         forecast = parse_forecast_json(response_text)
 
         # Validate price_points
@@ -254,6 +293,9 @@ def main():
         print("ERROR: ANTHROPIC_API_KEY not set")
         return
 
+    if not OPENAI_API_KEY:
+        print("WARNING: OPENAI_API_KEY not set — MACRO and TECH cohorts will fail")
+
     print(f"Robull Trajectory Agent Runner")
     print(f"API: {ROBULL_API_URL}")
     print()
@@ -286,22 +328,22 @@ def main():
     print(f"{len(accepting)} markets accepting forecasts")
     print()
 
-    # Run each cohort
+    # Run each cohort sequentially
     for cohort_name, cohort in COHORTS.items():
         agents = cohort["agents"]
         focus = cohort["focus"]
+        provider = cohort["provider"]
 
-        # Filter to agents with keys configured
         active_agents = [(a, AGENT_KEYS[a]) for a in agents if AGENT_KEYS.get(a)]
         if not active_agents:
             print(f"[{cohort_name}] No API keys configured, skipping cohort")
             continue
 
-        print(f"[{cohort_name}] Running {len(active_agents)} agents...")
+        print(f"[{cohort_name}] Running {len(active_agents)} agents ({provider})...")
 
         for agent_name, api_key in active_agents:
             for market in accepting:
-                run_agent(agent_name, api_key, market, focus)
+                run_agent(agent_name, api_key, market, focus, provider)
                 time.sleep(15)
 
         print()
