@@ -46,6 +46,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
   const [data, setData] = useState<MarketLive | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showConsensus, setShowConsensus] = useState(false);
 
   const fetchData = useCallback(() => {
     getMarketLive(params.id)
@@ -113,12 +114,33 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
           <div className="lg:col-span-3 space-y-5">
             {/* Trajectory chart */}
             <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-5">
+              <div className="flex items-center justify-end mb-3">
+                <div className="flex items-center gap-1.5 bg-zinc-900 rounded-full p-0.5 text-xs">
+                  <button
+                    onClick={() => setShowConsensus(false)}
+                    className={`px-3 py-1 rounded-full transition-colors ${
+                      !showConsensus ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    Individual
+                  </button>
+                  <button
+                    onClick={() => setShowConsensus(true)}
+                    className={`px-3 py-1 rounded-full transition-colors ${
+                      showConsensus ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    Consensus
+                  </button>
+                </div>
+              </div>
               <TrajectoryChart
                 forecasts={forecasts}
                 actuals={actuals}
                 previousClose={market.previous_close != null ? Number(market.previous_close) : null}
                 livePrice={market.live_price != null ? Number(market.live_price) : null}
                 session={session}
+                showConsensus={showConsensus}
               />
             </div>
 
@@ -410,12 +432,14 @@ function TrajectoryChart({
   previousClose,
   livePrice,
   session,
+  showConsensus = false,
 }: {
   forecasts: MarketLive['forecasts'];
   actuals: MarketLive['actuals'];
   previousClose: number | null;
   livePrice: number | null;
   session: SessionConfig;
+  showConsensus?: boolean;
 }) {
   const { totalSlots, forecastSlots, labels } = session;
 
@@ -569,8 +593,8 @@ function TrajectoryChart({
         </>
       )}
 
-      {/* Forecast lines — anchored to previous_close at label 0 */}
-      {forecasts.map((f, fi) => {
+      {/* Forecast lines */}
+      {!showConsensus && forecasts.map((f, fi) => {
         const pts: string[] = [];
         if (previousClose != null) {
           pts.push(`${PAD.left},${toY(previousClose)}`);
@@ -590,6 +614,29 @@ function TrajectoryChart({
           />
         );
       })}
+
+      {/* Consensus line — average of all forecasts */}
+      {showConsensus && forecasts.length > 0 && (() => {
+        const numPoints = forecasts[0].price_points.length;
+        const avgPts: string[] = [];
+        if (previousClose != null) {
+          avgPts.push(`${PAD.left},${toY(previousClose)}`);
+        }
+        for (let i = 0; i < numPoints; i++) {
+          const avg = forecasts.reduce((sum, f) => sum + f.price_points[i], 0) / forecasts.length;
+          avgPts.push(`${labelToX(i)},${toY(avg)}`);
+        }
+        return (
+          <polyline
+            points={avgPts.join(' ')}
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="1.5"
+            strokeDasharray="5 3"
+            opacity="0.8"
+          />
+        );
+      })()}
 
       {/* Actual price line — smooth cubic bezier, solid white */}
       {actualPoints.length >= 2 && (
