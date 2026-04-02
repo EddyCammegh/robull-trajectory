@@ -21,7 +21,22 @@ export function calculateMAPE(
   return (totalError / validPoints) * 100;
 }
 
+const FORECAST_SLOTS: Record<string, number[]> = {
+  US:       [0, 12, 24, 36, 48, 60, 72, 77],
+  CRYPTO:   [0, 36, 72, 108, 144, 180, 216, 252],
+  ASIAN:    [0, 6, 12, 18, 24, 30, 36, 41],
+  EUROPEAN: [0, 6, 18, 30, 42, 54, 66, 78],
+};
+
 export async function scoreMarket(marketId: string): Promise<void> {
+  const marketResult = await pool.query(
+    `SELECT session FROM trajectory_markets WHERE id = $1`,
+    [marketId]
+  );
+  if (marketResult.rows.length === 0) return;
+  const session: string = marketResult.rows[0].session;
+  const slots = FORECAST_SLOTS[session] ?? FORECAST_SLOTS.US;
+
   const actuals = await pool.query(
     `SELECT slot_index, actual_price FROM trajectory_actuals
      WHERE market_id = $1 ORDER BY slot_index`,
@@ -32,7 +47,9 @@ export async function scoreMarket(marketId: string): Promise<void> {
     return; // Not enough data points to score
   }
 
-  const actualPrices = actuals.rows.map((r) => parseFloat(r.actual_price));
+  const actualsBySlot = new Map<number, number>(
+    actuals.rows.map((r: any) => [r.slot_index, parseFloat(r.actual_price)])
+  );
 
   const forecasts = await pool.query(
     `SELECT id, agent_id, price_points FROM trajectory_forecasts
@@ -42,9 +59,18 @@ export async function scoreMarket(marketId: string): Promise<void> {
 
   if (forecasts.rows.length === 0) return;
 
-  const scored = forecasts.rows.map((f) => {
-    const predicted = (f.price_points as number[]).slice(0, actualPrices.length);
-    const mape = calculateMAPE(predicted, actualPrices);
+  const scored = forecasts.rows.map((f: any) => {
+    const pricePoints = f.price_points as number[];
+    const predicted: number[] = [];
+    const matched: number[] = [];
+    for (let i = 0; i < pricePoints.length; i++) {
+      const actual = actualsBySlot.get(slots[i]);
+      if (actual != null) {
+        predicted.push(pricePoints[i]);
+        matched.push(actual);
+      }
+    }
+    const mape = matched.length > 0 ? calculateMAPE(predicted, matched) : Infinity;
     return { id: f.id, agent_id: f.agent_id, mape };
   });
 

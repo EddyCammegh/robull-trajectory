@@ -19,7 +19,7 @@ const SESSIONS: Record<string, {
   US: {
     labels: ['9:30', '10:30', '11:30', '12:30', '1:30', '2:30', '3:30', '4:00'],
     totalSlots: 78,
-    forecastSlots: [6, 18, 30, 42, 54, 66, 77],
+    forecastSlots: [0, 12, 24, 36, 48, 60, 72, 77],
     openLabel: '9:30am ET',
   },
   CRYPTO: {

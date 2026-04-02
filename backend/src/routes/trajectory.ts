@@ -5,6 +5,13 @@ import { INSTRUMENTS, fetchPrice } from '../services/prices.js';
 import { getLatestPrice } from '../services/polygonStream.js';
 import { calculateMAPE } from '../services/scoring.js';
 
+const FORECAST_SLOTS: Record<string, number[]> = {
+  US:       [0, 12, 24, 36, 48, 60, 72, 77],
+  CRYPTO:   [0, 36, 72, 108, 144, 180, 216, 252],
+  ASIAN:    [0, 6, 12, 18, 24, 30, 36, 41],
+  EUROPEAN: [0, 6, 18, 30, 42, 54, 66, 78],
+};
+
 export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
   // POST /v1/trajectory/markets/create-today — manually create today's markets
   app.post('/markets/create-today', async (_request, reply) => {
@@ -188,8 +195,8 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(400).send({ error: 'market_id and price_points are required' });
     }
 
-    if (!Array.isArray(price_points) || price_points.length !== 7) {
-      return reply.status(400).send({ error: 'price_points must be an array of exactly 7 prices' });
+    if (!Array.isArray(price_points) || price_points.length !== 8) {
+      return reply.status(400).send({ error: 'price_points must be an array of exactly 8 prices' });
     }
 
     if (price_points.some((p) => typeof p !== 'number' || isNaN(p) || p <= 0)) {
@@ -403,16 +410,29 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     );
 
     const actuals = actualsResult.rows;
-    const actualPrices = actuals.map((a: any) => parseFloat(a.actual_price));
+    const actualsBySlot = new Map<number, number>(
+      actuals.map((a: any) => [a.slot_index, parseFloat(a.actual_price)])
+    );
+    const slots = FORECAST_SLOTS[market.session] ?? FORECAST_SLOTS.US;
 
-    // Calculate live MAPE for each forecast against available actuals
+    // Calculate live MAPE for each forecast against available actuals at forecast slot positions
     const forecasts = forecastsResult.rows.map((f: any) => {
       let live_mape: number | null = null;
 
-      if (actualPrices.length > 0) {
-        const predicted = (f.price_points as number[]).slice(0, actualPrices.length);
+      const predicted: number[] = [];
+      const matched: number[] = [];
+      const pricePoints = f.price_points as number[];
+      for (let i = 0; i < pricePoints.length; i++) {
+        const actual = actualsBySlot.get(slots[i]);
+        if (actual != null) {
+          predicted.push(pricePoints[i]);
+          matched.push(actual);
+        }
+      }
+
+      if (matched.length > 0) {
         try {
-          live_mape = calculateMAPE(predicted, actualPrices);
+          live_mape = calculateMAPE(predicted, matched);
         } catch {
           live_mape = null;
         }

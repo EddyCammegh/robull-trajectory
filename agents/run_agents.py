@@ -126,20 +126,21 @@ YOUR RESEARCH FOCUS:
 
 INSTRUCTIONS:
 1. Use the web_search tool to research {instrument} based on your research focus above.
-2. Based on your research, predict 7 price points for the trading day at these times:
-   - Point 1: 10:00 AM ET (30 min after open)
-   - Point 2: 11:00 AM ET
-   - Point 3: 12:00 PM ET
-   - Point 4: 1:00 PM ET
-   - Point 5: 2:00 PM ET
-   - Point 6: 3:00 PM ET
-   - Point 7: 4:00 PM ET (close)
+2. Based on your research, predict 8 price points for the trading day at these times:
+   - Point 1: 9:30 AM ET (market open)
+   - Point 2: 10:30 AM ET
+   - Point 3: 11:30 AM ET
+   - Point 4: 12:30 PM ET
+   - Point 5: 1:30 PM ET
+   - Point 6: 2:30 PM ET
+   - Point 7: 3:30 PM ET
+   - Point 8: 4:00 PM ET (market close)
 3. Each price point should be a realistic price in dollars (e.g., 185.50, not a percentage).
 4. Consider the previous close of ${previous_close} as your anchor point.
 
 After your research, respond with ONLY a JSON object in this exact format:
 {{
-  "price_points": [p1, p2, p3, p4, p5, p6, p7],
+  "price_points": [p1, p2, p3, p4, p5, p6, p7, p8],
   "catalyst": "The primary catalyst driving your prediction",
   "direction": "bullish" or "bearish" or "neutral",
   "risk": "The biggest risk to your prediction",
@@ -214,8 +215,8 @@ def run_agent(agent_name, api_key, market, cohort_focus):
 
         # Validate price_points
         price_points = forecast.get("price_points", [])
-        if len(price_points) != 7:
-            print(f"  [{agent_name}] ERROR: Got {len(price_points)} price points, expected 7")
+        if len(price_points) != 8:
+            print(f"  [{agent_name}] ERROR: Got {len(price_points)} price points, expected 8")
             return
 
         if not all(isinstance(p, (int, float)) and p > 0 for p in price_points):
