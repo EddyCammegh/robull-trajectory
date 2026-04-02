@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { getMarketLive, type MarketLive } from '@/lib/api';
+import { getMarkets, getMarketLive, type Market, type MarketLive } from '@/lib/api';
 
 const FORECAST_COLORS = [
   '#f5e642', '#60a5fa', '#34d399', '#f472b6',
@@ -47,6 +47,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showConsensus, setShowConsensus] = useState(false);
+  const [allMarkets, setAllMarkets] = useState<Market[]>([]);
 
   const fetchData = useCallback(() => {
     getMarketLive(params.id)
@@ -64,6 +65,10 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
     return () => clearInterval(interval);
   }, [fetchData]);
 
+  useEffect(() => {
+    getMarkets().then((d) => setAllMarkets(d.markets)).catch(() => {});
+  }, []);
+
   if (loading) return <div className="p-8 text-zinc-500">Loading arena...</div>;
   if (error && !data) return <div className="p-8 text-red-400">Error: {error}</div>;
   if (!data) return null;
@@ -74,11 +79,46 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
     .filter((f) => f.mape_score != null)
     .sort((a, b) => (a.mape_score ?? Infinity) - (b.mape_score ?? Infinity));
 
+  // Consensus computations
+  const dirs: Record<string, number> = {};
+  forecasts.forEach((f) => {
+    const d = f.direction ?? 'neutral';
+    dirs[d] = (dirs[d] || 0) + 1;
+  });
+  const topDir = forecasts.length > 0
+    ? Object.entries(dirs).sort((a, b) => b[1] - a[1])[0]
+    : null;
+
+  const closePrices = forecasts.map((f) => f.price_points[f.price_points.length - 1]);
+  const minClose = closePrices.length > 0 ? Math.min(...closePrices) : null;
+  const maxClose = closePrices.length > 0 ? Math.max(...closePrices) : null;
+
+  // Contrarian detection
+  const isContrarian = (f: typeof forecasts[0]) => {
+    if (!topDir || forecasts.length < 3) return false;
+    const minorityCount = forecasts.length - topDir[1];
+    return minorityCount > 0 && minorityCount <= 3 && f.direction !== topDir[0] && f.direction != null;
+  };
+
+  // Biggest bear / bull
+  const bearForecasts = forecasts.filter((f) => f.direction === 'bearish');
+  const bullForecasts = forecasts.filter((f) => f.direction === 'bullish');
+  const biggestBear = bearForecasts.length > 0
+    ? bearForecasts.reduce((lowest, f) =>
+        f.price_points[f.price_points.length - 1] < lowest.price_points[lowest.price_points.length - 1] ? f : lowest
+      )
+    : null;
+  const biggestBull = bullForecasts.length > 0
+    ? bullForecasts.reduce((highest, f) =>
+        f.price_points[f.price_points.length - 1] > highest.price_points[highest.price_points.length - 1] ? f : highest
+      )
+    : null;
+
   return (
     <main className="min-h-screen bg-black">
       <div className="max-w-[1400px] mx-auto p-6">
         {/* Header */}
-        <header className="flex items-center gap-4 mb-6">
+        <header className="flex items-center gap-4 mb-4">
           <Link
             href="/"
             className="text-3xl font-bold text-accent"
@@ -92,7 +132,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
               <StatusBadge status={market.status} />
             </div>
             <p className="text-sm text-zinc-500 mt-0.5">
-              {market.trading_date} · {market.session} session · {forecasts.length} forecast{forecasts.length !== 1 ? 's' : ''}
+              {market.trading_date} · {market.session} session
             </p>
           </div>
           {market.previous_close != null && (
@@ -108,6 +148,56 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
             </div>
           )}
         </header>
+
+        {/* Instrument switcher */}
+        {allMarkets.length > 0 && (
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {allMarkets.map((m) => (
+              <Link key={m.id} href={`/arena/${m.id}`}>
+                <span
+                  className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                    m.id === params.id
+                      ? 'bg-accent/15 text-accent border-accent/40'
+                      : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-600 hover:text-zinc-200'
+                  }`}
+                >
+                  {m.instrument}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Context bar */}
+        {forecasts.length > 0 && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 mb-5 px-1">
+            <span className="text-white font-medium">{forecasts.length} forecast{forecasts.length !== 1 ? 's' : ''}</span>
+            {topDir && (
+              <>
+                <span className="text-zinc-700">·</span>
+                <span className={
+                  topDir[0] === 'bullish' ? 'text-green-400' :
+                  topDir[0] === 'bearish' ? 'text-red-400' :
+                  'text-zinc-400'
+                }>
+                  {topDir[1]}/{forecasts.length} {topDir[0]}
+                </span>
+              </>
+            )}
+            {minClose != null && maxClose != null && (
+              <>
+                <span className="text-zinc-700">·</span>
+                <span>
+                  Close range: <span className="text-white font-mono">${minClose.toFixed(2)}</span>
+                  {' – '}
+                  <span className="text-white font-mono">${maxClose.toFixed(2)}</span>
+                </span>
+              </>
+            )}
+            <span className="text-zinc-700">·</span>
+            <StatusBadge status={market.status} />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
           {/* Chart + forecasts — 3 cols */}
@@ -244,22 +334,18 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                 <>
                   {/* Consensus summary */}
                   {(() => {
-                    const dirs = forecasts.reduce((acc, f) => {
-                      const d = f.direction ?? 'neutral';
-                      acc[d] = (acc[d] || 0) + 1;
-                      return acc;
-                    }, {} as Record<string, number>);
-                    const top = Object.entries(dirs).sort((a, b) => b[1] - a[1])[0];
                     const avgClose = forecasts.reduce((sum, f) => sum + f.price_points[f.price_points.length - 1], 0) / forecasts.length;
                     return (
                       <div className="text-xs text-zinc-400 mb-3 pb-2 border-b border-zinc-800">
-                        <span className={
-                          top[0] === 'bullish' ? 'text-green-400' :
-                          top[0] === 'bearish' ? 'text-red-400' :
-                          'text-zinc-400'
-                        }>
-                          {top[1]}/{forecasts.length} {top[0]}
-                        </span>
+                        {topDir && (
+                          <span className={
+                            topDir[0] === 'bullish' ? 'text-green-400' :
+                            topDir[0] === 'bearish' ? 'text-red-400' :
+                            'text-zinc-400'
+                          }>
+                            {topDir[1]}/{forecasts.length} {topDir[0]}
+                          </span>
+                        )}
                         {' · avg close '}
                         <span className="text-white font-mono">${avgClose.toFixed(2)}</span>
                       </div>
@@ -286,6 +372,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                       const openPrice = f.price_points[0];
                       const closePrice = f.price_points[f.price_points.length - 1];
                       const showModel = hasScores && (market.status === 'live' || market.status === 'scored');
+                      const contrarian = isContrarian(f);
 
                       return (
                         <div
@@ -300,6 +387,11 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                                 {i + 1}
                               </span>
                               <span className="truncate">{f.agent_name}</span>
+                              {contrarian && (
+                                <span className="text-[10px] text-amber-400 bg-amber-400/10 border border-amber-400/30 px-1 py-0.5 rounded flex-shrink-0">
+                                  contrarian
+                                </span>
+                              )}
                               {showModel && f.model && (
                                 <span className="text-[10px] text-zinc-600 bg-zinc-900 px-1 py-0.5 rounded flex-shrink-0">
                                   {f.model}
@@ -340,6 +432,34 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                 <p className="text-zinc-600 text-sm py-2">No forecasts yet.</p>
               )}
             </div>
+
+            {/* Biggest Bear / Biggest Bull */}
+            {(biggestBear || biggestBull) && (
+              <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-5 space-y-3">
+                {biggestBear && (
+                  <div>
+                    <div className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">Biggest Bear</div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-red-400 font-medium">{biggestBear.agent_name}</span>
+                      <span className="text-red-400 font-mono text-xs">
+                        ${biggestBear.price_points[biggestBear.price_points.length - 1].toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {biggestBull && (
+                  <div>
+                    <div className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">Biggest Bull</div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-green-400 font-medium">{biggestBull.agent_name}</span>
+                      <span className="text-green-400 font-mono text-xs">
+                        ${biggestBull.price_points[biggestBull.price_points.length - 1].toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Actual prices — show latest price per hour */}
             {actuals.length > 0 && (
@@ -492,6 +612,21 @@ function TrajectoryChart({
   const dotX = lastActual ? slotToX(lastActual.slot_index) : 0;
   const dotY = lastActual ? toY(Number(lastActual.actual_price)) : 0;
 
+  // Forecast spread band (min/max at each slot)
+  const numPoints = forecasts.length > 0 ? forecasts[0].price_points.length : 0;
+  let spreadPath = '';
+  if (forecasts.length >= 2 && numPoints > 0) {
+    const topLine: string[] = [];
+    const bottomLine: string[] = [];
+    for (let i = 0; i < numPoints; i++) {
+      const prices = forecasts.map((f) => f.price_points[i]);
+      const x = labelToX(i);
+      topLine.push(`${x},${toY(Math.max(...prices))}`);
+      bottomLine.push(`${x},${toY(Math.min(...prices))}`);
+    }
+    spreadPath = `M${topLine.join('L')}L${bottomLine.reverse().join('L')}Z`;
+  }
+
   return (
     <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} className="w-full" preserveAspectRatio="xMidYMid meet">
       {/* Horizontal grid lines */}
@@ -593,6 +728,15 @@ function TrajectoryChart({
         </>
       )}
 
+      {/* Forecast spread band — min/max range across all agents */}
+      {spreadPath && (
+        <path
+          d={spreadPath}
+          fill="#a1a1aa"
+          opacity="0.06"
+        />
+      )}
+
       {/* Forecast lines */}
       {!showConsensus && forecasts.map((f, fi) => {
         const pts: string[] = [];
@@ -617,7 +761,6 @@ function TrajectoryChart({
 
       {/* Consensus line — average of all forecasts */}
       {showConsensus && forecasts.length > 0 && (() => {
-        const numPoints = forecasts[0].price_points.length;
         const avgPts: string[] = [];
         if (previousClose != null) {
           avgPts.push(`${PAD.left},${toY(previousClose)}`);
