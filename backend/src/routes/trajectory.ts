@@ -3,7 +3,7 @@ import { pool } from '../db.js';
 import { authenticateAgent } from './agents.js';
 import { INSTRUMENTS, fetchPrice } from '../services/prices.js';
 import { getLatestPrice } from '../services/polygonStream.js';
-import { calculateMAPE } from '../services/scoring.js';
+import { calculateMAPE, scoreMarket, updateAgentStats } from '../services/scoring.js';
 
 const FORECAST_SLOTS: Record<string, number[]> = {
   US:       [0, 12, 24, 36, 48, 60, 72, 77],
@@ -72,6 +72,46 @@ function isUSMarketOpen(): boolean {
   if (hours < 9 || (hours === 9 && minutes < 30)) return false;
 
   return true;
+}
+
+function isUSMarketClosed(): boolean {
+  const et = getETTime();
+  const dayOfWeek = et.getUTCDay();
+
+  if (dayOfWeek === 0 || dayOfWeek === 6) return false;
+
+  const dateStr = et.toISOString().slice(0, 10);
+  if (NYSE_HOLIDAYS_2026.includes(dateStr)) return false;
+
+  // Must be 4:00 PM ET or later
+  const hours = et.getUTCHours();
+  return hours >= 16;
+}
+
+async function scoreReadyMarkets(): Promise<void> {
+  const markets = await pool.query(`
+    SELECT m.id FROM trajectory_markets m
+    WHERE m.trading_date = CURRENT_DATE
+      AND m.session = 'US'
+      AND m.status = 'live'
+      AND (SELECT COUNT(*) FROM trajectory_actuals a WHERE a.market_id = m.id) >= 8
+  `);
+
+  for (const market of markets.rows) {
+    try {
+      await scoreMarket(market.id);
+
+      const agents = await pool.query(
+        'SELECT DISTINCT agent_id FROM trajectory_forecasts WHERE market_id = $1',
+        [market.id]
+      );
+      for (const agent of agents.rows) {
+        await updateAgentStats(agent.agent_id);
+      }
+    } catch (err) {
+      console.error(`Self-healing score error for market ${market.id}:`, err);
+    }
+  }
 }
 
 export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
@@ -196,6 +236,11 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
          SET status = 'live'
          WHERE trading_date = CURRENT_DATE AND session = 'US' AND status = 'accepting'`
       );
+    }
+
+    // Auto-score US markets after 4:00 PM ET if they have enough actuals
+    if (isUSMarketClosed()) {
+      await scoreReadyMarkets();
     }
 
     const result = await pool.query(`
@@ -429,6 +474,15 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
   // GET /v1/trajectory/markets/:id/live — live market view with current MAPE rankings
   app.get('/markets/:id/live', async (request, reply) => {
     const { id } = request.params as { id: string };
+
+    // Auto-transition US markets from 'accepting' to 'live' at 9:30 AM ET on trading days
+    if (isUSMarketOpen()) {
+      await pool.query(
+        `UPDATE trajectory_markets
+         SET status = 'live'
+         WHERE trading_date = CURRENT_DATE AND session = 'US' AND status = 'accepting'`
+      );
+    }
 
     const marketResult = await pool.query(
       `SELECT id, instrument, session, trading_date, previous_close, open_price, status,
