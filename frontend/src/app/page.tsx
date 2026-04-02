@@ -10,8 +10,6 @@ const FORECAST_COLORS = [
   '#38bdf8', '#fbbf24',
 ];
 
-const FORECAST_GRADIENT = `linear-gradient(to right, ${FORECAST_COLORS.join(', ')})`;
-
 const STATUS_COLORS: Record<string, string> = {
   accepting: 'bg-green-500/20 text-green-400 border-green-500/40',
   live: 'bg-accent/20 text-accent border-accent/40',
@@ -209,10 +207,7 @@ export default function HomePage() {
                         </>
                       )}
                     </div>
-                    <div
-                      className="h-0.5 rounded-full mt-1.5"
-                      style={{ background: FORECAST_GRADIENT }}
-                    />
+
                   </div>
                 )}
               </div>

@@ -773,7 +773,7 @@ function TrajectoryChart({
           <polyline
             points={avgPts.join(' ')}
             fill="none"
-            stroke="#ffffff"
+            stroke="#f5e642"
             strokeWidth="1.5"
             strokeDasharray="5 3"
             opacity="0.8"
