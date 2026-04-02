@@ -12,6 +12,68 @@ const FORECAST_SLOTS: Record<string, number[]> = {
   EUROPEAN: [0, 6, 18, 30, 42, 54, 66, 78],
 };
 
+// NYSE holidays for 2026 (month is 0-indexed)
+const NYSE_HOLIDAYS_2026 = [
+  '2026-01-01', // New Year's Day
+  '2026-01-19', // MLK Day
+  '2026-02-16', // Presidents' Day
+  '2026-04-03', // Good Friday
+  '2026-05-25', // Memorial Day
+  '2026-06-19', // Juneteenth
+  '2026-07-03', // Independence Day (observed)
+  '2026-09-07', // Labor Day
+  '2026-11-26', // Thanksgiving
+  '2026-12-25', // Christmas
+];
+
+function getETTime(): Date {
+  // Compute current US Eastern time accounting for DST.
+  // DST starts second Sunday of March, ends first Sunday of November.
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth(); // 0-indexed
+  const day = now.getUTCDate();
+  const dow = now.getUTCDay(); // 0=Sun
+
+  // Second Sunday of March: find first Sunday in March, add 7
+  const mar1Dow = new Date(Date.UTC(year, 2, 1)).getUTCDay();
+  const secondSunMar = 1 + ((7 - mar1Dow) % 7) + 7;
+
+  // First Sunday of November
+  const nov1Dow = new Date(Date.UTC(year, 10, 1)).getUTCDay();
+  const firstSunNov = 1 + ((7 - nov1Dow) % 7);
+
+  // DST is active from second Sunday of March 2:00 AM local (which is 7:00 UTC)
+  // until first Sunday of November 2:00 AM local (which is 6:00 UTC)
+  const dstStart = Date.UTC(year, 2, secondSunMar, 7, 0, 0); // March, 07:00 UTC
+  const dstEnd = Date.UTC(year, 10, firstSunNov, 6, 0, 0);   // November, 06:00 UTC
+
+  const utcMs = now.getTime();
+  const isDST = utcMs >= dstStart && utcMs < dstEnd;
+  const offsetHours = isDST ? -4 : -5;
+
+  return new Date(utcMs + offsetHours * 3600_000);
+}
+
+function isUSMarketOpen(): boolean {
+  const et = getETTime();
+  const dayOfWeek = et.getUTCDay(); // getUTCDay because et is already shifted
+
+  // Must be weekday (Mon=1 .. Fri=5)
+  if (dayOfWeek === 0 || dayOfWeek === 6) return false;
+
+  // Check NYSE holidays
+  const dateStr = et.toISOString().slice(0, 10);
+  if (NYSE_HOLIDAYS_2026.includes(dateStr)) return false;
+
+  // Must be 9:30 AM ET or later
+  const hours = et.getUTCHours();
+  const minutes = et.getUTCMinutes();
+  if (hours < 9 || (hours === 9 && minutes < 30)) return false;
+
+  return true;
+}
+
 export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
   // POST /v1/trajectory/markets/create-today — manually create today's markets
   app.post('/markets/create-today', async (_request, reply) => {
@@ -127,6 +189,15 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
 
   // GET /v1/trajectory/markets — today's open markets
   app.get('/markets', async (_request, reply) => {
+    // Auto-transition US markets from 'accepting' to 'live' at 9:30 AM ET on trading days
+    if (isUSMarketOpen()) {
+      await pool.query(
+        `UPDATE trajectory_markets
+         SET status = 'live'
+         WHERE trading_date = CURRENT_DATE AND session = 'US' AND status = 'accepting'`
+      );
+    }
+
     const result = await pool.query(`
       SELECT
         m.id,
