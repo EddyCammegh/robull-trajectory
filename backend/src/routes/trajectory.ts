@@ -46,6 +46,35 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     return reply.status(201).send({ created, date: today });
   });
 
+  // POST /v1/trajectory/markets/reset-to-accepting — reset all today's markets to 'accepting'
+  app.post('/markets/reset-to-accepting', async (_request, reply) => {
+    const result = await pool.query(
+      `UPDATE trajectory_markets SET status = 'accepting' WHERE trading_date = CURRENT_DATE`
+    );
+    return reply.send({ reset: result.rowCount });
+  });
+
+  // POST /v1/trajectory/markets/:id/set-status — set a single market's status
+  app.post('/markets/:id/set-status', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { status } = request.body as { status: string };
+
+    if (!['accepting', 'live', 'scored'].includes(status)) {
+      return reply.status(400).send({ error: "status must be 'accepting', 'live', or 'scored'" });
+    }
+
+    const result = await pool.query(
+      `UPDATE trajectory_markets SET status = $1 WHERE id = $2 RETURNING id`,
+      [status, id]
+    );
+
+    if (result.rows.length === 0) {
+      return reply.status(404).send({ error: 'Market not found' });
+    }
+
+    return reply.send({ id, status });
+  });
+
   // POST /v1/trajectory/markets/refresh-prices — refresh previous_close for today's markets
   app.post('/markets/refresh-prices', async (_request, reply) => {
     const polygonKey = process.env.POLYGON_API_KEY;
