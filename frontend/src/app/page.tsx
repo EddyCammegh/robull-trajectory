@@ -40,6 +40,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [clockTime, setClockTime] = useState(() => new Date().toLocaleTimeString());
 
   const fetchAll = useCallback(async () => {
     try {
@@ -77,6 +78,11 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [fetchAll]);
 
+  useEffect(() => {
+    const tick = setInterval(() => setClockTime(new Date().toLocaleTimeString()), 1000);
+    return () => clearInterval(tick);
+  }, []);
+
   // Compute most bearish / most bullish
   const withConsensus = items.filter((i) => i.consensus && i.consensus.total > 0);
   const mostBearish = withConsensus
@@ -105,7 +111,7 @@ export default function HomePage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
             </span>
-            Live · {lastUpdated.toLocaleTimeString()}
+            Live · {clockTime}
           </div>
         )}
       </header>
