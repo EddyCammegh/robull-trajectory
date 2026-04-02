@@ -95,6 +95,12 @@ COHORTS = {
     },
 }
 
+PROVIDER_MODELS = {
+    "sonnet": "claude-sonnet-4-6",
+    "haiku": "claude-haiku-4-5-20251001",
+    "openai": "gpt-4o",
+}
+
 
 def get_markets():
     url = f"{ROBULL_API_URL}/v1/trajectory/markets"
@@ -114,7 +120,63 @@ def submit_forecast(api_key, payload):
     return resp.status_code, resp.json()
 
 
-def build_prompt(market, cohort_focus):
+# ── Phase 1: Research ──
+
+def research_prompt(instrument, cohort_focus, market):
+    previous_close = market.get("previous_close", "unknown")
+    live_price = market.get("live_price", "unknown")
+    trading_date = market.get("trading_date", "today")
+
+    return f"""You are a financial research assistant. Research {instrument} for {trading_date} through the following lens:
+
+{cohort_focus}
+
+CONTEXT:
+- Instrument: {instrument}
+- Previous Close: ${previous_close}
+- Live Price: ${live_price}
+- Trading Date: {trading_date}
+
+Use web_search to find current information. Then provide a structured research briefing covering:
+
+1. KEY FINDINGS: The most important facts you discovered (with sources where possible)
+2. PRICE-RELEVANT EVENTS: Any events today that could move the price (earnings, data releases, announcements)
+3. SENTIMENT: Overall market sentiment toward this instrument based on your research angle
+4. DATA POINTS: Specific numbers, levels, or metrics relevant to your research focus
+
+Be factual and concise. Include specific numbers and data points wherever possible."""
+
+
+def call_haiku_researcher(prompt):
+    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=2000,
+        tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}],
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    text_parts = []
+    for block in response.content:
+        if block.type == "text":
+            text_parts.append(block.text)
+
+    return "\n".join(text_parts)
+
+
+def call_haiku_researcher_with_retry(prompt):
+    try:
+        return call_haiku_researcher(prompt)
+    except anthropic.RateLimitError:
+        print("    Rate limited (429), waiting 60s and retrying...")
+        time.sleep(60)
+        return call_haiku_researcher(prompt)
+
+
+# ── Phase 2: Reasoning ──
+
+def build_prompt(market, cohort_focus, briefing):
     instrument = market["instrument"]
     previous_close = market.get("previous_close", "unknown")
     live_price = market.get("live_price", "unknown")
@@ -128,12 +190,14 @@ CURRENT DATA:
 - Live Price: ${live_price}
 - Trading Date: {trading_date}
 
-YOUR RESEARCH FOCUS:
+YOUR ANALYSIS FOCUS:
 {cohort_focus}
 
+RESEARCH BRIEFING:
+{briefing}
+
 INSTRUCTIONS:
-1. Use the web_search tool to research {instrument} based on your research focus above.
-2. Based on your research, predict 8 price points for the trading day at these times:
+1. Using the research briefing above and your analysis focus, predict 8 price points for the trading day at these times:
    - Point 1: 9:30 AM ET (market open)
    - Point 2: 10:30 AM ET
    - Point 3: 11:30 AM ET
@@ -142,10 +206,10 @@ INSTRUCTIONS:
    - Point 6: 2:30 PM ET
    - Point 7: 3:30 PM ET
    - Point 8: 4:00 PM ET (market close)
-3. Each price point should be a realistic price in dollars (e.g., 185.50, not a percentage).
-4. Consider the previous close of ${previous_close} as your anchor point.
+2. Each price point should be a realistic price in dollars (e.g., 185.50, not a percentage).
+3. Consider the previous close of ${previous_close} as your anchor point.
 
-After your research, respond with ONLY a JSON object in this exact format:
+Respond with ONLY a JSON object in this exact format:
 {{
   "price_points": [p1, p2, p3, p4, p5, p6, p7, p8],
   "catalyst": "The primary catalyst driving your prediction",
@@ -159,8 +223,6 @@ Respond with ONLY the JSON object, no other text."""
 
 
 def parse_forecast_json(text):
-    # Try to find JSON in the response
-    # Look for the last { ... } block
     depth = 0
     start = None
     last_json = None
@@ -181,13 +243,12 @@ def parse_forecast_json(text):
     return json.loads(last_json)
 
 
-def call_claude(prompt, model="claude-sonnet-4-6"):
+def call_claude_reasoner(prompt, model="claude-sonnet-4-6"):
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
     response = client.messages.create(
         model=model,
         max_tokens=2000,
-        tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 2}],
         messages=[{"role": "user", "content": prompt}],
     )
 
@@ -199,21 +260,20 @@ def call_claude(prompt, model="claude-sonnet-4-6"):
     return "\n".join(text_parts)
 
 
-def call_claude_with_retry(prompt, model="claude-sonnet-4-6"):
+def call_claude_reasoner_with_retry(prompt, model="claude-sonnet-4-6"):
     try:
-        return call_claude(prompt, model)
+        return call_claude_reasoner(prompt, model)
     except anthropic.RateLimitError:
         print("    Rate limited (429), waiting 60s and retrying...")
         time.sleep(60)
-        return call_claude(prompt, model)
+        return call_claude_reasoner(prompt, model)
 
 
-def call_openai(prompt):
+def call_openai_reasoner(prompt):
     client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
     response = client.responses.create(
         model="gpt-4o",
-        tools=[{"type": "web_search_preview"}],
         input=prompt,
     )
 
@@ -227,36 +287,29 @@ def call_openai(prompt):
     return "\n".join(text_parts)
 
 
-def call_openai_with_retry(prompt):
+def call_openai_reasoner_with_retry(prompt):
     try:
-        return call_openai(prompt)
+        return call_openai_reasoner(prompt)
     except openai.RateLimitError:
         print("    Rate limited (429), waiting 60s and retrying...")
         time.sleep(60)
-        return call_openai(prompt)
+        return call_openai_reasoner(prompt)
 
 
-PROVIDER_MODELS = {
-    "sonnet": "claude-sonnet-4-6",
-    "haiku": "claude-haiku-4-5-20251001",
-    "openai": "gpt-4o",
-}
-
-
-def run_agent(agent_name, api_key, market, cohort_focus, provider="sonnet"):
+def run_agent(agent_name, api_key, market, cohort_focus, briefing, provider="sonnet"):
     instrument = market["instrument"]
     market_id = market["id"]
 
     print(f"  [{agent_name}] Forecasting {instrument} ({provider})...")
 
     try:
-        prompt = build_prompt(market, cohort_focus)
+        prompt = build_prompt(market, cohort_focus, briefing)
         if provider == "openai":
-            response_text = call_openai_with_retry(prompt)
+            response_text = call_openai_reasoner_with_retry(prompt)
         elif provider == "haiku":
-            response_text = call_claude_with_retry(prompt, model="claude-haiku-4-5-20251001")
+            response_text = call_claude_reasoner_with_retry(prompt, model="claude-haiku-4-5-20251001")
         else:
-            response_text = call_claude_with_retry(prompt)
+            response_text = call_claude_reasoner_with_retry(prompt)
         forecast = parse_forecast_json(response_text)
 
         # Validate price_points
@@ -336,7 +389,40 @@ def main():
     print(f"{len(accepting)} markets accepting forecasts")
     print()
 
-    # Run each cohort sequentially
+    # ── PHASE 1: Research (Haiku + web search) ──
+    print("=" * 60)
+    print("PHASE 1: Research (Haiku + web search)")
+    print("=" * 60)
+    print()
+
+    research = {}  # research[cohort_name][instrument] = briefing_text
+    for cohort_name, cohort in COHORTS.items():
+        research[cohort_name] = {}
+        focus = cohort["focus"]
+
+        print(f"[{cohort_name}] Researching {len(accepting)} instruments...")
+
+        for market in accepting:
+            instrument = market["instrument"]
+            print(f"  [{cohort_name}] Researching {instrument}...")
+            try:
+                prompt = research_prompt(instrument, focus, market)
+                briefing = call_haiku_researcher_with_retry(prompt)
+                research[cohort_name][instrument] = briefing
+                print(f"  [{cohort_name}] ✓ {instrument} ({len(briefing)} chars)")
+            except Exception as e:
+                print(f"  [{cohort_name}] ERROR researching {instrument}: {e}")
+                research[cohort_name][instrument] = "Research unavailable."
+            time.sleep(5)
+
+        print()
+
+    # ── PHASE 2: Reasoning (no web search) ──
+    print("=" * 60)
+    print("PHASE 2: Reasoning (no web search)")
+    print("=" * 60)
+    print()
+
     for cohort_name, cohort in COHORTS.items():
         agents = cohort["agents"]
         focus = cohort["focus"]
@@ -351,7 +437,9 @@ def main():
 
         for agent_name, api_key in active_agents:
             for market in accepting:
-                run_agent(agent_name, api_key, market, focus, provider)
+                instrument = market["instrument"]
+                briefing = research.get(cohort_name, {}).get(instrument, "Research unavailable.")
+                run_agent(agent_name, api_key, market, focus, briefing, provider)
                 time.sleep(15)
 
         print()
