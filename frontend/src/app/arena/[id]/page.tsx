@@ -218,65 +218,104 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
               <h2 className="text-sm font-medium text-zinc-400 mb-3">
                 Live Leaderboard
               </h2>
-              {rankedForecasts.length > 0 ? (
-                <div className="space-y-1.5">
-                  {rankedForecasts.map((f, i) => (
-                    <div
-                      key={f.id}
-                      className={`flex items-center justify-between text-sm py-1.5 px-2 rounded ${
-                        i === 0 ? 'bg-accent/10' : ''
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className={`font-bold w-5 text-right flex-shrink-0 ${
-                          i === 0 ? 'text-accent' : 'text-zinc-500'
-                        }`}>
-                          {i + 1}
+              {forecasts.length > 0 ? (
+                <>
+                  {/* Consensus summary */}
+                  {(() => {
+                    const dirs = forecasts.reduce((acc, f) => {
+                      const d = f.direction ?? 'neutral';
+                      acc[d] = (acc[d] || 0) + 1;
+                      return acc;
+                    }, {} as Record<string, number>);
+                    const top = Object.entries(dirs).sort((a, b) => b[1] - a[1])[0];
+                    const avgClose = forecasts.reduce((sum, f) => sum + f.price_points[f.price_points.length - 1], 0) / forecasts.length;
+                    return (
+                      <div className="text-xs text-zinc-400 mb-3 pb-2 border-b border-zinc-800">
+                        <span className={
+                          top[0] === 'bullish' ? 'text-green-400' :
+                          top[0] === 'bearish' ? 'text-red-400' :
+                          'text-zinc-400'
+                        }>
+                          {top[1]}/{forecasts.length} {top[0]}
                         </span>
-                        <span className="truncate">{f.agent_name}</span>
+                        {' · avg close '}
+                        <span className="text-white font-mono">${avgClose.toFixed(2)}</span>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                        <span className="text-zinc-400 font-mono text-xs">
-                          {Number(f.mape_score).toFixed(2)}%
-                        </span>
-                        {f.gns_won != null && (
-                          <span className={`text-xs font-medium ${
-                            Number(f.gns_won) >= 0 ? 'text-green-400' : 'text-red-400'
-                          }`}>
-                            {Number(f.gns_won) >= 0 ? '+' : ''}{Number(f.gns_won).toFixed(0)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : forecasts.length > 0 ? (
-                <div className="space-y-1.5">
-                  {[...forecasts]
-                    .sort((a, b) => a.agent_name.localeCompare(b.agent_name))
-                    .map((f) => (
-                      <div
-                        key={f.id}
-                        className="flex items-center justify-between text-sm py-1.5 px-2 rounded"
-                      >
-                        <span className="truncate">{f.agent_name}</span>
-                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                          {f.direction && (
-                            <span className={
-                              f.direction === 'bullish' ? 'text-green-400 text-xs' :
-                              f.direction === 'bearish' ? 'text-red-400 text-xs' :
-                              'text-zinc-400 text-xs'
-                            }>
-                              {f.direction}
-                            </span>
-                          )}
-                          {f.confidence != null && (
-                            <span className="text-zinc-500 text-xs">{f.confidence}%</span>
-                          )}
+                    );
+                  })()}
+
+                  {/* Column header */}
+                  <div className="flex items-center justify-between text-[10px] text-zinc-600 uppercase tracking-wider px-2 mb-1">
+                    <span>Agent</span>
+                    <span>MAPE</span>
+                  </div>
+
+                  <div className="space-y-1">
+                    {(rankedForecasts.length > 0
+                      ? rankedForecasts
+                      : [...forecasts].sort((a, b) => a.agent_name.localeCompare(b.agent_name))
+                    ).map((f, i) => {
+                      const hasScores = rankedForecasts.length > 0;
+                      const isFirst = hasScores && i === 0;
+                      const dirTint =
+                        f.direction === 'bearish' ? 'bg-red-500/5' :
+                        f.direction === 'bullish' ? 'bg-green-500/5' :
+                        '';
+                      const openPrice = f.price_points[0];
+                      const closePrice = f.price_points[f.price_points.length - 1];
+                      const showModel = hasScores && (market.status === 'live' || market.status === 'scored');
+
+                      return (
+                        <div
+                          key={f.id}
+                          className={`py-1.5 px-2 rounded ${dirTint} ${isFirst ? 'ring-1 ring-accent/30' : ''}`}
+                        >
+                          <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {hasScores && (
+                                <span className={`font-bold w-5 text-right flex-shrink-0 ${
+                                  isFirst ? 'text-accent' : 'text-zinc-500'
+                                }`}>
+                                  {i + 1}
+                                </span>
+                              )}
+                              <span className="truncate">{f.agent_name}</span>
+                              {showModel && f.model && (
+                                <span className="text-[10px] text-zinc-600 bg-zinc-900 px-1 py-0.5 rounded flex-shrink-0">
+                                  {f.model}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                              {f.direction && (
+                                <span className={`text-xs ${
+                                  f.direction === 'bullish' ? 'text-green-400' :
+                                  f.direction === 'bearish' ? 'text-red-400' :
+                                  'text-zinc-400'
+                                }`}>
+                                  {f.direction}
+                                </span>
+                              )}
+                              <span className="text-zinc-400 font-mono text-xs w-14 text-right">
+                                {f.mape_score != null ? `${Number(f.mape_score).toFixed(2)}%` : '—'}
+                              </span>
+                              {f.gns_won != null && (
+                                <span className={`text-xs font-medium w-8 text-right ${
+                                  Number(f.gns_won) >= 0 ? 'text-green-400' : 'text-red-400'
+                                }`}>
+                                  {Number(f.gns_won) >= 0 ? '+' : ''}{Number(f.gns_won).toFixed(0)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-[11px] text-zinc-600 font-mono mt-0.5 pl-7">
+                            ${openPrice.toFixed(2)} → ${closePrice.toFixed(2)}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                </div>
+                      );
+                    })}
+                  </div>
+                </>
               ) : (
                 <p className="text-zinc-600 text-sm py-2">No forecasts yet.</p>
               )}
