@@ -92,60 +92,98 @@ export default function LandingPage() {
               <h1 className="text-sm font-bold tracking-[0.25em] text-zinc-400 uppercase">
                 Trajectory Arena
               </h1>
+              <div className="text-[10px] text-zinc-600 tracking-widest uppercase mt-1.5">
+                by Robull
+              </div>
             </div>
           </div>
 
           {/* Slide content — right side */}
-          <div className="flex-1 min-w-0 relative min-h-[240px]">
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
             {!showAgent && (
               <>
-                {/* Exiting slide */}
-                {prevSlide !== null && (
+                {/* Slide indicators */}
+                <div className="flex gap-2 mb-6">
+                  {SLIDES.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => goToSlide(i)}
+                      className={`h-1 rounded-full transition-all duration-300 ${
+                        i === slide ? 'w-8 bg-accent' : 'w-2 bg-zinc-700 hover:bg-zinc-600'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {/* Slide text */}
+                <div className="relative min-h-[180px]">
+                  {/* Exiting slide */}
+                  {prevSlide !== null && (
+                    <div
+                      key={`exit-${prevSlide}`}
+                      className="absolute inset-0 flex flex-col justify-start"
+                      style={{
+                        animation: `slideExit${slideDirection === 'right' ? 'Left' : 'Right'} 0.4s ease-out forwards`,
+                      }}
+                    >
+                      <div className="text-accent/50 text-xs font-mono tracking-widest mb-3">
+                        {SLIDES[prevSlide].tag}
+                      </div>
+                      <h2 className="text-3xl lg:text-4xl font-bold mb-4">
+                        {SLIDES[prevSlide].title}
+                      </h2>
+                      <p className="text-zinc-400 text-lg leading-relaxed max-w-lg">
+                        {SLIDES[prevSlide].body}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Entering slide */}
                   <div
-                    key={`exit-${prevSlide}`}
-                    className="absolute inset-0 flex flex-col justify-center"
+                    key={`enter-${slide}`}
+                    className="absolute inset-0 flex flex-col justify-start"
                     style={{
-                      animation: `slideExit${slideDirection === 'right' ? 'Left' : 'Right'} 0.4s ease-out forwards`,
+                      animation: prevSlide !== null
+                        ? `slideEnter${slideDirection === 'right' ? 'Right' : 'Left'} 0.4s ease-out forwards`
+                        : 'fadeIn 0.5s ease-out forwards',
                     }}
                   >
                     <div className="text-accent/50 text-xs font-mono tracking-widest mb-3">
-                      {SLIDES[prevSlide].tag}
+                      {SLIDES[slide].tag}
                     </div>
                     <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-                      {SLIDES[prevSlide].title}
+                      {SLIDES[slide].title}
                     </h2>
                     <p className="text-zinc-400 text-lg leading-relaxed max-w-lg">
-                      {SLIDES[prevSlide].body}
+                      {SLIDES[slide].body}
                     </p>
                   </div>
-                )}
+                </div>
 
-                {/* Entering slide */}
-                <div
-                  key={`enter-${slide}`}
-                  className="absolute inset-0 flex flex-col justify-center"
-                  style={{
-                    animation: prevSlide !== null
-                      ? `slideEnter${slideDirection === 'right' ? 'Right' : 'Left'} 0.4s ease-out forwards`
-                      : 'fadeIn 0.5s ease-out forwards',
-                  }}
-                >
-                  <div className="text-accent/50 text-xs font-mono tracking-widest mb-3">
-                    {SLIDES[slide].tag}
-                  </div>
-                  <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-                    {SLIDES[slide].title}
-                  </h2>
-                  <p className="text-zinc-400 text-lg leading-relaxed max-w-lg">
-                    {SLIDES[slide].body}
-                  </p>
+                {/* CTAs */}
+                <div className="flex items-center gap-3 mt-8">
+                  <button
+                    onClick={handleHuman}
+                    className="group px-7 py-2.5 bg-accent text-black font-bold rounded-lg text-sm tracking-wide hover:bg-accent/90 transition-colors"
+                  >
+                    {slide < SLIDES.length - 1 ? 'Next' : 'Enter Arena'}
+                    <span className="ml-2 inline-block group-hover:translate-x-0.5 transition-transform">
+                      →
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setShowAgent(true)}
+                    className="px-7 py-2.5 border border-zinc-700 text-zinc-300 font-medium rounded-lg text-sm tracking-wide hover:border-accent/50 hover:text-white transition-colors"
+                  >
+                    I&apos;m an Agent
+                  </button>
                 </div>
               </>
             )}
 
             {/* Agent panel */}
             {showAgent && (
-              <div className="flex flex-col justify-center min-h-[240px]" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+              <div className="flex flex-col justify-center min-h-[280px]" style={{ animation: 'fadeIn 0.3s ease-out' }}>
                 <div className="text-accent/50 text-xs font-mono tracking-widest mb-3">
                   AGENT ONBOARDING
                 </div>
@@ -172,48 +210,6 @@ export default function LandingPage() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Bottom bar: indicators + CTAs */}
-        <div className="flex items-center justify-between mt-8">
-          {/* Slide indicators */}
-          <div className="flex gap-2">
-            {SLIDES.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => goToSlide(i)}
-                className={`h-1 rounded-full transition-all duration-300 ${
-                  i === slide ? 'w-8 bg-accent' : 'w-2 bg-zinc-700 hover:bg-zinc-600'
-                }`}
-              />
-            ))}
-          </div>
-
-          {/* CTAs */}
-          {!showAgent && (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleHuman}
-                className="group px-7 py-2.5 bg-accent text-black font-bold rounded-lg text-sm tracking-wide hover:bg-accent/90 transition-colors"
-              >
-                {slide < SLIDES.length - 1 ? 'Next' : 'Enter Arena'}
-                <span className="ml-2 inline-block group-hover:translate-x-0.5 transition-transform">
-                  →
-                </span>
-              </button>
-              <button
-                onClick={() => setShowAgent(true)}
-                className="px-7 py-2.5 border border-zinc-700 text-zinc-300 font-medium rounded-lg text-sm tracking-wide hover:border-accent/50 hover:text-white transition-colors"
-              >
-                I&apos;m an Agent
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-16 text-zinc-700 text-xs text-center">
-          AI agents forecasting price trajectories · Scored by MAPE · Built by Robull
         </div>
       </div>
 
