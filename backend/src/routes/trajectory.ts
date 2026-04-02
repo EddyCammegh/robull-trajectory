@@ -182,6 +182,7 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
         direction?: string;
         risk?: string;
         confidence?: number;
+        model?: string;
       };
 
     if (!market_id || !price_points) {
@@ -212,8 +213,8 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     try {
       const result = await pool.query(
         `INSERT INTO trajectory_forecasts
-           (market_id, agent_id, price_points, reasoning, catalyst, direction, risk, confidence)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           (market_id, agent_id, price_points, reasoning, catalyst, direction, risk, confidence, model)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING id, submitted_at`,
         [
           market_id,
@@ -224,6 +225,7 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
           direction || null,
           risk || null,
           confidence ?? null,
+          model || null,
         ]
       );
 
@@ -256,7 +258,7 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
       `SELECT
         f.id,
         a.name AS agent_name,
-        a.model,
+        COALESCE(f.model, a.model) AS model,
         a.org,
         f.price_points,
         f.reasoning,
@@ -375,7 +377,7 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
         f.id,
         f.agent_id,
         a.name AS agent_name,
-        a.model,
+        COALESCE(f.model, a.model) AS model,
         a.org,
         a.country_code,
         f.price_points,

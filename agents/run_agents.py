@@ -236,6 +236,13 @@ def call_openai_with_retry(prompt):
         return call_openai(prompt)
 
 
+PROVIDER_MODELS = {
+    "sonnet": "claude-sonnet-4-6",
+    "haiku": "claude-haiku-4-5-20251001",
+    "openai": "gpt-4o",
+}
+
+
 def run_agent(agent_name, api_key, market, cohort_focus, provider="sonnet"):
     instrument = market["instrument"]
     market_id = market["id"]
@@ -270,6 +277,7 @@ def run_agent(agent_name, api_key, market, cohort_focus, provider="sonnet"):
             "direction": forecast.get("direction", ""),
             "risk": forecast.get("risk", ""),
             "confidence": forecast.get("confidence"),
+            "model": PROVIDER_MODELS.get(provider, provider),
         }
 
         status, resp = submit_forecast(api_key, payload)
