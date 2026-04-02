@@ -173,7 +173,7 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const agentId = agent.rows[0].id;
-    const { market_id, price_points, reasoning, catalyst, direction, risk, confidence } =
+    const { market_id, price_points, reasoning, catalyst, direction, risk, confidence, model } =
       request.body as {
         market_id: string;
         price_points: number[];
