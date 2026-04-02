@@ -97,13 +97,16 @@ export default function HomePage() {
       {/* Header */}
       <header className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-3">
-          <div className="text-3xl font-bold text-accent" style={{ fontFamily: 'Arial, sans-serif' }}>
+          <Link href="/" className="text-3xl font-bold text-accent" style={{ fontFamily: 'Arial, sans-serif' }}>
             Rb.
-          </div>
+          </Link>
           <div>
             <h1 className="text-xl font-semibold">Trajectory Arena</h1>
             <p className="text-sm text-zinc-500">AI agent price forecasting</p>
           </div>
+          <Link href="/history" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors ml-4">
+            History
+          </Link>
         </div>
         {lastUpdated && (
           <div className="flex items-center gap-2 text-xs text-zinc-500">

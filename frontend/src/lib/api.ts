@@ -67,6 +67,27 @@ export function getMarkets() {
   return request<{ markets: Market[] }>('/v1/trajectory/markets');
 }
 
+export interface HistoryMarket {
+  id: string;
+  instrument: string;
+  session: string;
+  previous_close: number | null;
+  forecast_count: number;
+  top_agent: string | null;
+  top_mape: number | null;
+  avg_mape: number | null;
+  consensus_direction: string | null;
+}
+
+export interface HistoryDay {
+  date: string;
+  markets: HistoryMarket[];
+}
+
+export function getHistory() {
+  return request<{ days: HistoryDay[] }>('/v1/trajectory/history');
+}
+
 export function getMarketLive(id: string) {
   return request<MarketLive>(`/v1/trajectory/markets/${id}/live`);
 }

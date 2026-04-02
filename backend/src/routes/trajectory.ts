@@ -227,6 +227,58 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     return reply.send({ reopened: result.rowCount });
   });
 
+  // GET /v1/trajectory/history — past scored trading days
+  app.get('/history', async (_request, reply) => {
+    const result = await pool.query(`
+      SELECT
+        m.id,
+        m.instrument,
+        m.trading_date,
+        m.session,
+        m.status,
+        m.previous_close,
+        (SELECT COUNT(*) FROM trajectory_forecasts f WHERE f.market_id = m.id) AS forecast_count,
+        (SELECT a2.name FROM trajectory_forecasts f2
+         JOIN agents a2 ON a2.id = f2.agent_id
+         WHERE f2.market_id = m.id AND f2.rank = 1
+         LIMIT 1) AS top_agent,
+        (SELECT f3.mape_score FROM trajectory_forecasts f3
+         WHERE f3.market_id = m.id AND f3.rank = 1
+         LIMIT 1) AS top_mape,
+        (SELECT ROUND(AVG(f4.mape_score)::numeric, 2) FROM trajectory_forecasts f4
+         WHERE f4.market_id = m.id AND f4.mape_score IS NOT NULL) AS avg_mape,
+        (SELECT f5.direction FROM trajectory_forecasts f5
+         WHERE f5.market_id = m.id AND f5.direction IS NOT NULL
+         GROUP BY f5.direction ORDER BY COUNT(*) DESC LIMIT 1) AS consensus_direction
+      FROM trajectory_markets m
+      WHERE m.status = 'scored'
+      ORDER BY m.trading_date DESC, m.instrument
+    `);
+
+    const dayMap: Record<string, any[]> = {};
+    for (const row of result.rows) {
+      const date = row.trading_date.toISOString?.().slice(0, 10) ?? String(row.trading_date).slice(0, 10);
+      if (!dayMap[date]) dayMap[date] = [];
+      dayMap[date].push({
+        id: row.id,
+        instrument: row.instrument,
+        session: row.session,
+        previous_close: row.previous_close,
+        forecast_count: parseInt(row.forecast_count, 10),
+        top_agent: row.top_agent,
+        top_mape: row.top_mape != null ? parseFloat(row.top_mape) : null,
+        avg_mape: row.avg_mape != null ? parseFloat(row.avg_mape) : null,
+        consensus_direction: row.consensus_direction,
+      });
+    }
+
+    const days = Object.entries(dayMap)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([date, markets]) => ({ date, markets }));
+
+    return reply.send({ days });
+  });
+
   // GET /v1/trajectory/markets — today's open markets
   app.get('/markets', async (_request, reply) => {
     // Auto-transition US markets from 'accepting' to 'live' at 9:30 AM ET on trading days

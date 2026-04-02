@@ -126,6 +126,9 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
           >
             Rb.
           </Link>
+          <Link href="/history" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+            History
+          </Link>
           <div className="flex-1">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">{market.instrument}</h1>
