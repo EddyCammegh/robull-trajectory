@@ -272,13 +272,11 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                         >
                           <div className="flex items-center justify-between text-sm">
                             <div className="flex items-center gap-2 min-w-0">
-                              {hasScores && (
-                                <span className={`font-bold w-5 text-right flex-shrink-0 ${
-                                  isFirst ? 'text-accent' : 'text-zinc-500'
-                                }`}>
-                                  {i + 1}
-                                </span>
-                              )}
+                              <span className={`font-bold w-5 text-right flex-shrink-0 ${
+                                isFirst ? 'text-accent' : 'text-zinc-500'
+                              }`}>
+                                {i + 1}
+                              </span>
                               <span className="truncate">{f.agent_name}</span>
                               {showModel && f.model && (
                                 <span className="text-[10px] text-zinc-600 bg-zinc-900 px-1 py-0.5 rounded flex-shrink-0">
