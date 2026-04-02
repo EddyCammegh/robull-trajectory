@@ -46,14 +46,6 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     return reply.status(201).send({ created, date: today });
   });
 
-  // POST /v1/trajectory/markets/reset-to-accepting — reset all today's markets to 'accepting'
-  app.post('/markets/reset-to-accepting', async (_request, reply) => {
-    const result = await pool.query(
-      `UPDATE trajectory_markets SET status = 'accepting' WHERE trading_date = CURRENT_DATE`
-    );
-    return reply.send({ reset: result.rowCount });
-  });
-
   // POST /v1/trajectory/markets/:id/set-status — set a single market's status
   app.post('/markets/:id/set-status', async (request, reply) => {
     const { id } = request.params as { id: string };
@@ -125,40 +117,12 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     return reply.send({ updated });
   });
 
-  // DELETE /v1/trajectory/markets/today — reset all of today's markets
-  app.delete('/markets/today', async (_request, reply) => {
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-
-      const markets = await client.query(
-        `SELECT id FROM trajectory_markets WHERE trading_date = CURRENT_DATE`
-      );
-      const marketIds = markets.rows.map((r: any) => r.id);
-
-      if (marketIds.length > 0) {
-        await client.query(
-          `DELETE FROM trajectory_actuals WHERE market_id = ANY($1)`,
-          [marketIds]
-        );
-        await client.query(
-          `DELETE FROM trajectory_forecasts WHERE market_id = ANY($1)`,
-          [marketIds]
-        );
-        await client.query(
-          `DELETE FROM trajectory_markets WHERE id = ANY($1)`,
-          [marketIds]
-        );
-      }
-
-      await client.query('COMMIT');
-      return reply.send({ deleted: marketIds.length });
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
-    } finally {
-      client.release();
-    }
+  // POST /v1/trajectory/markets/reopen-today — reset today's markets to 'accepting' (no data deleted)
+  app.post('/markets/reopen-today', async (_request, reply) => {
+    const result = await pool.query(
+      `UPDATE trajectory_markets SET status = 'accepting' WHERE trading_date = CURRENT_DATE`
+    );
+    return reply.send({ reopened: result.rowCount });
   });
 
   // GET /v1/trajectory/markets — today's open markets
