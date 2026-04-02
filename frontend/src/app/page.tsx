@@ -4,6 +4,22 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { getMarkets, getMarketLive, type Market, type MarketLive } from '@/lib/api';
 
+const FORECAST_COLORS = [
+  '#f5e642', '#60a5fa', '#34d399', '#f472b6',
+  '#a78bfa', '#fb923c', '#94a3b8', '#e879f9',
+  '#38bdf8', '#fbbf24',
+];
+
+function RainbowText({ text }: { text: string }) {
+  return (
+    <>
+      {text.split('').map((ch, i) => (
+        <span key={i} style={{ color: FORECAST_COLORS[i % FORECAST_COLORS.length] }}>{ch}</span>
+      ))}
+    </>
+  );
+}
+
 const STATUS_COLORS: Record<string, string> = {
   accepting: 'bg-green-500/20 text-green-400 border-green-500/40',
   live: 'bg-accent/20 text-accent border-accent/40',
@@ -191,24 +207,12 @@ export default function HomePage() {
 
                 {/* Consensus line */}
                 {consensus && consensus.total > 0 && (
-                  <div className="text-xs text-zinc-500 border-t border-zinc-800 pt-2 mt-1">
-                    <span
-                      className={
-                        consensus.topDirection === 'bullish'
-                          ? 'text-green-400'
-                          : consensus.topDirection === 'bearish'
-                            ? 'text-red-400'
-                            : 'text-zinc-400'
-                      }
-                    >
-                      {consensus.topCount}/{consensus.total} {consensus.topDirection}
-                    </span>
-                    {consensus.avgClose != null && (
-                      <>
-                        {' · avg close '}
-                        <span className="text-white font-mono">${consensus.avgClose.toFixed(2)}</span>
-                      </>
-                    )}
+                  <div className="text-xs border-t border-zinc-800 pt-2 mt-1">
+                    <RainbowText
+                      text={`${consensus.topCount}/${consensus.total} ${consensus.topDirection}${
+                        consensus.avgClose != null ? ` · avg close $${consensus.avgClose.toFixed(2)}` : ''
+                      }`}
+                    />
                   </div>
                 )}
               </div>
