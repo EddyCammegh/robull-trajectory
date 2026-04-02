@@ -178,7 +178,7 @@ def call_claude(prompt):
 
     response = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=4000,
+        max_tokens=2000,
         tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 5}],
         messages=[{"role": "user", "content": prompt}],
     )
@@ -192,6 +192,15 @@ def call_claude(prompt):
     return "\n".join(text_parts)
 
 
+def call_claude_with_retry(prompt):
+    try:
+        return call_claude(prompt)
+    except anthropic.RateLimitError:
+        print("    Rate limited (429), waiting 60s and retrying...")
+        time.sleep(60)
+        return call_claude(prompt)
+
+
 def run_agent(agent_name, api_key, market, cohort_focus):
     instrument = market["instrument"]
     market_id = market["id"]
@@ -200,7 +209,7 @@ def run_agent(agent_name, api_key, market, cohort_focus):
 
     try:
         prompt = build_prompt(market, cohort_focus)
-        response_text = call_claude(prompt)
+        response_text = call_claude_with_retry(prompt)
         forecast = parse_forecast_json(response_text)
 
         # Validate price_points
@@ -292,7 +301,7 @@ def main():
         for agent_name, api_key in active_agents:
             for market in accepting:
                 run_agent(agent_name, api_key, market, focus)
-                time.sleep(3)
+                time.sleep(15)
 
         print()
 

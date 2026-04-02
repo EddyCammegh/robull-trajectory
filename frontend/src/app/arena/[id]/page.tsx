@@ -505,14 +505,14 @@ function TrajectoryChart({
         </>
       )}
 
-      {/* Forecast lines — anchored to previous_close at slot 0 */}
+      {/* Forecast lines — anchored to previous_close at label 0 */}
       {forecasts.map((f, fi) => {
         const pts: string[] = [];
         if (previousClose != null) {
-          pts.push(`${slotToX(0)},${toY(previousClose)}`);
+          pts.push(`${PAD.left},${toY(previousClose)}`);
         }
         f.price_points.forEach((p: number, i: number) => {
-          pts.push(`${slotToX(forecastSlots[i])},${toY(p)}`);
+          pts.push(`${labelToX(i)},${toY(p)}`);
         });
         return (
           <polyline
