@@ -10,15 +10,7 @@ const FORECAST_COLORS = [
   '#38bdf8', '#fbbf24',
 ];
 
-function RainbowText({ text }: { text: string }) {
-  return (
-    <>
-      {text.split('').map((ch, i) => (
-        <span key={i} style={{ color: FORECAST_COLORS[i % FORECAST_COLORS.length] }}>{ch}</span>
-      ))}
-    </>
-  );
-}
+const FORECAST_GRADIENT = `linear-gradient(to right, ${FORECAST_COLORS.join(', ')})`;
 
 const STATUS_COLORS: Record<string, string> = {
   accepting: 'bg-green-500/20 text-green-400 border-green-500/40',
@@ -207,11 +199,19 @@ export default function HomePage() {
 
                 {/* Consensus line */}
                 {consensus && consensus.total > 0 && (
-                  <div className="text-xs border-t border-zinc-800 pt-2 mt-1">
-                    <RainbowText
-                      text={`${consensus.topCount}/${consensus.total} ${consensus.topDirection}${
-                        consensus.avgClose != null ? ` · avg close $${consensus.avgClose.toFixed(2)}` : ''
-                      }`}
+                  <div className="border-t border-zinc-800 pt-2 mt-1">
+                    <div className="text-xs text-white">
+                      {consensus.topCount}/{consensus.total} {consensus.topDirection}
+                      {consensus.avgClose != null && (
+                        <>
+                          {' · avg close '}
+                          <span className="font-mono">${consensus.avgClose.toFixed(2)}</span>
+                        </>
+                      )}
+                    </div>
+                    <div
+                      className="h-0.5 rounded-full mt-1.5"
+                      style={{ background: FORECAST_GRADIENT }}
                     />
                   </div>
                 )}
