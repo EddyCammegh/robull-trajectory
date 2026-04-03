@@ -118,18 +118,28 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
   return (
     <main className="min-h-screen bg-black">
       <div className="max-w-[1400px] mx-auto p-6">
-        {/* Header */}
-        <header className="flex items-center gap-4 mb-4">
+        {/* Nav bar */}
+        <nav className="flex items-center gap-6 mb-5">
           <Link
             href="/arena"
-            className="text-3xl font-bold text-accent"
+            className="text-2xl font-bold text-accent"
             style={{ fontFamily: 'Arial, sans-serif' }}
           >
             Rb.
           </Link>
-          <Link href="/history" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+          <Link href="/arena" className="text-sm text-zinc-500 hover:text-white transition-colors">
+            Arena
+          </Link>
+          <Link href="/history" className="text-sm text-zinc-500 hover:text-white transition-colors">
             History
           </Link>
+          <Link href="/leaderboard" className="text-sm text-zinc-500 hover:text-white transition-colors">
+            Global Leaderboard
+          </Link>
+        </nav>
+
+        {/* Instrument header */}
+        <header className="flex items-center gap-4 mb-4">
           <div className="flex-1">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">{market.instrument}</h1>
