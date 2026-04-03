@@ -579,6 +579,19 @@ function TrajectoryChart({
   showConsensus?: boolean;
   selectedForecastId?: string | null;
 }) {
+  const [actualLineColor, setActualLineColor] = useState('#ffffff');
+
+  useEffect(() => {
+    const theme = document.documentElement.getAttribute('data-theme');
+    setActualLineColor(theme === 'light' ? '#000000' : '#ffffff');
+    const observer = new MutationObserver(() => {
+      const t = document.documentElement.getAttribute('data-theme');
+      setActualLineColor(t === 'light' ? '#000000' : '#ffffff');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
+
   const { totalSlots, forecastSlots, labels } = session;
 
   function slotToX(slot: number): number {
@@ -801,12 +814,12 @@ function TrajectoryChart({
         );
       })()}
 
-      {/* Actual price line — smooth cubic bezier, solid white */}
+      {/* Actual price line — smooth cubic bezier */}
       {actualPoints.length >= 2 && (
         <path
           d={smoothPath(actualPoints)}
           fill="none"
-          stroke="#ffffff"
+          stroke={actualLineColor}
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
