@@ -107,6 +107,9 @@ export default function HomePage() {
           <Link href="/history" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors ml-4">
             History
           </Link>
+          <Link href="/leaderboard" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+            Global Leaderboard →
+          </Link>
         </div>
         {lastUpdated && (
           <div className="flex items-center gap-2 text-xs text-zinc-500">
@@ -240,6 +243,20 @@ export default function HomePage() {
           )}
         </div>
       )}
+
+      {/* Instrument archive links */}
+      <div className="mt-8">
+        <h3 className="text-xs text-zinc-600 uppercase tracking-wider mb-3">Instrument Archives</h3>
+        <div className="flex gap-2 flex-wrap">
+          {['QQQ', 'NVDA', 'AAPL', 'TSLA', 'GOLD'].map((sym) => (
+            <Link key={sym} href={`/instrument/${sym}`}>
+              <span className="text-xs font-medium px-3 py-1.5 rounded-full border border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-accent/40 hover:text-white transition-colors">
+                {sym}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
     </main>
   );
 }

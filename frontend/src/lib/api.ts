@@ -88,6 +88,21 @@ export function getHistory() {
   return request<{ days: HistoryDay[] }>('/v1/trajectory/history');
 }
 
+export interface InstrumentDay {
+  market_id: string;
+  trading_date: string;
+  open_price: number | null;
+  close_price: number | null;
+  forecast_count: number;
+  top_agent: string | null;
+  top_mape: number | null;
+  avg_mape: number | null;
+}
+
+export function getInstrumentHistory(instrument: string) {
+  return request<{ instrument: string; days: InstrumentDay[] }>(`/v1/trajectory/instruments/${instrument}/history`);
+}
+
 export function getMarketLive(id: string) {
   return request<MarketLive>(`/v1/trajectory/markets/${id}/live`);
 }

@@ -244,6 +244,47 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     return reply.send({ scored: true, market_id: id });
   });
 
+  // GET /v1/trajectory/instruments/:instrument/history — scored history for one instrument
+  app.get('/instruments/:instrument/history', async (request, reply) => {
+    const { instrument } = request.params as { instrument: string };
+
+    const result = await pool.query(`
+      SELECT
+        m.id AS market_id,
+        m.trading_date,
+        m.open_price,
+        (SELECT a2.actual_price FROM trajectory_actuals a2
+         WHERE a2.market_id = m.id AND a2.slot_index = 77
+         LIMIT 1) AS close_price,
+        (SELECT COUNT(*) FROM trajectory_forecasts f WHERE f.market_id = m.id) AS forecast_count,
+        (SELECT a3.name FROM trajectory_forecasts f2
+         JOIN agents a3 ON a3.id = f2.agent_id
+         WHERE f2.market_id = m.id AND f2.rank = 1
+         LIMIT 1) AS top_agent,
+        (SELECT f3.mape_score FROM trajectory_forecasts f3
+         WHERE f3.market_id = m.id AND f3.rank = 1
+         LIMIT 1) AS top_mape,
+        (SELECT ROUND(AVG(f4.mape_score)::numeric, 2) FROM trajectory_forecasts f4
+         WHERE f4.market_id = m.id AND f4.mape_score IS NOT NULL) AS avg_mape
+      FROM trajectory_markets m
+      WHERE m.instrument = $1 AND m.status = 'scored'
+      ORDER BY m.trading_date DESC
+    `, [instrument]);
+
+    const days = result.rows.map((r: any) => ({
+      market_id: r.market_id,
+      trading_date: r.trading_date?.toISOString?.().slice(0, 10) ?? String(r.trading_date).slice(0, 10),
+      open_price: r.open_price != null ? parseFloat(r.open_price) : null,
+      close_price: r.close_price != null ? parseFloat(r.close_price) : null,
+      forecast_count: parseInt(r.forecast_count, 10),
+      top_agent: r.top_agent,
+      top_mape: r.top_mape != null ? parseFloat(r.top_mape) : null,
+      avg_mape: r.avg_mape != null ? parseFloat(r.avg_mape) : null,
+    }));
+
+    return reply.send({ instrument, days });
+  });
+
   // GET /v1/trajectory/history — past scored trading days
   app.get('/history', async (_request, reply) => {
     const result = await pool.query(`
