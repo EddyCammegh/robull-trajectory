@@ -7,7 +7,7 @@ export async function fetchActualPrices(): Promise<void> {
 
   const markets = await pool.query(
     `SELECT id, instrument FROM trajectory_markets
-     WHERE trading_date = CURRENT_DATE AND status = 'live'`
+     WHERE trading_date = CURRENT_DATE AND status IN ('accepting', 'live')`
   );
 
   const now = new Date();
