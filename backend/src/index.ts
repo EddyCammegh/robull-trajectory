@@ -75,11 +75,12 @@ async function main() {
     }
   });
 
+  await runMigrations();
+
   app.register(agentsRoutes, { prefix: '/v1/agents' });
   app.register(trajectoryRoutes, { prefix: '/v1/trajectory' });
   app.register(leaderboardRoutes, { prefix: '/v1/leaderboard' });
 
-  await runMigrations();
   startCrons();
   startPolygonStream();
 
