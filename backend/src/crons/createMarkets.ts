@@ -1,14 +1,23 @@
 import { pool } from '../db.js';
-import { INSTRUMENTS, fetchPrice, getMarketStatus } from '../services/prices.js';
+import { INSTRUMENTS, fetchPrice } from '../services/prices.js';
+
+const NYSE_HOLIDAYS_2026 = [
+  '2026-01-01', '2026-01-19', '2026-02-16', '2026-04-03',
+  '2026-05-25', '2026-06-19', '2026-07-03', '2026-09-07',
+  '2026-11-26', '2026-12-25',
+];
 
 export async function createDailyMarkets(): Promise<void> {
-  const { isOpen } = getMarketStatus();
-  if (!isOpen) {
-    console.log('Market is closed, skipping market creation');
+  const now = new Date();
+  const etDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(now);
+  const etDay = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' })).getDay();
+
+  if (etDay === 0 || etDay === 6 || NYSE_HOLIDAYS_2026.includes(etDate)) {
+    console.log('Not a trading day, skipping market creation');
     return;
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = etDate;
 
   for (const [key, config] of Object.entries(INSTRUMENTS)) {
     try {
