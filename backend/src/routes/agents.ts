@@ -49,6 +49,28 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
     }
   });
 
+  // DELETE /v1/agents/:name — delete an agent and all their forecasts
+  app.delete('/:name', async (request, reply) => {
+    const { name } = request.params as { name: string };
+
+    const agent = await pool.query(
+      'SELECT id FROM agents WHERE LOWER(name) = LOWER($1)',
+      [name]
+    );
+
+    if (agent.rows.length === 0) {
+      return reply.status(404).send({ error: 'Agent not found' });
+    }
+
+    const agentId = agent.rows[0].id;
+
+    await pool.query('DELETE FROM trajectory_forecasts WHERE agent_id = $1', [agentId]);
+    await pool.query('DELETE FROM agent_trajectory_stats WHERE agent_id = $1', [agentId]);
+    await pool.query('DELETE FROM agents WHERE id = $1', [agentId]);
+
+    return reply.send({ deleted: true, name });
+  });
+
   app.get('/leaderboard', async (_request, reply) => {
     const result = await pool.query(`
       SELECT
