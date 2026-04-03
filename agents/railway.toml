@@ -1,0 +1,6 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+cronSchedule = "0 10 * * 1-5"
+startCommand = "python run_agents.py"

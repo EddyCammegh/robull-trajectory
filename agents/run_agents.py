@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import time
 import requests
@@ -352,7 +353,7 @@ def run_agent(agent_name, api_key, market, cohort_focus, briefing, provider="son
 def main():
     if not ANTHROPIC_API_KEY:
         print("ERROR: ANTHROPIC_API_KEY not set")
-        return
+        sys.exit(1)
 
     if not OPENAI_API_KEY:
         print("WARNING: OPENAI_API_KEY not set — MACRO and TECH cohorts will fail")
@@ -383,7 +384,7 @@ def main():
     # Filter to accepting markets only
     accepting = [m for m in markets if m["status"] == "accepting"]
     if not accepting:
-        print("No markets currently accepting forecasts.")
+        print("No accepting markets found, exiting")
         return
 
     print(f"{len(accepting)} markets accepting forecasts")
