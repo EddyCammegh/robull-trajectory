@@ -227,6 +227,23 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     return reply.send({ reopened: result.rowCount });
   });
 
+  // POST /v1/trajectory/markets/:id/score — manually trigger scoring for a market
+  app.post('/markets/:id/score', async (request, reply) => {
+    const { id } = request.params as { id: string };
+
+    await scoreMarket(id);
+
+    const agents = await pool.query(
+      'SELECT DISTINCT agent_id FROM trajectory_forecasts WHERE market_id = $1',
+      [id]
+    );
+    for (const agent of agents.rows) {
+      await updateAgentStats(agent.agent_id);
+    }
+
+    return reply.send({ scored: true, market_id: id });
+  });
+
   // GET /v1/trajectory/history — past scored trading days
   app.get('/history', async (_request, reply) => {
     const result = await pool.query(`
