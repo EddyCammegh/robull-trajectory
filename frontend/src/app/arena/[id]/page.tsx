@@ -129,7 +129,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
             Rb.
           </Link>
           <Link href="/arena" className="text-sm text-zinc-500 hover:text-white transition-colors">
-            Arena
+            Arenas
           </Link>
           <Link href="/history" className="text-sm text-zinc-500 hover:text-white transition-colors">
             History
