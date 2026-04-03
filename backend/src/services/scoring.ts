@@ -53,7 +53,7 @@ export async function scoreMarket(marketId: string): Promise<void> {
 
   const forecasts = await pool.query(
     `SELECT id, agent_id, price_points FROM trajectory_forecasts
-     WHERE market_id = $1 AND mape_score IS NULL`,
+     WHERE market_id = $1`,
     [marketId]
   );
 
