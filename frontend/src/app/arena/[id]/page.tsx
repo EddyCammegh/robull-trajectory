@@ -48,6 +48,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
   const [error, setError] = useState<string | null>(null);
   const [showConsensus, setShowConsensus] = useState(false);
   const [allMarkets, setAllMarkets] = useState<Market[]>([]);
+  const [selectedForecastId, setSelectedForecastId] = useState<string | null>(null);
 
   const fetchData = useCallback(() => {
     getMarketLive(params.id)
@@ -234,6 +235,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                 livePrice={market.live_price != null ? Number(market.live_price) : null}
                 session={session}
                 showConsensus={showConsensus}
+                selectedForecastId={selectedForecastId}
               />
             </div>
 
@@ -249,7 +251,12 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                   {forecasts.map((f, fi) => (
                     <div
                       key={f.id}
-                      className="border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 transition-colors"
+                      onClick={() => setSelectedForecastId(selectedForecastId === f.id ? null : f.id)}
+                      className={`border rounded-lg p-4 transition-colors cursor-pointer ${
+                        selectedForecastId === f.id
+                          ? 'border-accent/50 bg-accent/[0.03]'
+                          : 'border-zinc-800 hover:border-zinc-700'
+                      }`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -389,7 +396,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                               }`}>
                                 {i + 1}
                               </span>
-                              <span className="truncate">{f.agent_name}</span>
+                              <span>{f.agent_name}</span>
                               {contrarian && (
                                 <span className="text-[10px] text-amber-400 bg-amber-400/10 border border-amber-400/30 px-1 py-0.5 rounded flex-shrink-0">
                                   contrarian
@@ -549,6 +556,7 @@ function TrajectoryChart({
   livePrice,
   session,
   showConsensus = false,
+  selectedForecastId = null,
 }: {
   forecasts: MarketLive['forecasts'];
   actuals: MarketLive['actuals'];
@@ -556,6 +564,7 @@ function TrajectoryChart({
   livePrice: number | null;
   session: SessionConfig;
   showConsensus?: boolean;
+  selectedForecastId?: string | null;
 }) {
   const { totalSlots, forecastSlots, labels } = session;
 
@@ -742,15 +751,17 @@ function TrajectoryChart({
         f.price_points.forEach((p: number, i: number) => {
           pts.push(`${labelToX(i)},${toY(p)}`);
         });
+        const isSelected = selectedForecastId === f.id;
+        const hasSel = selectedForecastId != null;
         return (
           <polyline
             key={f.id}
             points={pts.join(' ')}
             fill="none"
             stroke={FORECAST_COLORS[fi % FORECAST_COLORS.length]}
-            strokeWidth="1"
+            strokeWidth={isSelected ? 2.5 : 1}
             strokeDasharray="5 3"
-            opacity="0.6"
+            opacity={hasSel ? (isSelected ? 1 : 0.15) : 0.6}
           />
         );
       })}
