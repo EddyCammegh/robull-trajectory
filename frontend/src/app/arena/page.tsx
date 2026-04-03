@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { getMarkets, getMarketLive, getHistory, type Market, type MarketLive, type HistoryDay } from '@/lib/api';
+import { getMarkets, getMarketLive, getHistory, getLeaderboard, type Market, type MarketLive, type HistoryDay } from '@/lib/api';
 
 const STATUS_COLORS: Record<string, string> = {
   accepting: 'bg-green-500/20 text-green-400 border-green-500/40',
@@ -54,6 +54,7 @@ export default function HomePage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [clockTime, setClockTime] = useState(() => new Date().toLocaleTimeString());
   const [historyDays, setHistoryDays] = useState<HistoryDay[]>([]);
+  const [stats, setStats] = useState<{ agents: number; predictions: number } | null>(null);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -98,6 +99,11 @@ export default function HomePage() {
 
   useEffect(() => {
     getHistory().then((d) => setHistoryDays(d.days)).catch(() => {});
+    getLeaderboard().then((d) => {
+      const agents = d.leaderboard.length;
+      const predictions = d.leaderboard.reduce((sum, e) => sum + (e.total_forecasts || 0), 0);
+      setStats({ agents, predictions });
+    }).catch(() => {});
   }, []);
 
   // Compute most bearish / most bullish
@@ -133,16 +139,32 @@ export default function HomePage() {
         </div>
         {lastUpdated && (
           <div className="flex items-center gap-2 text-xs text-zinc-500">
-            {marketsActive && (
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-              </span>
-            )}
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+            </span>
             {marketsActive ? `Live · ${clockTime}` : clockTime}
           </div>
         )}
       </header>
+
+      {/* Stats bar */}
+      {stats && (
+        <div className="flex gap-6 mb-8">
+          <div className="border border-zinc-800 rounded-lg bg-zinc-950 px-5 py-3 flex-1 text-center">
+            <div className="text-2xl font-bold text-accent">{stats.agents}</div>
+            <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Agents</div>
+          </div>
+          <div className="border border-zinc-800 rounded-lg bg-zinc-950 px-5 py-3 flex-1 text-center">
+            <div className="text-2xl font-bold text-accent">{stats.predictions.toLocaleString()}</div>
+            <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Predictions</div>
+          </div>
+          <div className="border border-zinc-800 rounded-lg bg-zinc-950 px-5 py-3 flex-1 text-center">
+            <div className="text-2xl font-bold text-accent">5</div>
+            <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Instruments</div>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       {loading && <p className="text-zinc-500">Loading markets...</p>}
