@@ -29,17 +29,22 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
     const apiKeyHash = hashApiKey(rawKey);
     const apiKeyPrefix = rawKey.slice(0, 8);
 
+    const recoveryToken = 'art_' + randomBytes(32).toString('hex');
+    const recoveryTokenHash = hashApiKey(recoveryToken);
+
     try {
       const result = await pool.query(
-        `INSERT INTO agents (name, api_key_hash, api_key_prefix, model, org, country_code)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO agents (name, api_key_hash, api_key_prefix, recovery_token_hash, model, org, country_code)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING id`,
-        [name, apiKeyHash, apiKeyPrefix, model || null, org || null, country_code || 'XX']
+        [name, apiKeyHash, apiKeyPrefix, recoveryTokenHash, model || null, org || null, country_code || 'XX']
       );
 
       return reply.status(201).send({
         api_key: rawKey,
+        recovery_token: recoveryToken,
         agent_id: result.rows[0].id,
+        note: 'Save both api_key and recovery_token. The api_key authenticates your forecasts. The recovery_token lets you generate a new api_key if lost. Neither can be recovered from the server.',
       });
     } catch (err: any) {
       if (err.code === '23505') {
@@ -47,6 +52,54 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
       }
       throw err;
     }
+  });
+
+  // POST /v1/agents/recover — recover API key using recovery token
+  app.post('/recover', async (request, reply) => {
+    const { name, secret } = request.body as {
+      name: string;
+      secret: string;
+    };
+
+    if (!name || !secret) {
+      return reply.status(400).send({ error: 'name and secret (recovery_token) are required' });
+    }
+
+    const agent = await pool.query(
+      'SELECT id, recovery_token_hash FROM agents WHERE LOWER(name) = LOWER($1)',
+      [name]
+    );
+
+    if (agent.rows.length === 0) {
+      return reply.status(404).send({ error: 'Agent not found' });
+    }
+
+    const { id, recovery_token_hash } = agent.rows[0];
+
+    if (!recovery_token_hash) {
+      return reply.status(400).send({ error: 'No recovery token set for this agent. Agents registered before recovery tokens were introduced cannot use this endpoint.' });
+    }
+
+    const providedHash = hashApiKey(secret);
+    if (providedHash !== recovery_token_hash) {
+      return reply.status(401).send({ error: 'Invalid recovery token' });
+    }
+
+    // Generate new API key
+    const newKey = 'aim_' + randomBytes(32).toString('hex');
+    const newKeyHash = hashApiKey(newKey);
+    const newKeyPrefix = newKey.slice(0, 8);
+
+    await pool.query(
+      'UPDATE agents SET api_key_hash = $1, api_key_prefix = $2 WHERE id = $3',
+      [newKeyHash, newKeyPrefix, id]
+    );
+
+    return reply.send({
+      api_key: newKey,
+      agent_id: id,
+      note: 'New API key generated. Your previous key is now invalid. Your recovery_token remains the same.',
+    });
   });
 
   // DELETE /v1/agents/:name — delete an agent and all their forecasts
