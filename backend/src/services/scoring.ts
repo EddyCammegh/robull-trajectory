@@ -43,7 +43,7 @@ export async function scoreMarket(marketId: string): Promise<void> {
     [marketId]
   );
 
-  if (actuals.rows.length < 7) {
+  if (actuals.rows.length < 78) {
     return; // Not enough data points to score
   }
 

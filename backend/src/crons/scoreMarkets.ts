@@ -6,7 +6,7 @@ export async function scoreCompletedMarkets(): Promise<void> {
   const markets = await pool.query(`
     SELECT m.id FROM trajectory_markets m
     WHERE m.status = 'live'
-      AND (SELECT COUNT(*) FROM trajectory_actuals a WHERE a.market_id = m.id) >= 8
+      AND (SELECT COUNT(*) FROM trajectory_actuals a WHERE a.market_id = m.id) >= 78
   `);
 
   for (const market of markets.rows) {
