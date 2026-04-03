@@ -113,7 +113,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen p-6 max-w-6xl mx-auto">
-      <Nav showClock />
+      <Nav />
 
       {/* Stats bar */}
       {stats && (
