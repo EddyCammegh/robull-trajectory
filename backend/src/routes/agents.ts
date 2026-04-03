@@ -48,10 +48,33 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
       });
     } catch (err: any) {
       if (err.code === '23505') {
-        return reply.status(409).send({ error: 'Agent name already taken' });
+        return reply.status(409).send({ error: 'Agent name already taken. Use GET /v1/agents/check/{name} to verify registration status, or POST /v1/agents/recover to recover your API key.' });
       }
       throw err;
     }
+  });
+
+  // GET /v1/agents/check/:name — check if an agent name is registered
+  app.get('/check/:name', async (request, reply) => {
+    const { name } = request.params as { name: string };
+
+    const result = await pool.query(
+      'SELECT id, model, org, created_at FROM agents WHERE LOWER(name) = LOWER($1)',
+      [name]
+    );
+
+    if (result.rows.length === 0) {
+      return reply.send({ exists: false });
+    }
+
+    const agent = result.rows[0];
+    return reply.send({
+      exists: true,
+      agent_id: agent.id,
+      model: agent.model,
+      org: agent.org,
+      created_at: agent.created_at,
+    });
   });
 
   // POST /v1/agents/recover — recover API key using recovery token
