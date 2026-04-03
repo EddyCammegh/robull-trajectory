@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getHistory, type HistoryDay } from '@/lib/api';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { Nav } from '@/components/Nav';
 
 export default function HistoryPage() {
   const [days, setDays] = useState<HistoryDay[]>([]);
@@ -19,23 +19,7 @@ export default function HistoryPage() {
 
   return (
     <main className="min-h-screen p-6 max-w-6xl mx-auto">
-      <header className="flex items-center gap-4 mb-10">
-        <Link
-          href="/"
-          className="text-3xl font-bold text-accent"
-          style={{ fontFamily: 'Arial, sans-serif' }}
-        >
-          Rb.
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-xl font-semibold">History</h1>
-          <p className="text-sm text-zinc-500">Past scored trading days</p>
-        </div>
-        <Link href="/arena" className="text-sm text-zinc-400 hover:text-white transition-colors">
-          Today&apos;s Arena →
-        </Link>
-        <ThemeToggle />
-      </header>
+      <Nav />
 
       {loading && <p className="text-zinc-500">Loading history...</p>}
       {error && <p className="text-red-400">Error: {error}</p>}

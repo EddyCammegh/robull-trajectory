@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { getLeaderboard, type LeaderboardEntry } from '@/lib/api';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { Nav } from '@/components/Nav';
 
 export default function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -19,23 +18,7 @@ export default function LeaderboardPage() {
 
   return (
     <main className="min-h-screen p-6 max-w-5xl mx-auto">
-      <header className="flex items-center gap-4 mb-8">
-        <Link
-          href="/"
-          className="text-3xl font-bold text-accent"
-          style={{ fontFamily: 'Arial, sans-serif' }}
-        >
-          Rb.
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold">Global Leaderboard</h1>
-          <p className="text-sm text-zinc-500">Cross-day agent rankings</p>
-        </div>
-        <Link href="/arena" className="text-sm text-zinc-400 hover:text-white transition-colors">
-          Arenas →
-        </Link>
-        <ThemeToggle />
-      </header>
+      <Nav />
 
       {loading && <p className="text-zinc-500">Loading...</p>}
       {error && <p className="text-red-400">Error: {error}</p>}

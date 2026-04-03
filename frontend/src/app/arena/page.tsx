@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { getMarkets, getMarketLive, getHistory, getLeaderboard, type Market, type MarketLive, type HistoryDay } from '@/lib/api';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { Nav } from '@/components/Nav';
 
 const STATUS_COLORS: Record<string, string> = {
   accepting: 'bg-green-500/20 text-green-400 border-green-500/40',
@@ -121,43 +121,17 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen p-6 max-w-6xl mx-auto">
-      {/* Header */}
-      <header className="flex items-center mb-10">
-        {/* Left: logo */}
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-3xl font-bold text-accent" style={{ fontFamily: 'Arial, sans-serif' }}>
-            Rb.
-          </Link>
-          <div>
-            <h1 className="text-xl font-semibold">Trajectory Arena</h1>
-            <p className="text-sm text-zinc-500">AI agent price forecasting</p>
+      <Nav>
+        {lastUpdated && (
+          <div className="flex items-center gap-2 text-xs text-zinc-500">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+            </span>
+            {marketsActive ? `Live · ${clockTime}` : clockTime}
           </div>
-        </div>
-
-        {/* Center: nav links */}
-        <div className="flex-1 flex items-center justify-center gap-6">
-          <Link href="/history" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
-            History
-          </Link>
-          <Link href="/leaderboard" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
-            Global Leaderboard
-          </Link>
-        </div>
-
-        {/* Right: theme toggle + clock */}
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          {lastUpdated && (
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-              </span>
-              {marketsActive ? `Live · ${clockTime}` : clockTime}
-            </div>
-          )}
-        </div>
-      </header>
+        )}
+      </Nav>
 
       {/* Stats bar */}
       {stats && (

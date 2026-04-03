@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getInstrumentHistory, type InstrumentDay } from '@/lib/api';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { Nav } from '@/components/Nav';
 
 export default function InstrumentPage({ params }: { params: { symbol: string } }) {
   const [days, setDays] = useState<InstrumentDay[]>([]);
@@ -25,23 +25,7 @@ export default function InstrumentPage({ params }: { params: { symbol: string } 
 
   return (
     <main className="min-h-screen p-6 max-w-5xl mx-auto">
-      <header className="flex items-center gap-4 mb-8">
-        <Link
-          href="/"
-          className="text-3xl font-bold text-accent"
-          style={{ fontFamily: 'Arial, sans-serif' }}
-        >
-          Rb.
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold">{symbol}</h1>
-          <p className="text-sm text-zinc-500">Instrument history · {days.length} scored day{days.length !== 1 ? 's' : ''}</p>
-        </div>
-        <Link href="/arena" className="text-sm text-zinc-400 hover:text-white transition-colors">
-          Today&apos;s Arena →
-        </Link>
-        <ThemeToggle />
-      </header>
+      <Nav />
 
       {/* Stats bar */}
       {(bestMape != null || avgMape != null) && (

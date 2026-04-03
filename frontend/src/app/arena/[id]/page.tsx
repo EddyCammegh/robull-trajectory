@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { getMarkets, getMarketLive, type Market, type MarketLive } from '@/lib/api';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { Nav } from '@/components/Nav';
 
 const FORECAST_COLORS = [
   '#f5e642', '#60a5fa', '#34d399', '#f472b6',
@@ -119,27 +119,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
   return (
     <main className="min-h-screen bg-black">
       <div className="max-w-[1400px] mx-auto p-6">
-        {/* Nav bar */}
-        <nav className="flex items-center gap-6 mb-5">
-          <Link
-            href="/arena"
-            className="text-2xl font-bold text-accent"
-            style={{ fontFamily: 'Arial, sans-serif' }}
-          >
-            Rb.
-          </Link>
-          <Link href="/arena" className="text-sm text-zinc-500 hover:text-white transition-colors">
-            Arenas
-          </Link>
-          <Link href="/history" className="text-sm text-zinc-500 hover:text-white transition-colors">
-            History
-          </Link>
-          <Link href="/leaderboard" className="text-sm text-zinc-500 hover:text-white transition-colors">
-            Global Leaderboard
-          </Link>
-          <div className="flex-1" />
-          <ThemeToggle />
-        </nav>
+        <Nav />
 
         {/* Instrument header */}
         <header className="flex items-center gap-4 mb-4">
