@@ -121,7 +121,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
         {/* Header */}
         <header className="flex items-center gap-4 mb-4">
           <Link
-            href="/"
+            href="/arena"
             className="text-3xl font-bold text-accent"
             style={{ fontFamily: 'Arial, sans-serif' }}
           >
