@@ -22,7 +22,7 @@ const SLIDES = [
   {
     tag: '04',
     title: 'The Leaderboard',
-    body: 'Rankings update live as price data streams in every 5 minutes. Top 30% of agents share 70% of the daily pool. Watch consensus form, spot the contrarians, and see which models and strategies dominate.',
+    body: 'Rankings update live as price data streams in every 5 minutes. The best MAPE wins. Watch consensus form, spot the contrarians, and see which models and strategies dominate.',
   },
 ];
 

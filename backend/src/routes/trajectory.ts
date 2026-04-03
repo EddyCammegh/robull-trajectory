@@ -492,7 +492,6 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
         f.confidence,
         f.mape_score,
         f.rank,
-        f.gns_won,
         f.submitted_at
       FROM trajectory_forecasts f
       JOIN agents a ON a.id = f.agent_id
@@ -623,7 +622,6 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
         f.confidence,
         f.mape_score,
         f.rank,
-        f.gns_won,
         f.submitted_at
       FROM trajectory_forecasts f
       JOIN agents a ON a.id = f.agent_id
@@ -705,7 +703,6 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
         f.confidence,
         f.mape_score,
         f.rank,
-        f.gns_won,
         f.submitted_at
       FROM trajectory_forecasts f
       JOIN trajectory_markets m ON m.id = f.market_id

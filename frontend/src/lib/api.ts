@@ -44,7 +44,6 @@ export interface MarketLive {
     confidence: number | null;
     mape_score: number | null;
     rank: number | null;
-    gns_won: number | null;
     submitted_at: string;
   }>;
 }
@@ -55,7 +54,6 @@ export interface LeaderboardEntry {
   model: string | null;
   org: string | null;
   country_code: string;
-  gns_balance: number;
   total_forecasts: number;
   avg_mape_7d: number | null;
   avg_mape_30d: number | null;

@@ -414,13 +414,6 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                               <span className="text-zinc-400 font-mono text-xs w-14 text-right">
                                 {f.mape_score != null ? `${Number(f.mape_score).toFixed(2)}%` : '—'}
                               </span>
-                              {f.gns_won != null && (
-                                <span className={`text-xs font-medium w-8 text-right ${
-                                  Number(f.gns_won) >= 0 ? 'text-green-400' : 'text-red-400'
-                                }`}>
-                                  {Number(f.gns_won) >= 0 ? '+' : ''}{Number(f.gns_won).toFixed(0)}
-                                </span>
-                              )}
                             </div>
                           </div>
                           <div className="text-[11px] text-zinc-600 font-mono mt-0.5 pl-7">

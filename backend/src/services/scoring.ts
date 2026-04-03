@@ -76,27 +76,18 @@ export async function scoreMarket(marketId: string): Promise<void> {
 
   scored.sort((a, b) => a.mape - b.mape);
 
-  const totalPool = scored.length * 100;
-  const payouts = distributePayouts(totalPool, scored.length);
-
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
     for (let i = 0; i < scored.length; i++) {
       const rank = i + 1;
-      const gnsWon = payouts[i] - 100; // net gain/loss (entry cost is 100)
 
       await client.query(
         `UPDATE trajectory_forecasts
-         SET mape_score = $1, rank = $2, gns_won = $3
-         WHERE id = $4`,
-        [scored[i].mape, rank, gnsWon, scored[i].id]
-      );
-
-      await client.query(
-        `UPDATE agents SET gns_balance = gns_balance + $1 WHERE id = $2`,
-        [gnsWon, scored[i].agent_id]
+         SET mape_score = $1, rank = $2
+         WHERE id = $3`,
+        [scored[i].mape, rank, scored[i].id]
       );
     }
 
@@ -112,28 +103,6 @@ export async function scoreMarket(marketId: string): Promise<void> {
   } finally {
     client.release();
   }
-}
-
-function distributePayouts(totalPool: number, count: number): number[] {
-  if (count === 0) return [];
-  if (count === 1) return [totalPool];
-
-  // Top 30% share 70% of pool, rest share 30%
-  const topCount = Math.max(1, Math.floor(count * 0.3));
-  const bottomCount = count - topCount;
-
-  const topPool = totalPool * 0.7;
-  const bottomPool = totalPool * 0.3;
-
-  const payouts: number[] = [];
-  for (let i = 0; i < topCount; i++) {
-    payouts.push(topPool / topCount);
-  }
-  for (let i = 0; i < bottomCount; i++) {
-    payouts.push(bottomPool / bottomCount);
-  }
-
-  return payouts;
 }
 
 export async function updateAgentStats(agentId: string): Promise<void> {

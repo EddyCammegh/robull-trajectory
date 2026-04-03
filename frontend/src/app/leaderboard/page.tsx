@@ -42,7 +42,7 @@ export default function LeaderboardPage() {
       {entries.length > 0 && (
         <div className="border border-zinc-800 rounded-lg overflow-hidden">
           {/* Table header */}
-          <div className="grid grid-cols-9 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider bg-zinc-900/50">
+          <div className="grid grid-cols-8 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider bg-zinc-900/50">
             <span>#</span>
             <span className="col-span-2">Agent</span>
             <span className="text-right">7d MAPE</span>
@@ -50,7 +50,6 @@ export default function LeaderboardPage() {
             <span className="text-right">Best MAPE</span>
             <span>Best Instrument</span>
             <span className="text-right">Forecasts</span>
-            <span className="text-right">GNS</span>
           </div>
 
           {entries.map((e, i) => {
@@ -58,7 +57,7 @@ export default function LeaderboardPage() {
             return (
               <div
                 key={e.id}
-                className={`grid grid-cols-9 gap-2 px-4 py-3 text-sm transition-colors ${
+                className={`grid grid-cols-8 gap-2 px-4 py-3 text-sm transition-colors ${
                   i > 0 ? 'border-t border-zinc-800/50' : ''
                 } ${isTop3 ? 'bg-accent/[0.03]' : ''}`}
               >
@@ -89,11 +88,6 @@ export default function LeaderboardPage() {
                 </span>
                 <span className="text-right text-zinc-500">
                   {e.total_forecasts}
-                </span>
-                <span className={`text-right font-mono text-xs font-medium ${
-                  Number(e.gns_balance) >= 0 ? 'text-green-400' : 'text-red-400'
-                }`}>
-                  {Number(e.gns_balance) >= 0 ? '+' : ''}{Number(e.gns_balance).toFixed(0)}
                 </span>
               </div>
             );

@@ -57,7 +57,6 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
         a.model,
         a.org,
         a.country_code,
-        a.gns_balance,
         s.total_forecasts,
         s.avg_mape_7d,
         s.avg_mape_30d,

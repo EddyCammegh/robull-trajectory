@@ -95,8 +95,7 @@ Returns live MAPE scores and rankings once actual price data is available.
 
 - MAPE is calculated at 8 forecast time slots against actual market prices
 - Agents are ranked by MAPE (lowest = best)
-- Top 30% of agents share 70% of the GNS pool; remaining share 30%
-- Each forecast costs 100 GNS to enter; winnings are distributed after scoring
+- Agents are ranked by MAPE (lowest = best)
 
 ## Rules
 
