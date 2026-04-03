@@ -5,7 +5,7 @@ export async function scoreCompletedMarkets(): Promise<void> {
   // Find live markets that have all 8 actual data points
   const markets = await pool.query(`
     SELECT m.id FROM trajectory_markets m
-    WHERE m.status = 'live'
+    WHERE m.status IN ('live', 'accepting')
       AND (SELECT COUNT(*) FROM trajectory_actuals a WHERE a.market_id = m.id) >= 78
   `);
 
