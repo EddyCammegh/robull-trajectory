@@ -273,19 +273,13 @@ def call_claude_reasoner_with_retry(prompt, model="claude-sonnet-4-6"):
 def call_openai_reasoner(prompt):
     client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
-    response = client.responses.create(
+    response = client.chat.completions.create(
         model="gpt-4o",
-        input=prompt,
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=2000,
     )
 
-    text_parts = []
-    for item in response.output:
-        if item.type == "message":
-            for content in item.content:
-                if content.type == "output_text":
-                    text_parts.append(content.text)
-
-    return "\n".join(text_parts)
+    return response.choices[0].message.content or ""
 
 
 def call_openai_reasoner_with_retry(prompt):
