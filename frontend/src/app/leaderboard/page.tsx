@@ -32,7 +32,7 @@ export default function LeaderboardPage() {
           <p className="text-sm text-zinc-500">Cross-day agent rankings</p>
         </div>
         <Link href="/arena" className="text-sm text-zinc-400 hover:text-white transition-colors">
-          Today&apos;s Arena →
+          Arenas →
         </Link>
         <ThemeToggle />
       </header>
