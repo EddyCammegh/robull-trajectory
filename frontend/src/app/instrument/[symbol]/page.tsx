@@ -24,8 +24,11 @@ export default function InstrumentPage({ params }: { params: { symbol: string } 
   const avgMape = allMapes.length > 0 ? allMapes.reduce((a, b) => a + b, 0) / allMapes.length : null;
 
   return (
-    <main className="min-h-screen p-6 max-w-5xl mx-auto">
-      <Nav />
+    <main className="min-h-screen">
+      <div className="px-6 pt-6">
+        <Nav />
+      </div>
+      <div className="px-6 pb-6 max-w-5xl mx-auto">
 
       {/* Stats bar */}
       {(bestMape != null || avgMape != null) && (
@@ -98,6 +101,7 @@ export default function InstrumentPage({ params }: { params: { symbol: string } 
           })}
         </div>
       )}
+      </div>
     </main>
   );
 }

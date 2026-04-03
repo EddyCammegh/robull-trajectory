@@ -112,8 +112,11 @@ export default function HomePage() {
   const latestDay = historyDays[0] ?? null;
 
   return (
-    <main className="min-h-screen p-6 max-w-6xl mx-auto">
-      <Nav />
+    <main className="min-h-screen">
+      <div className="px-6 pt-6">
+        <Nav />
+      </div>
+      <div className="px-6 pb-6 max-w-6xl mx-auto">
 
       {/* Stats bar */}
       {stats && (
@@ -343,6 +346,7 @@ export default function HomePage() {
           </div>
         </>
       )}
+      </div>
     </main>
   );
 }

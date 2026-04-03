@@ -118,8 +118,10 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
 
   return (
     <main className="min-h-screen bg-black">
-      <div className="max-w-[1400px] mx-auto p-6">
+      <div className="px-6 pt-6">
         <Nav />
+      </div>
+      <div className="max-w-[1400px] mx-auto px-6 pb-6">
 
         {/* Instrument header */}
         <header className="flex items-center gap-4 mb-4">
