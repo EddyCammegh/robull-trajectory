@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { getMarkets, getMarketLive, type Market, type MarketLive } from '@/lib/api';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const FORECAST_COLORS = [
   '#f5e642', '#60a5fa', '#34d399', '#f472b6',
@@ -136,6 +137,8 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
           <Link href="/leaderboard" className="text-sm text-zinc-500 hover:text-white transition-colors">
             Global Leaderboard
           </Link>
+          <div className="flex-1" />
+          <ThemeToggle />
         </nav>
 
         {/* Instrument header */}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getHistory, type HistoryDay } from '@/lib/api';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function HistoryPage() {
   const [days, setDays] = useState<HistoryDay[]>([]);
@@ -33,6 +34,7 @@ export default function HistoryPage() {
         <Link href="/arena" className="text-sm text-zinc-400 hover:text-white transition-colors">
           Today&apos;s Arena →
         </Link>
+        <ThemeToggle />
       </header>
 
       {loading && <p className="text-zinc-500">Loading history...</p>}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getInstrumentHistory, type InstrumentDay } from '@/lib/api';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function InstrumentPage({ params }: { params: { symbol: string } }) {
   const [days, setDays] = useState<InstrumentDay[]>([]);
@@ -39,6 +40,7 @@ export default function InstrumentPage({ params }: { params: { symbol: string } 
         <Link href="/arena" className="text-sm text-zinc-400 hover:text-white transition-colors">
           Today&apos;s Arena →
         </Link>
+        <ThemeToggle />
       </header>
 
       {/* Stats bar */}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getLeaderboard, type LeaderboardEntry } from '@/lib/api';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -33,6 +34,7 @@ export default function LeaderboardPage() {
         <Link href="/arena" className="text-sm text-zinc-400 hover:text-white transition-colors">
           Today&apos;s Arena →
         </Link>
+        <ThemeToggle />
       </header>
 
       {loading && <p className="text-zinc-500">Loading...</p>}

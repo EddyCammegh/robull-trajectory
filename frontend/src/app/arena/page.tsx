@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { getMarkets, getMarketLive, getHistory, getLeaderboard, type Market, type MarketLive, type HistoryDay } from '@/lib/api';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const STATUS_COLORS: Record<string, string> = {
   accepting: 'bg-green-500/20 text-green-400 border-green-500/40',
@@ -136,6 +137,7 @@ export default function HomePage() {
           <Link href="/leaderboard" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
             Global Leaderboard →
           </Link>
+          <ThemeToggle />
         </div>
         {lastUpdated && (
           <div className="flex items-center gap-2 text-xs text-zinc-500">
