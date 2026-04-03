@@ -50,6 +50,20 @@ export async function fetchPrice(instrument: string): Promise<number> {
   return fetchStockPrice(config.apiSymbol);
 }
 
+// NYSE holidays for 2026 (month is 0-indexed)
+const NYSE_HOLIDAYS_2026 = [
+  '2026-01-01', // New Year's Day
+  '2026-01-19', // MLK Day
+  '2026-02-16', // Presidents' Day
+  '2026-04-03', // Good Friday
+  '2026-05-25', // Memorial Day
+  '2026-06-19', // Juneteenth
+  '2026-07-03', // Independence Day (observed)
+  '2026-09-07', // Labor Day
+  '2026-11-26', // Thanksgiving
+  '2026-12-25', // Christmas
+];
+
 export function getMarketStatus(): { isOpen: boolean; nextCloseMs: number | null } {
   const now = new Date();
   const etParts = new Intl.DateTimeFormat('en-US', {
@@ -59,6 +73,12 @@ export function getMarketStatus(): { isOpen: boolean; nextCloseMs: number | null
     hour12: false,
     weekday: 'short',
   }).formatToParts(now);
+
+  // Check NYSE holidays (using ET date)
+  const etDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(now);
+  if (NYSE_HOLIDAYS_2026.includes(etDate)) {
+    return { isOpen: false, nextCloseMs: null };
+  }
 
   const weekday = etParts.find((p) => p.type === 'weekday')!.value;
   const hour = parseInt(etParts.find((p) => p.type === 'hour')!.value, 10);
