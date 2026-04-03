@@ -265,7 +265,9 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                             className="w-3 h-3 rounded-full flex-shrink-0"
                             style={{ backgroundColor: FORECAST_COLORS[fi % FORECAST_COLORS.length] }}
                           />
-                          <span className="font-medium">{f.agent_name}</span>
+                          <Link href={`/agents/${encodeURIComponent(f.agent_name)}`} className="font-medium hover:text-accent transition-colors" onClick={(e) => e.stopPropagation()}>
+                            {f.agent_name}
+                          </Link>
                           {f.model && (
                             <span className="text-xs text-zinc-600 bg-zinc-900 px-1.5 py-0.5 rounded">
                               {f.model}
@@ -396,7 +398,9 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                               }`}>
                                 {i + 1}
                               </span>
-                              <span>{f.agent_name}</span>
+                              <Link href={`/agents/${encodeURIComponent(f.agent_name)}`} className="hover:text-accent transition-colors">
+                                {f.agent_name}
+                              </Link>
                               {contrarian && (
                                 <span className="text-[10px] text-amber-400 bg-amber-400/10 border border-amber-400/30 px-1 py-0.5 rounded flex-shrink-0">
                                   contrarian

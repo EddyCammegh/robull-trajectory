@@ -102,6 +102,91 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
     });
   });
 
+  // GET /v1/agents/:name — public agent profile
+  app.get('/:name', async (request, reply) => {
+    const { name } = request.params as { name: string };
+
+    const agentResult = await pool.query(`
+      SELECT
+        a.id, a.name, a.model, a.org, a.country_code,
+        s.total_forecasts, s.avg_mape_7d, s.avg_mape_30d, s.best_mape, s.best_instrument
+      FROM agents a
+      LEFT JOIN agent_trajectory_stats s ON s.agent_id = a.id
+      WHERE LOWER(a.name) = LOWER($1)
+    `, [name]);
+
+    if (agentResult.rows.length === 0) {
+      return reply.status(404).send({ error: 'Agent not found' });
+    }
+
+    const agent = agentResult.rows[0];
+
+    const forecastsResult = await pool.query(`
+      SELECT
+        f.id,
+        f.market_id,
+        m.trading_date,
+        m.instrument,
+        f.price_points,
+        f.direction,
+        f.confidence,
+        f.reasoning,
+        f.mape_score,
+        f.rank,
+        f.submitted_at
+      FROM trajectory_forecasts f
+      JOIN trajectory_markets m ON m.id = f.market_id
+      WHERE f.agent_id = $1
+      ORDER BY m.trading_date DESC, m.instrument
+      LIMIT 30
+    `, [agent.id]);
+
+    const instrumentsResult = await pool.query(`
+      SELECT
+        m.instrument,
+        COUNT(*)::integer AS forecast_count,
+        ROUND(AVG(f.mape_score)::numeric, 2) AS avg_mape
+      FROM trajectory_forecasts f
+      JOIN trajectory_markets m ON m.id = f.market_id
+      WHERE f.agent_id = $1 AND f.mape_score IS NOT NULL
+      GROUP BY m.instrument
+      ORDER BY avg_mape ASC
+    `, [agent.id]);
+
+    return reply.send({
+      agent: {
+        id: agent.id,
+        name: agent.name,
+        model: agent.model,
+        org: agent.org,
+        country_code: agent.country_code,
+        total_forecasts: agent.total_forecasts,
+        avg_mape_7d: agent.avg_mape_7d != null ? parseFloat(agent.avg_mape_7d) : null,
+        avg_mape_30d: agent.avg_mape_30d != null ? parseFloat(agent.avg_mape_30d) : null,
+        best_mape: agent.best_mape != null ? parseFloat(agent.best_mape) : null,
+        best_instrument: agent.best_instrument,
+      },
+      instruments: instrumentsResult.rows.map((r: any) => ({
+        instrument: r.instrument,
+        forecast_count: r.forecast_count,
+        avg_mape: r.avg_mape != null ? parseFloat(r.avg_mape) : null,
+      })),
+      forecasts: forecastsResult.rows.map((r: any) => ({
+        id: r.id,
+        market_id: r.market_id,
+        trading_date: r.trading_date?.toISOString?.().slice(0, 10) ?? String(r.trading_date).slice(0, 10),
+        instrument: r.instrument,
+        price_points: r.price_points,
+        direction: r.direction,
+        confidence: r.confidence,
+        reasoning: r.reasoning,
+        mape_score: r.mape_score != null ? parseFloat(r.mape_score) : null,
+        rank: r.rank,
+        submitted_at: r.submitted_at,
+      })),
+    });
+  });
+
   // DELETE /v1/agents/:name — delete an agent and all their forecasts
   app.delete('/:name', async (request, reply) => {
     const { name } = request.params as { name: string };

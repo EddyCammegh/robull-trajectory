@@ -101,6 +101,46 @@ export function getInstrumentHistory(instrument: string) {
   return request<{ instrument: string; days: InstrumentDay[] }>(`/v1/trajectory/instruments/${instrument}/history`);
 }
 
+export interface AgentProfile {
+  id: string;
+  name: string;
+  model: string | null;
+  org: string | null;
+  country_code: string;
+  total_forecasts: number | null;
+  avg_mape_7d: number | null;
+  avg_mape_30d: number | null;
+  best_mape: number | null;
+  best_instrument: string | null;
+}
+
+export interface AgentForecast {
+  id: string;
+  market_id: string;
+  trading_date: string;
+  instrument: string;
+  price_points: number[];
+  direction: string | null;
+  confidence: number | null;
+  reasoning: string | null;
+  mape_score: number | null;
+  rank: number | null;
+}
+
+export interface AgentInstrument {
+  instrument: string;
+  forecast_count: number;
+  avg_mape: number | null;
+}
+
+export function getAgentProfile(name: string) {
+  return request<{
+    agent: AgentProfile;
+    instruments: AgentInstrument[];
+    forecasts: AgentForecast[];
+  }>(`/v1/agents/${encodeURIComponent(name)}`);
+}
+
 export function getMarketLive(id: string) {
   return request<MarketLive>(`/v1/trajectory/markets/${id}/live`);
 }

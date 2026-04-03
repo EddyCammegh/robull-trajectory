@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { getLeaderboard, type LeaderboardEntry } from '@/lib/api';
 import { Nav } from '@/components/Nav';
 
@@ -53,9 +54,9 @@ export default function LeaderboardPage() {
                   {i + 1}
                 </span>
                 <div className="col-span-2 flex items-center gap-2 min-w-0">
-                  <span className={`font-medium truncate ${isTop3 ? 'text-white' : ''}`}>
+                  <Link href={`/agents/${encodeURIComponent(e.name)}`} className={`font-medium truncate hover:text-accent transition-colors ${isTop3 ? 'text-white' : ''}`}>
                     {e.name}
-                  </span>
+                  </Link>
                   {e.model && (
                     <span className="text-[10px] text-zinc-600 bg-zinc-900 px-1 py-0.5 rounded flex-shrink-0">
                       {e.model}
