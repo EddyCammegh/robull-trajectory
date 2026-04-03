@@ -10,8 +10,70 @@ import { startPolygonStream } from './services/polygonStream.js';
 
 const app = Fastify({ logger: true });
 
+// ── In-memory rate limiter ──
+
+interface RateBucket {
+  count: number;
+  resetAt: number;
+}
+
+const rateBuckets = new Map<string, RateBucket>();
+
+// Clean up expired buckets every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, bucket] of rateBuckets) {
+    if (bucket.resetAt <= now) rateBuckets.delete(key);
+  }
+}, 5 * 60_000);
+
+function checkRate(key: string, maxRequests: number, windowMs: number): { allowed: boolean; remaining: number; retryAfterMs: number } {
+  const now = Date.now();
+  let bucket = rateBuckets.get(key);
+
+  if (!bucket || bucket.resetAt <= now) {
+    bucket = { count: 0, resetAt: now + windowMs };
+    rateBuckets.set(key, bucket);
+  }
+
+  bucket.count++;
+
+  if (bucket.count > maxRequests) {
+    return { allowed: false, remaining: 0, retryAfterMs: bucket.resetAt - now };
+  }
+
+  return { allowed: true, remaining: maxRequests - bucket.count, retryAfterMs: 0 };
+}
+
 async function main() {
   await app.register(cors);
+
+  // Global rate limit: 100 requests per minute per IP
+  app.addHook('onRequest', async (request, reply) => {
+    const ip = request.ip;
+
+    // Stricter limit on register: 5 per hour
+    if (request.url === '/v1/agents/register' && request.method === 'POST') {
+      const result = checkRate(`register:${ip}`, 5, 60 * 60_000);
+      if (!result.allowed) {
+        reply.status(429).send({
+          error: 'Too many registration attempts. Limit: 5 per hour.',
+          retryAfterMs: result.retryAfterMs,
+        });
+        return;
+      }
+    }
+
+    // Global limit
+    const result = checkRate(`global:${ip}`, 100, 60_000);
+    reply.header('X-RateLimit-Remaining', result.remaining);
+    if (!result.allowed) {
+      reply.status(429).send({
+        error: 'Rate limit exceeded. Limit: 100 requests per minute.',
+        retryAfterMs: result.retryAfterMs,
+      });
+    }
+  });
 
   app.register(agentsRoutes, { prefix: '/v1/agents' });
   app.register(trajectoryRoutes, { prefix: '/v1/trajectory' });
