@@ -222,21 +222,27 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
             {/* Trajectory chart */}
             <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-5">
               <div className="flex items-center justify-end mb-3">
-                <div className="flex items-center gap-1.5 bg-zinc-900 rounded-full p-0.5 text-xs">
+                <div className="inline-flex border border-zinc-800 rounded-lg overflow-hidden text-xs">
                   <button
                     onClick={() => setShowConsensus(false)}
-                    className={`px-3 py-1 rounded-full transition-colors ${
-                      !showConsensus ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'
+                    className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors ${
+                      !showConsensus ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'
                     }`}
                   >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M1 3h10M1 6h10M1 9h10" />
+                    </svg>
                     Individual
                   </button>
                   <button
                     onClick={() => setShowConsensus(true)}
-                    className={`px-3 py-1 rounded-full transition-colors ${
-                      showConsensus ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'
+                    className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors border-l border-zinc-800 ${
+                      showConsensus ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'
                     }`}
                   >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M1 6h10" />
+                    </svg>
                     Consensus
                   </button>
                 </div>
@@ -381,7 +387,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                     <span>MAPE</span>
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     {(rankedForecasts.length > 0
                       ? rankedForecasts
                       : [...forecasts].sort((a, b) => a.agent_name.localeCompare(b.agent_name))
@@ -394,13 +400,12 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                         '';
                       const openPrice = f.price_points[0];
                       const closePrice = f.price_points[f.price_points.length - 1];
-                      const showModel = hasScores && (market.status === 'live' || market.status === 'scored');
                       const contrarian = isContrarian(f);
 
                       return (
                         <div
                           key={f.id}
-                          className={`py-1.5 px-2 rounded ${dirTint} ${isFirst ? 'ring-1 ring-accent/30' : ''}`}
+                          className={`py-2 px-2 rounded ${dirTint} ${isFirst ? 'ring-1 ring-accent/30' : ''}`}
                         >
                           <div className="flex items-center justify-between text-sm">
                             <div className="flex items-center gap-2 min-w-0">
@@ -415,11 +420,6 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                                   contrarian
                                 </span>
                               )}
-                              {showModel && f.model && (
-                                <span className="text-[10px] text-zinc-600 bg-zinc-900 px-1 py-0.5 rounded flex-shrink-0">
-                                  {f.model}
-                                </span>
-                              )}
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                               {f.direction && (
@@ -431,12 +431,14 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                                   {f.direction}
                                 </span>
                               )}
-                              <span className="text-zinc-400 font-mono text-xs w-14 text-right">
+                              <span className={`font-mono text-xs font-bold w-14 text-right ${
+                                f.mape_score != null ? 'text-accent' : 'text-zinc-500'
+                              }`}>
                                 {f.mape_score != null ? `${Number(f.mape_score).toFixed(2)}%` : '—'}
                               </span>
                             </div>
                           </div>
-                          <div className="text-[11px] text-zinc-600 font-mono mt-0.5 pl-7">
+                          <div className="text-[10px] text-zinc-600 font-mono mt-0.5 pl-7">
                             ${openPrice.toFixed(2)} → ${closePrice.toFixed(2)}
                           </div>
                         </div>
@@ -579,18 +581,21 @@ function TrajectoryChart({
   showConsensus?: boolean;
   selectedForecastId?: string | null;
 }) {
-  const [actualLineColor, setActualLineColor] = useState('#ffffff');
+  const [isLight, setIsLight] = useState(false);
 
   useEffect(() => {
-    const theme = document.documentElement.getAttribute('data-theme');
-    setActualLineColor(theme === 'light' ? '#000000' : '#ffffff');
-    const observer = new MutationObserver(() => {
-      const t = document.documentElement.getAttribute('data-theme');
-      setActualLineColor(t === 'light' ? '#000000' : '#ffffff');
-    });
+    const check = () => setIsLight(document.documentElement.getAttribute('data-theme') === 'light');
+    check();
+    const observer = new MutationObserver(check);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     return () => observer.disconnect();
   }, []);
+
+  const actualLineColor = isLight ? '#000000' : '#ffffff';
+  const gridColor = isLight ? '#e4e4e7' : '#27272a';
+  const labelColor = isLight ? '#52525b' : '#71717a';
+  const mutedColor = isLight ? '#a1a1aa' : '#52525b';
+  const defaultForecastOpacity = isLight ? 0.8 : 0.6;
 
   const { totalSlots, forecastSlots, labels } = session;
 
@@ -668,7 +673,7 @@ function TrajectoryChart({
           y1={toY(tick)}
           x2={CHART_W - PAD.right}
           y2={toY(tick)}
-          stroke="#27272a"
+          stroke={gridColor}
           strokeWidth="1"
         />
       ))}
@@ -680,7 +685,7 @@ function TrajectoryChart({
           y1={PAD.top}
           x2={labelToX(i)}
           y2={PAD.top + PLOT_H}
-          stroke="#27272a"
+          stroke={gridColor}
           strokeWidth="1"
         />
       ))}
@@ -692,7 +697,7 @@ function TrajectoryChart({
           x={PAD.left - 8}
           y={toY(tick) + 4}
           textAnchor="end"
-          fill="#71717a"
+          fill={labelColor}
           fontSize="11"
           fontFamily="monospace"
         >
@@ -707,7 +712,7 @@ function TrajectoryChart({
           x={labelToX(i)}
           y={CHART_H - 8}
           textAnchor="middle"
-          fill="#71717a"
+          fill={labelColor}
           fontSize="11"
         >
           {label}
@@ -720,7 +725,7 @@ function TrajectoryChart({
         y1={PAD.top}
         x2={slotToX(0)}
         y2={PAD.top + PLOT_H}
-        stroke="#52525b"
+        stroke={mutedColor}
         strokeWidth="1"
         strokeDasharray="2 3"
       />
@@ -728,7 +733,7 @@ function TrajectoryChart({
         x={slotToX(0)}
         y={PAD.top - 5}
         textAnchor="middle"
-        fill="#52525b"
+        fill={mutedColor}
         fontSize="10"
         fontFamily="monospace"
       >
@@ -743,14 +748,14 @@ function TrajectoryChart({
             y1={toY(previousClose)}
             x2={CHART_W - PAD.right}
             y2={toY(previousClose)}
-            stroke="#52525b"
+            stroke={mutedColor}
             strokeWidth="1"
             strokeDasharray="6 4"
           />
           <text
             x={CHART_W - PAD.right + 4}
             y={toY(previousClose) + 4}
-            fill="#52525b"
+            fill={mutedColor}
             fontSize="10"
             fontFamily="monospace"
           >
@@ -787,7 +792,7 @@ function TrajectoryChart({
             stroke={FORECAST_COLORS[fi % FORECAST_COLORS.length]}
             strokeWidth={isSelected ? 2.5 : 1}
             strokeDasharray="5 3"
-            opacity={hasSel ? (isSelected ? 1 : 0.15) : 0.6}
+            opacity={hasSel ? (isSelected ? 1 : 0.15) : defaultForecastOpacity}
           />
         );
       })}

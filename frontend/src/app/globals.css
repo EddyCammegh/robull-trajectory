@@ -53,3 +53,7 @@ html[data-theme="light"] .bg-accent\/\[0\.03\] { background-color: rgba(179,158,
 
 /* Ring overrides */
 html[data-theme="light"] .ring-accent\/30 { --tw-ring-color: rgba(179,158,0,0.3); }
+
+/* Segmented control in light mode */
+html[data-theme="light"] .bg-zinc-800 { background-color: #e4e4e7; }
+html[data-theme="light"] .bg-zinc-700 { background-color: #d4d4d8; }
