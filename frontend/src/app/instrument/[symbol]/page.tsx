@@ -25,10 +25,10 @@ export default function InstrumentPage({ params }: { params: { symbol: string } 
 
   return (
     <main className="min-h-screen">
-      <div className="px-6 pt-6">
+      <div className="px-4 md:px-6 pt-6">
         <Nav />
       </div>
-      <div className="px-6 pb-6 max-w-5xl mx-auto">
+      <div className="px-4 md:px-6 pb-6 max-w-5xl mx-auto">
 
       {/* Stats bar */}
       {(bestMape != null || avgMape != null) && (

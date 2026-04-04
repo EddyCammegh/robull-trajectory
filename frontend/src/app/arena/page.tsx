@@ -113,10 +113,10 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen">
-      <div className="px-6 pt-6">
+      <div className="px-4 md:px-6 pt-6">
         <Nav />
       </div>
-      <div className="px-6 pb-6 max-w-6xl mx-auto">
+      <div className="px-4 md:px-6 pb-6 max-w-6xl mx-auto">
 
       {/* Stats bar */}
       {stats && (
@@ -201,7 +201,7 @@ export default function HomePage() {
           {/* Browse by Instrument */}
           <div>
             <h2 className="text-sm font-medium text-zinc-400 mb-4">Browse by Instrument</h2>
-            <div className="grid grid-cols-5 gap-3">
+            <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
               {['QQQ', 'NVDA', 'AAPL', 'TSLA', 'GOLD'].map((sym) => (
                 <Link key={sym} href={`/instrument/${sym}`}>
                   <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-4 text-center hover:border-accent/40 transition-colors cursor-pointer">

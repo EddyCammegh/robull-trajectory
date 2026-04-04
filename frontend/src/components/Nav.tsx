@@ -35,18 +35,19 @@ export function Nav() {
           History
         </Link>
         <Link href="/leaderboard" className="text-sm text-zinc-500 hover:text-white transition-colors">
-          Global Leaderboard
+          <span className="md:hidden">Leaderboard</span>
+          <span className="hidden md:inline">Global Leaderboard</span>
         </Link>
       </div>
 
       {/* Right: clock + theme toggle — fixed width */}
-      <div className="w-48 flex-shrink-0 flex items-center justify-end gap-3">
+      <div className="w-auto md:w-48 flex-shrink-0 flex items-center justify-end gap-3">
         <div className="flex items-center gap-2 text-xs text-zinc-500">
           <span className="relative flex h-2 w-2 flex-shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
           </span>
-          <span className="font-mono">{clockTime || '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0'}</span>
+          <span className="font-mono hidden md:inline">{clockTime || '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0'}</span>
         </div>
         <ThemeToggle />
       </div>
