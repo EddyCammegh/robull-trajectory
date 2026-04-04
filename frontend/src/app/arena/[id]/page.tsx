@@ -259,45 +259,66 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                           : 'border-zinc-800 hover:border-zinc-700'
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-3 h-3 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: FORECAST_COLORS[fi % FORECAST_COLORS.length] }}
-                          />
-                          <Link href={`/agents/${encodeURIComponent(f.agent_name)}`} className="font-medium hover:text-accent transition-colors" onClick={(e) => e.stopPropagation()}>
-                            {f.agent_name}
-                          </Link>
-                          {f.model && (
-                            <span className="text-xs text-zinc-600 bg-zinc-900 px-1.5 py-0.5 rounded">
-                              {f.model}
-                            </span>
-                          )}
-                          {f.org && (
-                            <span className="text-xs text-zinc-500">· {f.org}</span>
+                      {/* Card header — two rows on mobile, single row on md+ */}
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5 md:gap-0 mb-2">
+                        {/* Row 1 mobile / left group desktop */}
+                        <div className="flex items-center justify-between md:justify-start gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div
+                              className="w-3 h-3 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: FORECAST_COLORS[fi % FORECAST_COLORS.length] }}
+                            />
+                            <Link href={`/agents/${encodeURIComponent(f.agent_name)}`} className="font-medium hover:text-accent transition-colors truncate" onClick={(e) => e.stopPropagation()}>
+                              {f.agent_name}
+                            </Link>
+                            {f.model && (
+                              <span className="text-xs text-zinc-600 bg-zinc-900 px-1.5 py-0.5 rounded hidden md:inline">
+                                {f.model}
+                              </span>
+                            )}
+                            {f.org && (
+                              <span className="text-xs text-zinc-500 hidden md:inline">· {f.org}</span>
+                            )}
+                          </div>
+                          {/* Rank — visible on mobile right side, hidden on desktop (shown in right group) */}
+                          {f.rank != null && (
+                            <span className="text-zinc-400 font-medium text-sm flex-shrink-0 md:hidden">#{f.rank}</span>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 text-sm">
-                          {f.direction && (
-                            <span className={
-                              f.direction === 'bullish' ? 'text-green-400' :
-                              f.direction === 'bearish' ? 'text-red-400' :
-                              'text-zinc-400'
-                            }>
-                              {f.direction}
-                            </span>
-                          )}
-                          {f.confidence != null && (
-                            <span className="text-zinc-500">{f.confidence}%</span>
-                          )}
-                          {f.mape_score != null && (
-                            <span className="text-accent font-medium">
-                              {Number(f.mape_score).toFixed(2)}% MAPE
-                            </span>
-                          )}
-                          {f.rank != null && (
-                            <span className="text-zinc-400 font-medium">#{f.rank}</span>
-                          )}
+                        {/* Row 2 mobile / right group desktop */}
+                        <div className="flex items-center justify-between md:justify-end gap-2 md:gap-3 text-sm pl-5 md:pl-0">
+                          <div className="flex items-center gap-2">
+                            {f.model && (
+                              <span className="text-xs text-zinc-600 bg-zinc-900 px-1.5 py-0.5 rounded md:hidden">
+                                {f.model}
+                              </span>
+                            )}
+                            {f.org && (
+                              <span className="text-xs text-zinc-500 md:hidden">· {f.org}</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                            {f.direction && (
+                              <span className={
+                                f.direction === 'bullish' ? 'text-green-400' :
+                                f.direction === 'bearish' ? 'text-red-400' :
+                                'text-zinc-400'
+                              }>
+                                {f.direction}
+                              </span>
+                            )}
+                            {f.confidence != null && (
+                              <span className="text-zinc-500">{f.confidence}%</span>
+                            )}
+                            {f.mape_score != null && (
+                              <span className="text-accent font-medium">
+                                {Number(f.mape_score).toFixed(2)}% MAPE
+                              </span>
+                            )}
+                            {f.rank != null && (
+                              <span className="text-zinc-400 font-medium hidden md:inline">#{f.rank}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       {/* Price points row */}
