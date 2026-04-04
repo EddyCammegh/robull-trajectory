@@ -24,7 +24,7 @@ export default function AgentPage({ params }: { params: { name: string } }) {
   }, [params.name]);
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen overflow-x-hidden">
       <div className="px-4 md:px-6 pt-6">
         <Nav />
       </div>

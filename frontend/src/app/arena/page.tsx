@@ -112,7 +112,7 @@ export default function HomePage() {
   const latestDay = historyDays[0] ?? null;
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen overflow-x-hidden">
       <div className="px-4 md:px-6 pt-6">
         <Nav />
       </div>
@@ -120,18 +120,18 @@ export default function HomePage() {
 
       {/* Stats bar */}
       {stats && (
-        <div className="flex gap-6 mb-8">
-          <div className="border border-zinc-800 rounded-lg bg-zinc-950 px-5 py-3 flex-1 text-center">
-            <div className="text-2xl font-bold text-accent">{stats.agents}</div>
-            <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Agents</div>
+        <div className="grid grid-cols-3 gap-2 md:gap-6 mb-8">
+          <div className="border border-zinc-800 rounded-lg bg-zinc-950 px-2 md:px-5 py-3 text-center">
+            <div className="text-lg md:text-2xl font-bold text-accent">{stats.agents}</div>
+            <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Agents</div>
           </div>
-          <div className="border border-zinc-800 rounded-lg bg-zinc-950 px-5 py-3 flex-1 text-center">
-            <div className="text-2xl font-bold text-accent">{stats.predictions.toLocaleString()}</div>
-            <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Predictions</div>
+          <div className="border border-zinc-800 rounded-lg bg-zinc-950 px-2 md:px-5 py-3 text-center">
+            <div className="text-lg md:text-2xl font-bold text-accent">{stats.predictions.toLocaleString()}</div>
+            <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Predictions</div>
           </div>
-          <div className="border border-zinc-800 rounded-lg bg-zinc-950 px-5 py-3 flex-1 text-center">
-            <div className="text-2xl font-bold text-accent">5</div>
-            <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Instruments</div>
+          <div className="border border-zinc-800 rounded-lg bg-zinc-950 px-2 md:px-5 py-3 text-center">
+            <div className="text-lg md:text-2xl font-bold text-accent">5</div>
+            <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Instruments</div>
           </div>
         </div>
       )}
@@ -144,7 +144,7 @@ export default function HomePage() {
       {!loading && !marketsActive && (
         <div className="space-y-10">
           {/* Closed message */}
-          <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-8 text-center">
+          <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-6 md:p-8 text-center">
             <div className="text-zinc-400 text-lg mb-2">Markets are closed</div>
             <p className="text-zinc-600 text-sm">
               Open Monday–Friday · 9:30 AM – 4:00 PM ET
@@ -201,7 +201,7 @@ export default function HomePage() {
           {/* Browse by Instrument */}
           <div>
             <h2 className="text-sm font-medium text-zinc-400 mb-4">Browse by Instrument</h2>
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {['QQQ', 'NVDA', 'AAPL', 'TSLA', 'GOLD'].map((sym) => (
                 <Link key={sym} href={`/instrument/${sym}`}>
                   <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-4 text-center hover:border-accent/40 transition-colors cursor-pointer">
@@ -235,7 +235,7 @@ export default function HomePage() {
               return (
                 <Link key={m.id} href={`/arena/${m.id}`}>
                   <div
-                    className={`border rounded-lg p-5 transition-colors cursor-pointer bg-zinc-950 ${borderTint}`}
+                    className={`border rounded-lg p-4 md:p-5 transition-colors cursor-pointer bg-zinc-950 ${borderTint}`}
                   >
                     {/* Instrument + Status */}
                     <div className="flex items-center justify-between mb-3">
@@ -305,7 +305,7 @@ export default function HomePage() {
 
           {/* Most bearish / bullish callouts */}
           {(mostBearish || mostBullish) && (
-            <div className="flex flex-wrap gap-4 mt-6 text-sm">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mt-6 text-sm">
               {mostBearish && (
                 <div className="flex items-center gap-2 text-red-400">
                   <span className="text-zinc-500">Most Bearish Today:</span>

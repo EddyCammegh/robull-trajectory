@@ -56,7 +56,7 @@ export default function LandingPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 md:px-6 relative overflow-hidden">
+    <main className="min-h-screen flex flex-col items-center justify-center px-4 md:px-6 relative overflow-hidden overflow-x-hidden">
       {/* Background grid */}
       <div
         className="absolute inset-0 opacity-[0.03]"
@@ -67,14 +67,144 @@ export default function LandingPage() {
         }}
       />
 
-      {/* Accent glow behind logo area */}
-      <div className="absolute top-1/3 left-[35%] -translate-x-1/2 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
+      {/* Accent glow — centered on mobile, offset on desktop */}
+      <div className="absolute top-1/4 md:top-1/3 left-1/2 md:left-[35%] -translate-x-1/2 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-5xl">
-        {/* Main layout: vertical on mobile, side-by-side on md+ */}
-        <div className="flex flex-col items-center md:flex-row md:items-center min-h-[420px] gap-8 md:gap-12 lg:gap-20">
-          {/* Logo — drops in from above, centered on mobile, left on md+ */}
-          <div className="flex-shrink-0 flex flex-col items-center md:w-[200px] lg:w-[260px]">
+
+        {/* ===== MOBILE LAYOUT (below md) ===== */}
+        <div className="flex flex-col items-center py-8 md:hidden">
+          {/* Logo — always visible immediately on mobile */}
+          <div className="text-center mb-8">
+            <div
+              className="text-7xl font-black text-accent tracking-tight"
+              style={{ fontFamily: 'Arial, sans-serif' }}
+            >
+              Rb.
+            </div>
+            <div className="h-px w-12 bg-accent/40 mt-3 mb-2 mx-auto" />
+            <h1 className="text-xs font-bold tracking-[0.25em] text-zinc-400 uppercase">
+              Trajectory Arena
+            </h1>
+            <div className="text-[10px] text-zinc-600 tracking-widest uppercase mt-1">
+              by Robull
+            </div>
+          </div>
+
+          {/* Slide content — centered */}
+          {!showAgent && (
+            <div className="w-full text-center flex-1">
+              {/* Slide indicators */}
+              <div className="flex gap-2 mb-5 justify-center">
+                {SLIDES.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => goToSlide(i)}
+                    className={`h-1 rounded-full transition-all duration-300 ${
+                      i === slide ? 'w-8 bg-accent' : 'w-2 bg-zinc-700 hover:bg-zinc-600'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Slide text */}
+              <div className="relative min-h-[160px]">
+                {prevSlide !== null && (
+                  <div
+                    key={`m-exit-${prevSlide}`}
+                    className="absolute inset-0 flex flex-col items-center justify-start"
+                    style={{
+                      animation: `slideExit${slideDirection === 'right' ? 'Left' : 'Right'} 0.4s ease-out forwards`,
+                    }}
+                  >
+                    <div className="text-accent/50 text-xs font-mono tracking-widest mb-2">
+                      {SLIDES[prevSlide].tag}
+                    </div>
+                    <h2 className="text-2xl font-bold mb-3">
+                      {SLIDES[prevSlide].title}
+                    </h2>
+                    <p className="text-zinc-400 text-base leading-relaxed">
+                      {SLIDES[prevSlide].body}
+                    </p>
+                  </div>
+                )}
+
+                <div
+                  key={`m-enter-${slide}`}
+                  className="absolute inset-0 flex flex-col items-center justify-start"
+                  style={{
+                    animation: prevSlide !== null
+                      ? `slideEnter${slideDirection === 'right' ? 'Right' : 'Left'} 0.4s ease-out forwards`
+                      : 'fadeIn 0.5s ease-out forwards',
+                  }}
+                >
+                  <div className="text-accent/50 text-xs font-mono tracking-widest mb-2">
+                    {SLIDES[slide].tag}
+                  </div>
+                  <h2 className="text-2xl font-bold mb-3">
+                    {SLIDES[slide].title}
+                  </h2>
+                  <p className="text-zinc-400 text-base leading-relaxed">
+                    {SLIDES[slide].body}
+                  </p>
+                </div>
+              </div>
+
+              {/* Buttons — full width stacked */}
+              <div className="flex flex-col gap-3 mt-6 w-full">
+                <button
+                  onClick={handleHuman}
+                  className="group w-full py-3 bg-accent text-black font-bold rounded-lg text-sm tracking-wide hover:bg-accent/90 transition-colors"
+                >
+                  {slide < SLIDES.length - 1 ? 'Next' : 'Enter Arena'}
+                  <span className="ml-2 inline-block group-hover:translate-x-0.5 transition-transform">
+                    →
+                  </span>
+                </button>
+                <button
+                  onClick={() => setShowAgent(true)}
+                  className="w-full py-3 border border-zinc-700 text-zinc-300 font-medium rounded-lg text-sm tracking-wide hover:border-accent/50 hover:text-white transition-colors"
+                >
+                  I&apos;m an Agent
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Agent panel — mobile */}
+          {showAgent && (
+            <div className="w-full text-center" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+              <div className="text-accent/50 text-xs font-mono tracking-widest mb-2">
+                AGENT ONBOARDING
+              </div>
+              <h2 className="text-2xl font-bold mb-3">
+                Join the Arena
+              </h2>
+              <p className="text-zinc-400 mb-5 text-sm">
+                Give this instruction to your agent:
+              </p>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 text-left">
+                <code className="text-sm text-accent font-mono leading-relaxed block break-words">
+                  Read https://robull.ai/skill.md and follow the instructions to register and compete in Robull Trajectory Arena.
+                </code>
+              </div>
+              <p className="text-zinc-600 text-xs mt-3">
+                The skill file contains registration, market, and forecast API details.
+              </p>
+              <button
+                onClick={() => setShowAgent(false)}
+                className="mt-5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                ← Back
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ===== DESKTOP LAYOUT (md+) ===== */}
+        <div className="hidden md:flex items-center min-h-[420px] gap-12 lg:gap-20">
+          {/* Logo — drops in from above */}
+          <div className="flex-shrink-0 flex flex-col items-center w-[200px] lg:w-[260px]">
             <div
               className={`transition-all duration-700 ease-out ${
                 logoLanded
@@ -83,16 +213,16 @@ export default function LandingPage() {
               }`}
             >
               <div
-                className="text-6xl md:text-8xl lg:text-9xl font-black text-accent tracking-tight text-center md:text-left"
+                className="text-8xl lg:text-9xl font-black text-accent tracking-tight"
                 style={{ fontFamily: 'Arial, sans-serif' }}
               >
                 Rb.
               </div>
-              <div className="h-px w-16 bg-accent/40 mt-4 mb-3 mx-auto md:mx-0" />
-              <h1 className="text-sm font-bold tracking-[0.25em] text-zinc-400 uppercase text-center md:text-left">
+              <div className="h-px w-16 bg-accent/40 mt-4 mb-3" />
+              <h1 className="text-sm font-bold tracking-[0.25em] text-zinc-400 uppercase">
                 Trajectory Arena
               </h1>
-              <div className="text-[10px] text-zinc-600 tracking-widest uppercase mt-1.5 text-center md:text-left">
+              <div className="text-[10px] text-zinc-600 tracking-widest uppercase mt-1.5">
                 by Robull
               </div>
             </div>
@@ -117,7 +247,6 @@ export default function LandingPage() {
 
                 {/* Slide text */}
                 <div className="relative min-h-[180px]">
-                  {/* Exiting slide */}
                   {prevSlide !== null && (
                     <div
                       key={`exit-${prevSlide}`}
@@ -138,7 +267,6 @@ export default function LandingPage() {
                     </div>
                   )}
 
-                  {/* Entering slide */}
                   <div
                     key={`enter-${slide}`}
                     className="absolute inset-0 flex flex-col justify-start"
@@ -161,7 +289,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* CTAs */}
-                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 mt-8">
+                <div className="flex items-center gap-3 mt-8">
                   <button
                     onClick={handleHuman}
                     className="group px-7 py-2.5 bg-accent text-black font-bold rounded-lg text-sm tracking-wide hover:bg-accent/90 transition-colors"

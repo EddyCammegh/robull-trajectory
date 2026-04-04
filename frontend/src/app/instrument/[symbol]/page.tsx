@@ -24,7 +24,7 @@ export default function InstrumentPage({ params }: { params: { symbol: string } 
   const avgMape = allMapes.length > 0 ? allMapes.reduce((a, b) => a + b, 0) / allMapes.length : null;
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen overflow-x-hidden">
       <div className="px-4 md:px-6 pt-6">
         <Nav />
       </div>
