@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import time
+from datetime import datetime, timezone, timedelta
 import requests
 import anthropic
 import openai
@@ -9,6 +10,7 @@ import openai
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 ROBULL_API_URL = os.environ.get("ROBULL_API_URL", "https://robull-trajectory-production.up.railway.app")
+POLYGON_API_KEY = os.environ.get("POLYGON_API_KEY", "")
 
 AGENT_KEYS = {
     # NEWS cohort
@@ -103,6 +105,89 @@ PROVIDER_MODELS = {
 }
 
 
+# ── Instrument → ticker mapping for Polygon price history ──────────────────
+INSTRUMENT_TICKER_MAP = {
+    "AAPL": "AAPL",
+    "NVDA": "NVDA",
+    "TSLA": "TSLA",
+    "QQQ": "QQQ",
+    "GOLD": "GLD",
+}
+
+
+def fetch_price_history(instrument, days=30):
+    """Fetch last N days of daily closing prices from Polygon API."""
+    if not POLYGON_API_KEY:
+        print(f"  [TimesFM] No POLYGON_API_KEY, skipping price history for {instrument}")
+        return []
+    ticker = INSTRUMENT_TICKER_MAP.get(instrument, instrument)
+    to_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    from_date = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
+    url = f"https://api.polygon.io/v2/aggs/ticker/{ticker}/range/1/day/{from_date}/{to_date}"
+    try:
+        resp = requests.get(url, params={"apiKey": POLYGON_API_KEY}, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        results = data.get("results", [])
+        if not results:
+            print(f"  [TimesFM] No price data for {instrument} ({ticker})")
+            return []
+        closes = [r["c"] for r in results]
+        print(f"  [TimesFM] Fetched {len(closes)} daily closes for {instrument}")
+        return closes
+    except Exception as e:
+        print(f"  [TimesFM] Polygon API error for {instrument}: {e}")
+        return []
+
+
+def run_timesfm_forecast(price_history, horizon=8):
+    """Run TimesFM 2.5 forecast or fall back to linear extrapolation."""
+    if not price_history or len(price_history) < 5:
+        return []
+
+    # Try TimesFM first
+    try:
+        import timesfm
+        import numpy as np
+
+        tfm = timesfm.TimesFm(
+            hparams=timesfm.TimesFmHparams(
+                backend="cpu",
+                per_core_batch_size=1,
+                horizon_len=horizon,
+            ),
+            checkpoint=timesfm.TimesFmCheckpoint(huggingface_repo_id="google/timesfm-2.0-500m-pytorch"),
+        )
+        forecast_input = np.array([price_history])
+        point_forecast, _ = tfm.forecast(forecast_input)
+        raw = point_forecast[0][:horizon].tolist()
+
+        # Sanity check: forecasts should be in a reasonable range of recent prices
+        last_price = price_history[-1]
+        scaled = []
+        for p in raw:
+            if abs(p - last_price) / last_price > 0.5:  # >50% deviation is suspect
+                scaled.append(last_price)
+            else:
+                scaled.append(round(p, 2))
+        print(f"  [TimesFM] Model forecast: {scaled}")
+        return scaled
+
+    except ImportError:
+        print("  [TimesFM] timesfm not installed, falling back to linear extrapolation")
+    except Exception as e:
+        print(f"  [TimesFM] Model error: {e}, falling back to linear extrapolation")
+
+    # Fallback: simple linear extrapolation from last 5 days
+    recent = price_history[-5:]
+    n = len(recent)
+    avg_delta = (recent[-1] - recent[0]) / (n - 1) if n > 1 else 0
+    last = price_history[-1]
+    forecast = [round(last + avg_delta * (i + 1), 2) for i in range(horizon)]
+    print(f"  [TimesFM] Linear fallback forecast: {forecast}")
+    return forecast
+
+
 def get_markets():
     url = f"{ROBULL_API_URL}/v1/trajectory/markets"
     resp = requests.get(url, timeout=15)
@@ -177,11 +262,21 @@ def call_haiku_researcher_with_retry(prompt):
 
 # ── Phase 2: Reasoning ──
 
-def build_prompt(market, cohort_focus, briefing):
+def build_prompt(market, cohort_focus, briefing, timesfm_baseline=None):
     instrument = market["instrument"]
     previous_close = market.get("previous_close", "unknown")
     live_price = market.get("live_price", "unknown")
     trading_date = market.get("trading_date", "today")
+
+    timesfm_block = ""
+    if timesfm_baseline and len(timesfm_baseline) >= 8:
+        hours = ["9:30", "10:30", "11:30", "12:30", "1:30", "2:30", "3:30", "4:00"]
+        price_points_str = ", ".join(f"{h}=${p:.2f}" for h, p in zip(hours, timesfm_baseline[:8]))
+        timesfm_block = (
+            f"\nTIMESFM BASELINE (statistical pattern forecast): {price_points_str}. "
+            f"Consider whether today's news and your analysis supports or contradicts this statistical baseline. "
+            f"Explain any significant deviations in your reasoning.\n"
+        )
 
     return f"""You are a financial forecasting agent. Your task is to predict the intraday price trajectory for {instrument} on {trading_date}.
 
@@ -196,7 +291,7 @@ YOUR ANALYSIS FOCUS:
 
 RESEARCH BRIEFING:
 {briefing}
-
+{timesfm_block}
 INSTRUCTIONS:
 1. Using the research briefing above and your analysis focus, predict 8 price points for the trading day at these times:
    - Point 1: 9:30 AM ET (market open)
@@ -291,14 +386,14 @@ def call_openai_reasoner_with_retry(prompt):
         return call_openai_reasoner(prompt)
 
 
-def run_agent(agent_name, api_key, market, cohort_focus, briefing, provider="sonnet"):
+def run_agent(agent_name, api_key, market, cohort_focus, briefing, provider="sonnet", timesfm_baseline=None):
     instrument = market["instrument"]
     market_id = market["id"]
 
     print(f"  [{agent_name}] Forecasting {instrument} ({provider})...")
 
     try:
-        prompt = build_prompt(market, cohort_focus, briefing)
+        prompt = build_prompt(market, cohort_focus, briefing, timesfm_baseline=timesfm_baseline)
         if provider == "openai":
             response_text = call_openai_reasoner_with_retry(prompt)
         elif provider == "haiku":
@@ -384,6 +479,34 @@ def main():
     print(f"{len(accepting)} markets accepting forecasts")
     print()
 
+    # ── PHASE 0: TimesFM baseline forecasts ──
+    print("=" * 60)
+    print("PHASE 0: TimesFM Baseline Forecasts")
+    print("=" * 60)
+    print()
+
+    timesfm_forecasts = {}  # instrument → [p1..p8]
+    for market in accepting:
+        instrument = market["instrument"]
+        ticker = INSTRUMENT_TICKER_MAP.get(instrument)
+        if not ticker:
+            print(f"  [{instrument}] No ticker mapping, skipping TimesFM")
+            continue
+        prices = fetch_price_history(instrument)
+        if prices:
+            forecast = run_timesfm_forecast(prices)
+            if forecast:
+                timesfm_forecasts[instrument] = forecast
+                hours = ["9:30", "10:30", "11:30", "12:30", "1:30", "2:30", "3:30", "4:00"]
+                baseline_str = ", ".join(f"{h}=${p:.2f}" for h, p in zip(hours, forecast[:8]))
+                print(f"  [Phase 0] {instrument} TimesFM baseline: {baseline_str}")
+
+    if timesfm_forecasts:
+        print(f"\n  Generated forecasts for {len(timesfm_forecasts)} instruments")
+    else:
+        print("  No TimesFM forecasts generated (missing POLYGON_API_KEY or no data)")
+    print()
+
     # ── PHASE 1: Research (Haiku + web search) ──
     print("=" * 60)
     print("PHASE 1: Research (Haiku + web search)")
@@ -434,7 +557,8 @@ def main():
             for market in accepting:
                 instrument = market["instrument"]
                 briefing = research.get(cohort_name, {}).get(instrument, "Research unavailable.")
-                run_agent(agent_name, api_key, market, focus, briefing, provider)
+                baseline = timesfm_forecasts.get(instrument)
+                run_agent(agent_name, api_key, market, focus, briefing, provider, timesfm_baseline=baseline)
                 time.sleep(15)
 
         print()
