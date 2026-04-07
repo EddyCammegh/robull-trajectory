@@ -1,3 +1,5 @@
 requests
 anthropic
 openai
+timesfm
+torch
