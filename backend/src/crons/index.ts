@@ -17,8 +17,8 @@ function isTradingDay(): boolean {
 }
 
 export function startCrons(): void {
-  // Create markets at 9:00 AM ET every weekday (skip holidays)
-  cron.schedule('0 9 * * 1-5', async () => {
+  // Create markets at 5:00 AM ET every weekday (skip holidays)
+  cron.schedule('0 5 * * 1-5', async () => {
     if (!isTradingDay()) { console.log('NYSE holiday — skipping market creation'); return; }
     console.log('Running createDailyMarkets cron');
     await createDailyMarkets();

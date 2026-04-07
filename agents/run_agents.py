@@ -141,26 +141,40 @@ def fetch_price_history(instrument, days=30):
 
 
 def run_timesfm_forecast(price_history, horizon=8):
-    """Run TimesFM 2.5 forecast or fall back to linear extrapolation."""
+    """Run TimesFM 1.3.0 forecast or fall back to linear extrapolation."""
     if not price_history or len(price_history) < 5:
         return []
 
     # Try TimesFM first
     try:
         import timesfm
-        import numpy as np
+        import pandas as pd
 
-        tfm = timesfm.TimesFm(
-            hparams=timesfm.TimesFmHparams(
-                backend="cpu",
-                per_core_batch_size=1,
+        tfm = timesfm.TimesFM(
+            hparams=timesfm.TimesFMHparams(
+                backend="torch",
+                per_core_batch_size=32,
                 horizon_len=horizon,
             ),
-            checkpoint=timesfm.TimesFmCheckpoint(huggingface_repo_id="google/timesfm-2.0-500m-pytorch"),
+            checkpoint=timesfm.TimesFMCheckpoint(
+                huggingface_repo_id="google/timesfm-1.0-200m",
+            ),
         )
-        forecast_input = np.array([price_history])
-        point_forecast, _ = tfm.forecast(forecast_input)
-        raw = point_forecast[0][:horizon].tolist()
+
+        # Build input DataFrame with columns: unique_id, ds, y
+        df = pd.DataFrame({
+            "unique_id": ["instrument"] * len(price_history),
+            "ds": pd.date_range(end=pd.Timestamp.now().normalize(), periods=len(price_history), freq="D"),
+            "y": price_history,
+        })
+
+        point_forecast, _ = tfm.forecast_on_df(
+            inputs=df,
+            freq="D",
+            value_name="y",
+            num_jobs=1,
+        )
+        raw = point_forecast["timesfm"].values[:horizon].tolist()
 
         # Sanity check: forecasts should be in a reasonable range of recent prices
         last_price = price_history[-1]
