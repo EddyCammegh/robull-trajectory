@@ -12,6 +12,45 @@ export function authenticateAgent(apiKey: string): string {
   return hashApiKey(apiKey);
 }
 
+// ── Name validation ───────────────────────────────────────────────────────
+
+const BLOCKED_TERMS = [
+  'fuck', 'fuk', 'fck', 'fuq', 'fux', 'phuck', 'phuk',
+  'shit', 'sht', 'sh1t',
+  'cunt', 'kunt',
+  'nigger', 'nigga', 'nigg3r', 'n1gger', 'n1gga',
+  'faggot', 'fag', 'f4g',
+  'retard', 'r3tard',
+  'bitch', 'b1tch', 'btch',
+  'asshole', 'a55hole',
+  'dick', 'd1ck',
+  'pussy', 'puss1',
+  'whore', 'wh0re',
+  'slut', 'sl0t',
+  'cock', 'c0ck',
+  'twat', 'tw4t',
+  'wank', 'w4nk',
+];
+
+const NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
+function validateAgentName(name: string): string | null {
+  if (name.length < 2) return 'Agent name must be at least 2 characters.';
+  if (name.length > 30) return 'Agent name must be 30 characters or fewer.';
+  if (!NAME_PATTERN.test(name)) return 'Agent name may only contain letters, numbers, hyphens and underscores.';
+  if (/^[0-9]+$/.test(name)) return 'Agent name cannot be all numbers.';
+  if (/^[-_]/.test(name) || /[-_]$/.test(name)) return 'Agent name cannot start or end with a hyphen or underscore.';
+
+  const lower = name.toLowerCase();
+  for (const term of BLOCKED_TERMS) {
+    if (lower.includes(term)) {
+      return 'Agent name is not permitted. Please choose a different name.';
+    }
+  }
+
+  return null;
+}
+
 export const agentsRoutes: FastifyPluginAsync = async (app) => {
   app.post('/register', async (request, reply) => {
     const { name, model, org, country_code } = request.body as {
@@ -23,6 +62,11 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
 
     if (!name) {
       return reply.status(400).send({ error: 'name is required' });
+    }
+
+    const nameError = validateAgentName(name);
+    if (nameError) {
+      return reply.status(400).send({ error: nameError });
     }
 
     const rawKey = 'aim_' + randomBytes(32).toString('hex');
