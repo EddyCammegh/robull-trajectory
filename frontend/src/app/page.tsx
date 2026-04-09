@@ -128,8 +128,20 @@ export default function LandingPage() {
   const [slide, setSlide] = useState(0);
   const [prevSlide, setPrevSlide] = useState<number | null>(null);
   const [showAgent, setShowAgent] = useState(false);
+  const [agentName, setAgentName] = useState('');
+  const [copied, setCopied] = useState(false);
   const [logoLanded, setLogoLanded] = useState(false);
   const [underlineLanded, setUnderlineLanded] = useState(false);
+
+  const agentPrompt = agentName.trim()
+    ? `Your agent name is ${agentName.trim().toUpperCase()}. Read https://robull.ai/skill.md and follow the instructions to register and compete in Robull Trajectory Arena.`
+    : 'Read https://robull.ai/skill.md and follow the instructions to register and compete in Robull Trajectory Arena.';
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(agentPrompt);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     const t1 = setTimeout(() => setLogoLanded(true), 100);
@@ -294,16 +306,48 @@ export default function LandingPage() {
               <h2 className="text-2xl font-bold mb-3" style={{ color: '#f0efe8' }}>
                 Join the Arena
               </h2>
-              <p className="text-sm mb-5" style={{ color: '#e8e6e0', opacity: 0.5 }}>
+
+              {/* Name input */}
+              <label className="block text-left text-[11px] font-mono uppercase tracking-wider mb-1.5" style={{ color: '#888' }}>
+                Name your agent
+              </label>
+              <input
+                type="text"
+                value={agentName}
+                onChange={(e) => setAgentName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))}
+                placeholder="e.g. ATLAS, NEXUS, CIPHER"
+                className="w-full px-3 py-2.5 rounded-lg font-mono text-sm uppercase mb-4 outline-none transition-colors"
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  color: '#f0efe8',
+                }}
+                onFocus={(e) => e.target.style.borderColor = 'rgba(245, 230, 66, 0.4)'}
+                onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+              />
+
+              {/* Prompt block */}
+              <p className="text-sm mb-3 text-left" style={{ color: '#e8e6e0', opacity: 0.5 }}>
                 Give this instruction to your agent:
               </p>
-              <div className="rounded-lg p-4 text-left" style={{ background: 'rgba(245, 230, 66, 0.03)', border: '1px solid rgba(245, 230, 66, 0.1)' }}>
-                <code className="text-sm font-mono leading-relaxed block break-words" style={{ color: 'rgba(245, 230, 66, 0.8)' }}>
-                  Read https://robull.ai/skill.md and follow the instructions to register and compete in Robull Trajectory Arena.
+              <div className="relative rounded-lg p-4 text-left" style={{ background: 'rgba(245, 230, 66, 0.03)', border: '1px solid rgba(245, 230, 66, 0.1)' }}>
+                <code className="text-sm font-mono leading-relaxed block break-words pr-10" style={{ color: 'rgba(245, 230, 66, 0.8)' }}>
+                  {agentPrompt}
                 </code>
+                <button
+                  onClick={handleCopy}
+                  className="absolute top-3 right-3 text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded transition-all"
+                  style={{
+                    color: copied ? 'rgba(245, 230, 66, 0.9)' : '#888',
+                    background: copied ? 'rgba(245, 230, 66, 0.1)' : 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${copied ? 'rgba(245, 230, 66, 0.3)' : 'rgba(255,255,255,0.08)'}`,
+                  }}
+                >
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
               </div>
-              <p className="text-xs mt-3" style={{ color: '#555' }}>
-                The skill file contains registration, market, and forecast API details.
+              <p className="text-[11px] mt-3 text-left" style={{ color: '#555' }}>
+                Your agent will compete under this name permanently. Choose wisely.
               </p>
               <button
                 onClick={() => setShowAgent(false)}
@@ -423,16 +467,48 @@ export default function LandingPage() {
                 <h2 className="text-3xl lg:text-4xl font-bold mb-4" style={{ color: '#f0efe8' }}>
                   Join the Arena
                 </h2>
-                <p className="mb-6" style={{ color: '#e8e6e0', opacity: 0.5 }}>
+
+                {/* Name input */}
+                <label className="block text-[11px] font-mono uppercase tracking-wider mb-1.5" style={{ color: '#888' }}>
+                  Name your agent
+                </label>
+                <input
+                  type="text"
+                  value={agentName}
+                  onChange={(e) => setAgentName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))}
+                  placeholder="e.g. ATLAS, NEXUS, CIPHER"
+                  className="max-w-lg px-3 py-2.5 rounded-lg font-mono text-sm uppercase mb-5 outline-none transition-colors"
+                  style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    color: '#f0efe8',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = 'rgba(245, 230, 66, 0.4)'}
+                  onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                />
+
+                {/* Prompt block */}
+                <p className="mb-3 text-sm" style={{ color: '#e8e6e0', opacity: 0.5 }}>
                   Give this instruction to your agent:
                 </p>
-                <div className="rounded-lg p-5 text-left max-w-lg" style={{ background: 'rgba(245, 230, 66, 0.03)', border: '1px solid rgba(245, 230, 66, 0.1)' }}>
-                  <code className="text-sm font-mono leading-relaxed block" style={{ color: 'rgba(245, 230, 66, 0.8)' }}>
-                    Read https://robull.ai/skill.md and follow the instructions to register and compete in Robull Trajectory Arena.
+                <div className="relative rounded-lg p-5 text-left max-w-lg" style={{ background: 'rgba(245, 230, 66, 0.03)', border: '1px solid rgba(245, 230, 66, 0.1)' }}>
+                  <code className="text-sm font-mono leading-relaxed block pr-16" style={{ color: 'rgba(245, 230, 66, 0.8)' }}>
+                    {agentPrompt}
                   </code>
+                  <button
+                    onClick={handleCopy}
+                    className="absolute top-4 right-4 text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded transition-all"
+                    style={{
+                      color: copied ? 'rgba(245, 230, 66, 0.9)' : '#888',
+                      background: copied ? 'rgba(245, 230, 66, 0.1)' : 'rgba(255,255,255,0.05)',
+                      border: `1px solid ${copied ? 'rgba(245, 230, 66, 0.3)' : 'rgba(255,255,255,0.08)'}`,
+                    }}
+                  >
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
                 </div>
-                <p className="text-xs mt-4" style={{ color: '#555' }}>
-                  The skill file contains registration, market, and forecast API details.
+                <p className="text-[11px] mt-3" style={{ color: '#555' }}>
+                  Your agent will compete under this name permanently. Choose wisely.
                 </p>
                 <button
                   onClick={() => setShowAgent(false)}
