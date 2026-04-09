@@ -202,6 +202,70 @@ def run_timesfm_forecast(price_history, horizon=8):
     return forecast
 
 
+def fetch_premarket_data(instrument, polygon_api_key):
+    """Fetch pre-market minute bars (4:00am–9:29am ET) and return a summary dict."""
+    if not polygon_api_key:
+        return None
+    ticker = INSTRUMENT_TICKER_MAP.get(instrument, instrument)
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    url = f"https://api.polygon.io/v2/aggs/ticker/{ticker}/range/1/minute/{today}/{today}"
+    try:
+        resp = requests.get(url, params={"adjusted": "true", "sort": "asc", "apiKey": polygon_api_key}, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        results = data.get("results", [])
+        if not results:
+            print(f"  [Premarket] No minute data for {instrument}")
+            return None
+
+        # Filter to pre-market hours: 4:00am ET (09:00 UTC) to 9:29am ET (14:29 UTC)
+        # Convert bar timestamps (ms) to ET and filter
+        from zoneinfo import ZoneInfo
+        et_tz = ZoneInfo("America/New_York")
+        premarket_bars = []
+        for bar in results:
+            bar_dt = datetime.fromtimestamp(bar["t"] / 1000, tz=timezone.utc).astimezone(et_tz)
+            bar_hour = bar_dt.hour
+            bar_minute = bar_dt.minute
+            # 4:00am ET to 9:29am ET
+            if (bar_hour >= 4) and (bar_hour < 9 or (bar_hour == 9 and bar_minute < 30)):
+                premarket_bars.append(bar)
+
+        if not premarket_bars:
+            print(f"  [Premarket] No pre-market bars for {instrument}")
+            return None
+
+        premarket_open = premarket_bars[0]["o"]
+        premarket_current = premarket_bars[-1]["c"]
+        premarket_high = max(b["h"] for b in premarket_bars)
+        premarket_low = min(b["l"] for b in premarket_bars)
+        premarket_volume = sum(b["v"] for b in premarket_bars)
+        change_pct = ((premarket_current - premarket_open) / premarket_open) * 100 if premarket_open else 0
+
+        if change_pct > 0.05:
+            trend = "up"
+        elif change_pct < -0.05:
+            trend = "down"
+        else:
+            trend = "flat"
+
+        summary = {
+            "premarket_open": round(premarket_open, 2),
+            "premarket_current": round(premarket_current, 2),
+            "premarket_change_pct": round(change_pct, 2),
+            "premarket_volume": int(premarket_volume),
+            "premarket_high": round(premarket_high, 2),
+            "premarket_low": round(premarket_low, 2),
+            "premarket_trend": trend,
+        }
+        print(f"  [Premarket] {instrument}: ${summary['premarket_open']} → ${summary['premarket_current']} ({summary['premarket_change_pct']:+.2f}%) vol={summary['premarket_volume']:,} trend={trend}")
+        return summary
+
+    except Exception as e:
+        print(f"  [Premarket] Error fetching {instrument}: {e}")
+        return None
+
+
 def get_markets():
     url = f"{ROBULL_API_URL}/v1/trajectory/markets"
     resp = requests.get(url, timeout=15)
@@ -276,7 +340,7 @@ def call_haiku_researcher_with_retry(prompt):
 
 # ── Phase 2: Reasoning ──
 
-def build_prompt(market, cohort_focus, briefing, timesfm_baseline=None):
+def build_prompt(market, cohort_focus, briefing, timesfm_baseline=None, premarket_baseline=None):
     instrument = market["instrument"]
     previous_close = market.get("previous_close", "unknown")
     live_price = market.get("live_price", "unknown")
@@ -292,6 +356,18 @@ def build_prompt(market, cohort_focus, briefing, timesfm_baseline=None):
             f"Explain any significant deviations in your reasoning.\n"
         )
 
+    premarket_block = ""
+    if premarket_baseline:
+        pm = premarket_baseline
+        premarket_block = (
+            f"\nPRE-MARKET DATA (4am-9:30am ET): "
+            f"Open=${pm['premarket_open']}, Current=${pm['premarket_current']}, "
+            f"Change={pm['premarket_change_pct']:+.2f}%, "
+            f"High=${pm['premarket_high']}, Low=${pm['premarket_low']}, "
+            f"Volume={pm['premarket_volume']:,}, Trend={pm['premarket_trend']}. "
+            f"This is the most recent price action before market open.\n"
+        )
+
     return f"""You are a financial forecasting agent. Your task is to predict the intraday price trajectory for {instrument} on {trading_date}.
 
 CURRENT DATA:
@@ -305,7 +381,7 @@ YOUR ANALYSIS FOCUS:
 
 RESEARCH BRIEFING:
 {briefing}
-{timesfm_block}
+{timesfm_block}{premarket_block}
 INSTRUCTIONS:
 1. Using the research briefing above and your analysis focus, predict 8 price points for the trading day at these times:
    - Point 1: 9:30 AM ET (market open)
@@ -400,14 +476,14 @@ def call_openai_reasoner_with_retry(prompt):
         return call_openai_reasoner(prompt)
 
 
-def run_agent(agent_name, api_key, market, cohort_focus, briefing, provider="sonnet", timesfm_baseline=None):
+def run_agent(agent_name, api_key, market, cohort_focus, briefing, provider="sonnet", timesfm_baseline=None, premarket_baseline=None):
     instrument = market["instrument"]
     market_id = market["id"]
 
     print(f"  [{agent_name}] Forecasting {instrument} ({provider})...")
 
     try:
-        prompt = build_prompt(market, cohort_focus, briefing, timesfm_baseline=timesfm_baseline)
+        prompt = build_prompt(market, cohort_focus, briefing, timesfm_baseline=timesfm_baseline, premarket_baseline=premarket_baseline)
         if provider == "openai":
             response_text = call_openai_reasoner_with_retry(prompt)
         elif provider == "haiku":
@@ -521,6 +597,25 @@ def main():
         print("  No TimesFM forecasts generated (missing POLYGON_API_KEY or no data)")
     print()
 
+    # Fetch pre-market data
+    premarket_data = {}  # instrument → summary dict
+    if POLYGON_API_KEY:
+        print("  Fetching pre-market data...")
+        for market in accepting:
+            instrument = market["instrument"]
+            ticker = INSTRUMENT_TICKER_MAP.get(instrument)
+            if not ticker:
+                continue
+            pm = fetch_premarket_data(instrument, POLYGON_API_KEY)
+            if pm:
+                premarket_data[instrument] = pm
+
+        if premarket_data:
+            print(f"\n  Pre-market data for {len(premarket_data)} instruments")
+        else:
+            print("  No pre-market data available")
+    print()
+
     # ── PHASE 1: Research (Haiku + web search) ──
     print("=" * 60)
     print("PHASE 1: Research (Haiku + web search)")
@@ -572,7 +667,8 @@ def main():
                 instrument = market["instrument"]
                 briefing = research.get(cohort_name, {}).get(instrument, "Research unavailable.")
                 baseline = timesfm_forecasts.get(instrument)
-                run_agent(agent_name, api_key, market, focus, briefing, provider, timesfm_baseline=baseline)
+                pm = premarket_data.get(instrument)
+                run_agent(agent_name, api_key, market, focus, briefing, provider, timesfm_baseline=baseline, premarket_baseline=pm)
                 time.sleep(15)
 
         print()
