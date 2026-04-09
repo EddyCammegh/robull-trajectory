@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { ParticleCanvas } from '@/components/ParticleCanvas';
 
 export const metadata: Metadata = {
   title: 'Robull Trajectory',
@@ -24,7 +25,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen bg-black text-white antialiased">
-        {children}
+        <ParticleCanvas />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {children}
+        </div>
       </body>
     </html>
   );

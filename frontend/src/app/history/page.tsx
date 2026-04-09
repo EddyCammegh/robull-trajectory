@@ -18,7 +18,7 @@ export default function HistoryPage() {
   }, []);
 
   return (
-    <main className="min-h-screen overflow-x-hidden">
+    <main className="min-h-screen overflow-x-hidden bg-black">
       <div className="px-4 md:px-6 pt-6">
         <Nav />
       </div>

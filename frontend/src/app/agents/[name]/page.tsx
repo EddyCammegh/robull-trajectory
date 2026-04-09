@@ -24,7 +24,7 @@ export default function AgentPage({ params }: { params: { name: string } }) {
   }, [params.name]);
 
   return (
-    <main className="min-h-screen overflow-x-hidden">
+    <main className="min-h-screen overflow-x-hidden bg-black">
       <div className="px-4 md:px-6 pt-6">
         <Nav />
       </div>
@@ -91,8 +91,8 @@ export default function AgentPage({ params }: { params: { name: string } }) {
               {forecasts.length === 0 ? (
                 <p className="text-zinc-600 text-sm">No forecasts yet.</p>
               ) : (
-                <div className="border border-zinc-800 rounded-lg overflow-hidden">
-                  <div className="grid grid-cols-7 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider bg-zinc-900/50">
+                <div className="border border-zinc-800 rounded-lg overflow-hidden bg-zinc-950">
+                  <div className="grid grid-cols-7 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider bg-zinc-950">
                     <span>Date</span>
                     <span>Instrument</span>
                     <span>Direction</span>
@@ -103,7 +103,7 @@ export default function AgentPage({ params }: { params: { name: string } }) {
                   </div>
                   {forecasts.map((f, i) => (
                     <Link key={f.id} href={`/arena/${f.market_id}`}>
-                      <div className={`grid grid-cols-7 gap-2 px-4 py-2.5 text-sm hover:bg-zinc-900/50 transition-colors cursor-pointer ${
+                      <div className={`grid grid-cols-7 gap-2 px-4 py-2.5 text-sm hover:bg-zinc-900 transition-colors cursor-pointer ${
                         i > 0 ? 'border-t border-zinc-800/50' : ''
                       }`}>
                         <span className="text-zinc-400 font-mono text-xs">{f.trading_date}</span>

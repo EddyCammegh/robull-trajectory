@@ -122,7 +122,7 @@ export default function HomePage() {
   const latestDay = historyDays[0] ?? null;
 
   return (
-    <main className="min-h-screen overflow-x-hidden">
+    <main className="min-h-screen overflow-x-hidden bg-black">
       <div className="px-4 md:px-6 pt-6">
         <Nav />
       </div>
@@ -350,7 +350,7 @@ export default function HomePage() {
             <div className="flex gap-2 flex-wrap">
               {['QQQ', 'NVDA', 'AAPL', 'TSLA', 'GOLD'].map((sym) => (
                 <Link key={sym} href={`/instrument/${sym}`}>
-                  <span className="text-xs font-medium px-3 py-1.5 rounded-full border border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-accent/40 hover:text-white transition-colors">
+                  <span className="text-xs font-medium px-3 py-1.5 rounded-full border border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-accent/40 hover:text-white transition-colors">
                     {sym}
                   </span>
                 </Link>

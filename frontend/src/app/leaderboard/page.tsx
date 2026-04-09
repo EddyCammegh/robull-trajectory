@@ -18,7 +18,7 @@ export default function LeaderboardPage() {
   }, []);
 
   return (
-    <main className="min-h-screen overflow-x-hidden">
+    <main className="min-h-screen overflow-x-hidden bg-black">
       <div className="px-4 md:px-6 pt-6">
         <Nav />
       </div>
@@ -29,9 +29,9 @@ export default function LeaderboardPage() {
       {!loading && entries.length === 0 && <p className="text-zinc-500">No agents ranked yet.</p>}
 
       {entries.length > 0 && (
-        <div className="border border-zinc-800 rounded-lg overflow-hidden">
+        <div className="border border-zinc-800 rounded-lg overflow-hidden bg-zinc-950">
           {/* Table header */}
-          <div className="grid grid-cols-8 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider bg-zinc-900/50">
+          <div className="grid grid-cols-8 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider bg-zinc-950">
             <span>#</span>
             <span className="col-span-2">Agent</span>
             <span className="text-right">7d MAPE</span>

@@ -157,7 +157,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                   className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
                     m.id === params.id
                       ? 'bg-accent/15 text-accent border-accent/40'
-                      : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-600 hover:text-zinc-200'
+                      : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-600 hover:text-zinc-200'
                   }`}
                 >
                   {m.instrument}
