@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ParticleCanvas } from '@/components/ParticleCanvas';
 
 const SLIDES = [
   {
@@ -106,7 +107,10 @@ function LandingPageInner() {
   const firstAnim = 'premiumFadeIn 0.6s ease-out forwards';
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 md:px-6 relative overflow-hidden" style={{ background: '#000' }}>
+    <main className="min-h-screen flex flex-col items-center justify-center px-4 md:px-6 relative overflow-hidden bg-transparent">
+      {/* Particle network — landing page instance */}
+      <ParticleCanvas />
+
       {/* Subtle radial vignette */}
       <div className="absolute inset-0 pointer-events-none" style={{
         background: 'radial-gradient(ellipse 70% 60% at 50% 50%, transparent 0%, rgba(0,0,0,0.7) 100%)',
