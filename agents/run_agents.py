@@ -155,9 +155,10 @@ def run_timesfm_forecast(price_history, horizon=8):
                 per_core_batch_size=32,
                 horizon_len=horizon,
                 context_len=512,
+                num_layers=20,
             ),
             checkpoint=timesfm.TimesFmCheckpoint(
-                huggingface_repo_id="google/timesfm-2.0-500m-pytorch",
+                huggingface_repo_id="google/timesfm-1.0-200m-pytorch",
             ),
         )
 
