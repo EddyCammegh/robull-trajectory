@@ -1,6 +1,9 @@
 [build]
 builder = "nixpacks"
 
+[build.nixpacksPlan.phases.setup]
+nixPkgs = ["python311", "python311Packages.pip"]
+
 [deploy]
 cronSchedule = "0 11 * * 1-5"
-startCommand = "python run_agents.py"
+startCommand = "python3.11 run_agents.py"
