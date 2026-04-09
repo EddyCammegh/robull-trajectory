@@ -46,4 +46,22 @@ export async function createDailyMarkets(): Promise<void> {
       console.error(`Error creating market for ${key}:`, err);
     }
   }
+
+  // Refresh previous_close for all today's markets to ensure prices are populated
+  console.log('Refreshing previous_close for all markets...');
+  for (const [key] of Object.entries(INSTRUMENTS)) {
+    try {
+      const price = await fetchPrice(key);
+      if (price) {
+        await pool.query(
+          `UPDATE trajectory_markets SET previous_close = $1
+           WHERE instrument = $2 AND trading_date = $3`,
+          [price, key, today]
+        );
+        console.log(`  Refreshed ${key} previous_close: $${price}`);
+      }
+    } catch (err) {
+      console.error(`  Failed to refresh price for ${key}:`, err);
+    }
+  }
 }
