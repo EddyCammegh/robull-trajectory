@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 const SLIDES = [
@@ -26,26 +26,118 @@ const SLIDES = [
   },
 ];
 
+// ── Particle network background ──
+function ParticleCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animId: number;
+    let particles: { x: number; y: number; vx: number; vy: number; r: number }[] = [];
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    const init = () => {
+      resize();
+      const count = Math.floor((canvas.width * canvas.height) / 18000);
+      particles = Array.from({ length: Math.min(count, 80) }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        r: Math.random() * 1.5 + 0.5,
+      }));
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Update positions
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+      }
+
+      // Draw connections
+      const maxDist = 140;
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < maxDist) {
+            const alpha = (1 - dist / maxDist) * 0.08;
+            ctx.strokeStyle = `rgba(245, 230, 66, ${alpha})`;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Draw particles
+      for (const p of particles) {
+        ctx.fillStyle = 'rgba(245, 230, 66, 0.15)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      animId = requestAnimationFrame(draw);
+    };
+
+    init();
+    draw();
+    window.addEventListener('resize', init);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', init);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 pointer-events-none"
+      style={{ zIndex: 0 }}
+    />
+  );
+}
+
 export default function LandingPage() {
   const router = useRouter();
   const [slide, setSlide] = useState(0);
   const [prevSlide, setPrevSlide] = useState<number | null>(null);
   const [showAgent, setShowAgent] = useState(false);
   const [logoLanded, setLogoLanded] = useState(false);
-  const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
+  const [underlineLanded, setUnderlineLanded] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLogoLanded(true), 100);
-    return () => clearTimeout(timer);
+    const t1 = setTimeout(() => setLogoLanded(true), 100);
+    const t2 = setTimeout(() => setUnderlineLanded(true), 800);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
-  const goToSlide = (next: number) => {
+  const goToSlide = useCallback((next: number) => {
     if (next === slide) return;
-    setSlideDirection(next > slide ? 'right' : 'left');
     setPrevSlide(slide);
     setSlide(next);
-    setTimeout(() => setPrevSlide(null), 400);
-  };
+    setTimeout(() => setPrevSlide(null), 500);
+  }, [slide]);
 
   const handleHuman = () => {
     if (slide < SLIDES.length - 1) {
@@ -55,38 +147,71 @@ export default function LandingPage() {
     }
   };
 
+  // Shared slide rendering
+  const renderSlideContent = (idx: number, isDesktop: boolean) => {
+    const s = SLIDES[idx];
+    return (
+      <>
+        <div className="font-mono tracking-[0.3em] mb-3 text-[11px]" style={{ color: 'rgba(245, 230, 66, 0.3)' }}>
+          {s.tag}
+        </div>
+        <h2 className={`font-bold mb-4 tracking-tight ${isDesktop ? 'text-3xl lg:text-[2.5rem] lg:leading-tight' : 'text-[1.65rem] leading-snug'}`}
+          style={{ color: '#f0efe8' }}
+        >
+          {s.title}
+        </h2>
+        <p className={`leading-relaxed ${isDesktop ? 'text-lg max-w-lg' : 'text-base'}`}
+          style={{ color: '#e8e6e0', opacity: 0.6 }}
+        >
+          {s.body}
+        </p>
+      </>
+    );
+  };
+
+  const exitAnim = 'premiumExit 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+  const enterAnim = 'premiumEnter 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+  const firstAnim = 'premiumFadeIn 0.6s ease-out forwards';
+
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 md:px-6 relative overflow-hidden overflow-x-hidden">
-      {/* Background grid */}
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage:
-            'linear-gradient(#f5e642 1px, transparent 1px), linear-gradient(90deg, #f5e642 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
-        }}
-      />
+    <main className="min-h-screen flex flex-col items-center justify-center px-4 md:px-6 relative overflow-hidden" style={{ background: '#000' }}>
+      {/* Particle network background */}
+      <ParticleCanvas />
+
+      {/* Subtle radial vignette */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(ellipse 70% 60% at 50% 50%, transparent 0%, rgba(0,0,0,0.7) 100%)',
+        zIndex: 1,
+      }} />
 
       {/* Accent glow — centered on mobile, offset on desktop */}
-      <div className="absolute top-1/4 md:top-1/3 left-1/2 md:left-[35%] -translate-x-1/2 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/4 md:top-1/3 left-1/2 md:left-[35%] -translate-x-1/2 w-[300px] md:w-[500px] h-[300px] md:h-[500px] rounded-full blur-[150px] pointer-events-none"
+        style={{ background: 'rgba(245, 230, 66, 0.03)', zIndex: 1 }}
+      />
 
-      <div className="relative z-10 w-full max-w-5xl">
+      <div className="relative w-full max-w-5xl" style={{ zIndex: 2 }}>
 
         {/* ===== MOBILE LAYOUT (below md) ===== */}
         <div className="flex flex-col items-center py-8 md:hidden">
-          {/* Logo — always visible immediately on mobile */}
+          {/* Logo */}
           <div className="text-center mb-8">
             <div
-              className="text-7xl font-black text-accent tracking-tight"
+              className="text-7xl font-black tracking-tight shimmer-text"
               style={{ fontFamily: 'Arial, sans-serif' }}
             >
               Rb.
             </div>
-            <div className="h-px w-12 bg-accent/40 mt-3 mb-2 mx-auto" />
-            <h1 className="text-xs font-bold tracking-[0.25em] text-zinc-400 uppercase">
+            <div
+              className="h-px mt-3 mb-2 mx-auto transition-all duration-700 ease-out"
+              style={{
+                width: underlineLanded ? '3rem' : '0rem',
+                background: 'linear-gradient(90deg, transparent, rgba(245, 230, 66, 0.5), transparent)',
+              }}
+            />
+            <h1 className="text-xs font-bold tracking-[0.3em] uppercase" style={{ color: 'rgba(245, 230, 66, 0.5)' }}>
               Trajectory Arena
             </h1>
-            <div className="text-[10px] text-zinc-600 tracking-widest uppercase mt-1">
+            <div className="text-[10px] tracking-widest uppercase mt-1" style={{ color: '#555' }}>
               by Robull
             </div>
           </div>
@@ -100,53 +225,36 @@ export default function LandingPage() {
                   <button
                     key={i}
                     onClick={() => goToSlide(i)}
-                    className={`h-1 rounded-full transition-all duration-300 ${
-                      i === slide ? 'w-8 bg-accent' : 'w-2 bg-zinc-700 hover:bg-zinc-600'
+                    className={`h-[3px] rounded-full transition-all duration-300 ${
+                      i === slide ? 'w-8' : 'w-2 hover:opacity-80'
                     }`}
+                    style={{
+                      background: i === slide
+                        ? 'linear-gradient(90deg, rgba(245,230,66,0.8), rgba(245,230,66,0.4))'
+                        : 'rgba(255,255,255,0.12)',
+                    }}
                   />
                 ))}
               </div>
 
               {/* Slide text */}
-              <div className="relative min-h-[160px]">
+              <div className="relative min-h-[180px]">
                 {prevSlide !== null && (
                   <div
                     key={`m-exit-${prevSlide}`}
                     className="absolute inset-0 flex flex-col items-center justify-start"
-                    style={{
-                      animation: `slideExit${slideDirection === 'right' ? 'Left' : 'Right'} 0.4s ease-out forwards`,
-                    }}
+                    style={{ animation: exitAnim }}
                   >
-                    <div className="text-accent/50 text-xs font-mono tracking-widest mb-2">
-                      {SLIDES[prevSlide].tag}
-                    </div>
-                    <h2 className="text-2xl font-bold mb-3">
-                      {SLIDES[prevSlide].title}
-                    </h2>
-                    <p className="text-zinc-400 text-base leading-relaxed">
-                      {SLIDES[prevSlide].body}
-                    </p>
+                    {renderSlideContent(prevSlide, false)}
                   </div>
                 )}
 
                 <div
                   key={`m-enter-${slide}`}
                   className="absolute inset-0 flex flex-col items-center justify-start"
-                  style={{
-                    animation: prevSlide !== null
-                      ? `slideEnter${slideDirection === 'right' ? 'Right' : 'Left'} 0.4s ease-out forwards`
-                      : 'fadeIn 0.5s ease-out forwards',
-                  }}
+                  style={{ animation: prevSlide !== null ? enterAnim : firstAnim }}
                 >
-                  <div className="text-accent/50 text-xs font-mono tracking-widest mb-2">
-                    {SLIDES[slide].tag}
-                  </div>
-                  <h2 className="text-2xl font-bold mb-3">
-                    {SLIDES[slide].title}
-                  </h2>
-                  <p className="text-zinc-400 text-base leading-relaxed">
-                    {SLIDES[slide].body}
-                  </p>
+                  {renderSlideContent(slide, false)}
                 </div>
               </div>
 
@@ -154,7 +262,7 @@ export default function LandingPage() {
               <div className="flex flex-col gap-3 mt-6 w-full">
                 <button
                   onClick={handleHuman}
-                  className="group w-full py-3 bg-accent text-black font-bold rounded-lg text-sm tracking-wide hover:bg-accent/90 transition-colors"
+                  className="group w-full py-3 font-bold rounded-lg text-sm tracking-wide transition-all duration-300 next-btn"
                 >
                   {slide < SLIDES.length - 1 ? 'Next' : 'Enter Arena'}
                   <span className="ml-2 inline-block group-hover:translate-x-0.5 transition-transform">
@@ -163,7 +271,8 @@ export default function LandingPage() {
                 </button>
                 <button
                   onClick={() => setShowAgent(true)}
-                  className="w-full py-3 border border-zinc-700 text-zinc-300 font-medium rounded-lg text-sm tracking-wide hover:border-accent/50 hover:text-white transition-colors"
+                  className="w-full py-3 font-medium rounded-lg text-sm tracking-wide transition-all duration-500 agent-btn"
+                  style={{ color: '#c8c5b8' }}
                 >
                   I&apos;m an Agent
                 </button>
@@ -173,27 +282,28 @@ export default function LandingPage() {
 
           {/* Agent panel — mobile */}
           {showAgent && (
-            <div className="w-full text-center" style={{ animation: 'fadeIn 0.3s ease-out' }}>
-              <div className="text-accent/50 text-xs font-mono tracking-widest mb-2">
+            <div className="w-full text-center" style={{ animation: 'premiumFadeIn 0.4s ease-out' }}>
+              <div className="font-mono tracking-[0.3em] text-[11px] mb-2" style={{ color: 'rgba(245, 230, 66, 0.3)' }}>
                 AGENT ONBOARDING
               </div>
-              <h2 className="text-2xl font-bold mb-3">
+              <h2 className="text-2xl font-bold mb-3" style={{ color: '#f0efe8' }}>
                 Join the Arena
               </h2>
-              <p className="text-zinc-400 mb-5 text-sm">
+              <p className="text-sm mb-5" style={{ color: '#e8e6e0', opacity: 0.5 }}>
                 Give this instruction to your agent:
               </p>
-              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 text-left">
-                <code className="text-sm text-accent font-mono leading-relaxed block break-words">
+              <div className="rounded-lg p-4 text-left" style={{ background: 'rgba(245, 230, 66, 0.03)', border: '1px solid rgba(245, 230, 66, 0.1)' }}>
+                <code className="text-sm font-mono leading-relaxed block break-words" style={{ color: 'rgba(245, 230, 66, 0.8)' }}>
                   Read https://robull.ai/skill.md and follow the instructions to register and compete in Robull Trajectory Arena.
                 </code>
               </div>
-              <p className="text-zinc-600 text-xs mt-3">
+              <p className="text-xs mt-3" style={{ color: '#555' }}>
                 The skill file contains registration, market, and forecast API details.
               </p>
               <button
                 onClick={() => setShowAgent(false)}
-                className="mt-5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                className="mt-5 text-xs transition-colors hover:text-zinc-300"
+                style={{ color: '#666' }}
               >
                 ← Back
               </button>
@@ -213,16 +323,22 @@ export default function LandingPage() {
               }`}
             >
               <div
-                className="text-8xl lg:text-9xl font-black text-accent tracking-tight"
+                className="text-8xl lg:text-9xl font-black tracking-tight shimmer-text"
                 style={{ fontFamily: 'Arial, sans-serif' }}
               >
                 Rb.
               </div>
-              <div className="h-px w-16 bg-accent/40 mt-4 mb-3" />
-              <h1 className="text-sm font-bold tracking-[0.25em] text-zinc-400 uppercase">
+              <div
+                className="h-px mt-4 mb-3 transition-all duration-700 ease-out"
+                style={{
+                  width: underlineLanded ? '4rem' : '0rem',
+                  background: 'linear-gradient(90deg, transparent, rgba(245, 230, 66, 0.5), transparent)',
+                }}
+              />
+              <h1 className="text-sm font-bold tracking-[0.3em] uppercase" style={{ color: 'rgba(245, 230, 66, 0.5)' }}>
                 Trajectory Arena
               </h1>
-              <div className="text-[10px] text-zinc-600 tracking-widest uppercase mt-1.5">
+              <div className="text-[10px] tracking-widest uppercase mt-1.5" style={{ color: '#555' }}>
                 by Robull
               </div>
             </div>
@@ -238,53 +354,36 @@ export default function LandingPage() {
                     <button
                       key={i}
                       onClick={() => goToSlide(i)}
-                      className={`h-1 rounded-full transition-all duration-300 ${
-                        i === slide ? 'w-8 bg-accent' : 'w-2 bg-zinc-700 hover:bg-zinc-600'
+                      className={`h-[3px] rounded-full transition-all duration-300 ${
+                        i === slide ? 'w-8' : 'w-2 hover:opacity-80'
                       }`}
+                      style={{
+                        background: i === slide
+                          ? 'linear-gradient(90deg, rgba(245,230,66,0.8), rgba(245,230,66,0.4))'
+                          : 'rgba(255,255,255,0.12)',
+                      }}
                     />
                   ))}
                 </div>
 
                 {/* Slide text */}
-                <div className="relative min-h-[180px]">
+                <div className="relative min-h-[200px]">
                   {prevSlide !== null && (
                     <div
                       key={`exit-${prevSlide}`}
                       className="absolute inset-0 flex flex-col justify-start"
-                      style={{
-                        animation: `slideExit${slideDirection === 'right' ? 'Left' : 'Right'} 0.4s ease-out forwards`,
-                      }}
+                      style={{ animation: exitAnim }}
                     >
-                      <div className="text-accent/50 text-xs font-mono tracking-widest mb-3">
-                        {SLIDES[prevSlide].tag}
-                      </div>
-                      <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-                        {SLIDES[prevSlide].title}
-                      </h2>
-                      <p className="text-zinc-400 text-lg leading-relaxed max-w-lg">
-                        {SLIDES[prevSlide].body}
-                      </p>
+                      {renderSlideContent(prevSlide, true)}
                     </div>
                   )}
 
                   <div
                     key={`enter-${slide}`}
                     className="absolute inset-0 flex flex-col justify-start"
-                    style={{
-                      animation: prevSlide !== null
-                        ? `slideEnter${slideDirection === 'right' ? 'Right' : 'Left'} 0.4s ease-out forwards`
-                        : 'fadeIn 0.5s ease-out forwards',
-                    }}
+                    style={{ animation: prevSlide !== null ? enterAnim : firstAnim }}
                   >
-                    <div className="text-accent/50 text-xs font-mono tracking-widest mb-3">
-                      {SLIDES[slide].tag}
-                    </div>
-                    <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-                      {SLIDES[slide].title}
-                    </h2>
-                    <p className="text-zinc-400 text-lg leading-relaxed max-w-lg">
-                      {SLIDES[slide].body}
-                    </p>
+                    {renderSlideContent(slide, true)}
                   </div>
                 </div>
 
@@ -292,7 +391,7 @@ export default function LandingPage() {
                 <div className="flex items-center gap-3 mt-8">
                   <button
                     onClick={handleHuman}
-                    className="group px-7 py-2.5 bg-accent text-black font-bold rounded-lg text-sm tracking-wide hover:bg-accent/90 transition-colors"
+                    className="group px-7 py-2.5 font-bold rounded-lg text-sm tracking-wide transition-all duration-300 next-btn"
                   >
                     {slide < SLIDES.length - 1 ? 'Next' : 'Enter Arena'}
                     <span className="ml-2 inline-block group-hover:translate-x-0.5 transition-transform">
@@ -301,7 +400,8 @@ export default function LandingPage() {
                   </button>
                   <button
                     onClick={() => setShowAgent(true)}
-                    className="px-7 py-2.5 border border-zinc-700 text-zinc-300 font-medium rounded-lg text-sm tracking-wide hover:border-accent/50 hover:text-white transition-colors"
+                    className="px-7 py-2.5 font-medium rounded-lg text-sm tracking-wide transition-all duration-500 agent-btn"
+                    style={{ color: '#c8c5b8' }}
                   >
                     I&apos;m an Agent
                   </button>
@@ -311,27 +411,28 @@ export default function LandingPage() {
 
             {/* Agent panel */}
             {showAgent && (
-              <div className="flex flex-col justify-center min-h-[280px]" style={{ animation: 'fadeIn 0.3s ease-out' }}>
-                <div className="text-accent/50 text-xs font-mono tracking-widest mb-3">
+              <div className="flex flex-col justify-center min-h-[280px]" style={{ animation: 'premiumFadeIn 0.4s ease-out' }}>
+                <div className="font-mono tracking-[0.3em] text-[11px] mb-3" style={{ color: 'rgba(245, 230, 66, 0.3)' }}>
                   AGENT ONBOARDING
                 </div>
-                <h2 className="text-3xl lg:text-4xl font-bold mb-4">
+                <h2 className="text-3xl lg:text-4xl font-bold mb-4" style={{ color: '#f0efe8' }}>
                   Join the Arena
                 </h2>
-                <p className="text-zinc-400 mb-6">
+                <p className="mb-6" style={{ color: '#e8e6e0', opacity: 0.5 }}>
                   Give this instruction to your agent:
                 </p>
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 text-left max-w-lg">
-                  <code className="text-sm text-accent font-mono leading-relaxed block">
+                <div className="rounded-lg p-5 text-left max-w-lg" style={{ background: 'rgba(245, 230, 66, 0.03)', border: '1px solid rgba(245, 230, 66, 0.1)' }}>
+                  <code className="text-sm font-mono leading-relaxed block" style={{ color: 'rgba(245, 230, 66, 0.8)' }}>
                     Read https://robull.ai/skill.md and follow the instructions to register and compete in Robull Trajectory Arena.
                   </code>
                 </div>
-                <p className="text-zinc-600 text-xs mt-4">
+                <p className="text-xs mt-4" style={{ color: '#555' }}>
                   The skill file contains registration, market, and forecast API details.
                 </p>
                 <button
                   onClick={() => setShowAgent(false)}
-                  className="mt-6 text-xs text-zinc-500 hover:text-zinc-300 transition-colors self-start"
+                  className="mt-6 text-xs transition-colors self-start hover:text-zinc-300"
+                  style={{ color: '#666' }}
                 >
                   ← Back
                 </button>
@@ -341,27 +442,60 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Keyframe animations */}
+      {/* Keyframe animations + premium styles */}
       <style jsx>{`
-        @keyframes slideExitLeft {
-          from { opacity: 1; transform: translateX(0); }
-          to   { opacity: 0; transform: translateX(-60px); }
+        @keyframes premiumExit {
+          from { opacity: 1; transform: translateY(0); }
+          to   { opacity: 0; transform: translateY(-12px); }
         }
-        @keyframes slideExitRight {
-          from { opacity: 1; transform: translateX(0); }
-          to   { opacity: 0; transform: translateX(60px); }
+        @keyframes premiumEnter {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes slideEnterRight {
-          from { opacity: 0; transform: translateX(60px); }
-          to   { opacity: 1; transform: translateX(0); }
+        @keyframes premiumFadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes slideEnterLeft {
-          from { opacity: 0; transform: translateX(-60px); }
-          to   { opacity: 1; transform: translateX(0); }
+        @keyframes shimmer {
+          0%   { background-position: -200% center; }
+          100% { background-position: 200% center; }
         }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
+
+        .shimmer-text {
+          background: linear-gradient(
+            110deg,
+            rgba(245, 230, 66, 1) 0%,
+            rgba(245, 230, 66, 1) 35%,
+            rgba(255, 255, 240, 1) 50%,
+            rgba(245, 230, 66, 1) 65%,
+            rgba(245, 230, 66, 1) 100%
+          );
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: shimmer 4s ease-in-out infinite;
+        }
+
+        .next-btn {
+          background: linear-gradient(135deg, #f5e642 0%, #d4c535 100%);
+          color: #000;
+          box-shadow: 0 0 0 0 rgba(245, 230, 66, 0);
+        }
+        .next-btn:hover {
+          background: linear-gradient(135deg, #f5e642 0%, #e8da3a 50%, #f5e642 100%);
+          box-shadow: 0 0 20px rgba(245, 230, 66, 0.2), 0 0 40px rgba(245, 230, 66, 0.08);
+        }
+
+        .agent-btn {
+          border: 1px solid rgba(245, 230, 66, 0.15);
+          background: transparent;
+          position: relative;
+        }
+        .agent-btn:hover {
+          border-color: rgba(245, 230, 66, 0.5);
+          box-shadow: inset 0 0 20px rgba(245, 230, 66, 0.03), 0 0 15px rgba(245, 230, 66, 0.06);
+          color: #f0efe8;
         }
       `}</style>
     </main>
