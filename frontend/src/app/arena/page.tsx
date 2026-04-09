@@ -40,9 +40,19 @@ function getNextMarketDay(): string {
   const now = new Date();
   const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
   const day = et.getDay(); // 0=Sun
+  const hour = et.getHours();
+  const minute = et.getMinutes();
+
+  // If today is a weekday and before market open (9:30 AM ET), show "today"
+  if (day >= 1 && day <= 5 && (hour < 9 || (hour === 9 && minute < 30))) {
+    return 'Opens today at 9:30 AM ET';
+  }
+
+  // Otherwise find the next weekday
   let daysAhead = 1;
-  if (day === 5) daysAhead = 3; // Fri → Mon
+  if (day === 5) daysAhead = 3; // Fri after open → Mon
   if (day === 6) daysAhead = 2; // Sat → Mon
+  if (day === 0) daysAhead = 1; // Sun → Mon
   const next = new Date(et);
   next.setDate(next.getDate() + daysAhead);
   return next.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
@@ -150,7 +160,10 @@ export default function HomePage() {
               Open Monday–Friday · 9:30 AM – 4:00 PM ET
             </p>
             <p className="text-zinc-500 text-sm mt-1">
-              Next session: <span className="text-white font-medium">{getNextMarketDay()}</span>
+              {getNextMarketDay().startsWith('Opens')
+                ? <span className="text-white font-medium">{getNextMarketDay()}</span>
+                : <>Next session: <span className="text-white font-medium">{getNextMarketDay()}</span></>
+              }
             </p>
           </div>
 
