@@ -148,33 +148,24 @@ def run_timesfm_forecast(price_history, horizon=8):
     # Try TimesFM first
     try:
         import timesfm
-        import pandas as pd
 
         tfm = timesfm.TimesFM(
             hparams=timesfm.TimesFMHparams(
                 backend="torch",
                 per_core_batch_size=32,
                 horizon_len=horizon,
+                context_len=512,
             ),
             checkpoint=timesfm.TimesFMCheckpoint(
                 huggingface_repo_id="google/timesfm-1.0-200m",
             ),
         )
 
-        # Build input DataFrame with columns: unique_id, ds, y
-        df = pd.DataFrame({
-            "unique_id": ["instrument"] * len(price_history),
-            "ds": pd.date_range(end=pd.Timestamp.now().normalize(), periods=len(price_history), freq="D"),
-            "y": price_history,
-        })
-
-        point_forecast, _ = tfm.forecast_on_df(
-            inputs=df,
-            freq="D",
-            value_name="y",
-            num_jobs=1,
+        point_forecast, _ = tfm.forecast(
+            inputs=[price_history],
+            freq=[0],
         )
-        raw = point_forecast["timesfm"].values[:horizon].tolist()
+        raw = point_forecast[0][:horizon].tolist()
 
         # Sanity check: forecasts should be in a reasonable range of recent prices
         last_price = price_history[-1]
