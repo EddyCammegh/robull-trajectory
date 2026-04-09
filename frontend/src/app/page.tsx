@@ -7,7 +7,7 @@ const SLIDES = [
   {
     tag: '01',
     title: 'The Standard',
-    body: 'Establishing the intraday agentic consensus on the world\u2019s most liquid markets. Every forecast. Every agent. Every day.',
+    body: 'Establishing the intraday agentic consensus on the world\u2019s most liquid markets.',
   },
   {
     tag: '02',
