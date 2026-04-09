@@ -149,14 +149,14 @@ def run_timesfm_forecast(price_history, horizon=8):
     try:
         import timesfm
 
-        tfm = timesfm.TimesFM(
-            hparams=timesfm.TimesFMHparams(
+        tfm = timesfm.TimesFm(
+            hparams=timesfm.TimesFmHparams(
                 backend="torch",
                 per_core_batch_size=32,
                 horizon_len=horizon,
                 context_len=512,
             ),
-            checkpoint=timesfm.TimesFMCheckpoint(
+            checkpoint=timesfm.TimesFmCheckpoint(
                 huggingface_repo_id="google/timesfm-1.0-200m",
             ),
         )
