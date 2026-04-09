@@ -51,13 +51,13 @@ function ParticleCanvas() {
 
     const init = () => {
       resize();
-      const count = Math.floor((canvas.width * canvas.height) / 18000);
-      particles = Array.from({ length: Math.min(count, 80) }, () => ({
+      const count = Math.floor((canvas.width * canvas.height) / 12000);
+      particles = Array.from({ length: Math.min(count, 120) }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         vx: (Math.random() - 0.5) * 0.3,
         vy: (Math.random() - 0.5) * 0.3,
-        r: Math.random() * 1.5 + 0.5,
+        r: Math.random() * 1.2 + 1.4,
       }));
     };
 
@@ -75,16 +75,16 @@ function ParticleCanvas() {
       }
 
       // Draw connections
-      const maxDist = 140;
+      const maxDist = 200;
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < maxDist) {
-            const alpha = (1 - dist / maxDist) * 0.08;
+            const alpha = (1 - dist / maxDist) * 0.20;
             ctx.strokeStyle = `rgba(245, 230, 66, ${alpha})`;
-            ctx.lineWidth = 0.5;
+            ctx.lineWidth = 0.8;
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
@@ -95,7 +95,7 @@ function ParticleCanvas() {
 
       // Draw particles
       for (const p of particles) {
-        ctx.fillStyle = 'rgba(245, 230, 66, 0.15)';
+        ctx.fillStyle = 'rgba(245, 230, 66, 0.35)';
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fill();
