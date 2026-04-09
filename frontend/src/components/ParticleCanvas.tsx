@@ -6,6 +6,7 @@ export function ParticleCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    console.log('ParticleCanvas mounted');
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -87,8 +88,7 @@ export function ParticleCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none"
-      style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}
+      style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
     />
   );
 }
