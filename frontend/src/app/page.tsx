@@ -112,8 +112,8 @@ function ParticleCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-none"
-      style={{ zIndex: 0 }}
+      className="pointer-events-none"
+      style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}
     />
   );
 }
@@ -181,22 +181,22 @@ export default function LandingPage() {
       {/* Subtle radial vignette */}
       <div className="absolute inset-0 pointer-events-none" style={{
         background: 'radial-gradient(ellipse 70% 60% at 50% 50%, transparent 0%, rgba(0,0,0,0.7) 100%)',
-        zIndex: 1,
+        zIndex: 5,
       }} />
 
       {/* Accent glow — centered on mobile, offset on desktop */}
       <div className="absolute top-1/4 md:top-1/3 left-1/2 md:left-[35%] -translate-x-1/2 w-[300px] md:w-[500px] h-[300px] md:h-[500px] rounded-full blur-[150px] pointer-events-none"
-        style={{ background: 'rgba(245, 230, 66, 0.03)', zIndex: 1 }}
+        style={{ background: 'rgba(245, 230, 66, 0.03)', zIndex: 5 }}
       />
 
-      <div className="relative w-full max-w-5xl" style={{ zIndex: 2 }}>
+      <div className="relative w-full max-w-5xl" style={{ zIndex: 10 }}>
 
         {/* ===== MOBILE LAYOUT (below md) ===== */}
         <div className="flex flex-col items-center py-8 md:hidden">
           {/* Logo */}
           <div className="text-center mb-8">
             <div
-              className="text-7xl font-black tracking-tight shimmer-text"
+              className="text-7xl font-black tracking-tight text-accent"
               style={{ fontFamily: 'Arial, sans-serif' }}
             >
               Rb.
@@ -323,7 +323,7 @@ export default function LandingPage() {
               }`}
             >
               <div
-                className="text-8xl lg:text-9xl font-black tracking-tight shimmer-text"
+                className="text-8xl lg:text-9xl font-black tracking-tight text-accent"
                 style={{ fontFamily: 'Arial, sans-serif' }}
               >
                 Rb.
@@ -456,27 +456,6 @@ export default function LandingPage() {
           from { opacity: 0; transform: translateY(8px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes shimmer {
-          0%   { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-
-        .shimmer-text {
-          background: linear-gradient(
-            110deg,
-            rgba(245, 230, 66, 1) 0%,
-            rgba(245, 230, 66, 1) 35%,
-            rgba(255, 255, 240, 1) 50%,
-            rgba(245, 230, 66, 1) 65%,
-            rgba(245, 230, 66, 1) 100%
-          );
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: shimmer 4s ease-in-out infinite;
-        }
-
         .next-btn {
           background: linear-gradient(135deg, #f5e642 0%, #d4c535 100%);
           color: #000;
