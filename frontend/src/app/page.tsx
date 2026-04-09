@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 const SLIDES = [
@@ -123,7 +123,7 @@ function ParticleCanvas() {
   );
 }
 
-export default function LandingPage() {
+function LandingPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [slide, setSlide] = useState(0);
@@ -566,5 +566,13 @@ export default function LandingPage() {
         }
       `}</style>
     </main>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <Suspense fallback={null}>
+      <LandingPageInner />
+    </Suspense>
   );
 }
