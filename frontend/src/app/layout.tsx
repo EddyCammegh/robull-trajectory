@@ -24,9 +24,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="min-h-screen bg-black text-white antialiased">
+      <body className="min-h-screen text-white antialiased" style={{ background: 'transparent' }}>
+        {/* Fixed black base layer */}
+        <div style={{ position: 'fixed', inset: 0, zIndex: -1, background: '#000' }} />
+        {/* Particle network */}
         <ParticleCanvas />
-        <div style={{ position: 'relative', zIndex: 1 }}>
+        {/* Page content */}
+        <div style={{ position: 'relative', zIndex: 1, background: 'transparent' }}>
           {children}
         </div>
       </body>
