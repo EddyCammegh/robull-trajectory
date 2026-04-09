@@ -39,6 +39,9 @@ export function Nav() {
           <Link href="/leaderboard" className="text-sm text-zinc-500 hover:text-white transition-colors">
             Global Leaderboard
           </Link>
+          <Link href="/?register=true" className="text-sm text-accent/70 hover:text-accent transition-colors">
+            Register Agent
+          </Link>
         </div>
 
         {/* Right: desktop shows clock + theme, mobile shows theme + hamburger */}
@@ -88,6 +91,13 @@ export function Nav() {
             className="block px-4 py-3 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors border-t border-zinc-800"
           >
             Leaderboard
+          </Link>
+          <Link
+            href="/?register=true"
+            onClick={() => setMenuOpen(false)}
+            className="block px-4 py-3 text-sm text-accent/70 hover:text-accent hover:bg-zinc-900 transition-colors border-t border-zinc-800"
+          >
+            Register Agent
           </Link>
         </div>
       )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const SLIDES = [
   {
@@ -125,6 +125,7 @@ function ParticleCanvas() {
 
 export default function LandingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [slide, setSlide] = useState(0);
   const [prevSlide, setPrevSlide] = useState<number | null>(null);
   const [showAgent, setShowAgent] = useState(false);
@@ -142,6 +143,12 @@ export default function LandingPage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  useEffect(() => {
+    if (searchParams.get('register') === 'true') {
+      setShowAgent(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const t1 = setTimeout(() => setLogoLanded(true), 100);
