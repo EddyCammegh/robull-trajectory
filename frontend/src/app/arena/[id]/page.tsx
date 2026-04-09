@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { getMarkets, getMarketLive, type Market, type MarketLive } from '@/lib/api';
 import { Nav } from '@/components/Nav';
+import { ParticleCanvas } from '@/components/ParticleCanvas';
 
 const FORECAST_COLORS = [
   '#f5e642', '#60a5fa', '#34d399', '#f472b6',
@@ -118,6 +119,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
 
   return (
     <main className="min-h-screen bg-black overflow-x-hidden">
+      <ParticleCanvas />
       <div className="px-4 md:px-6 pt-6">
         <Nav />
       </div>

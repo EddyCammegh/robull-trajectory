@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getAgentProfile, type AgentProfile, type AgentForecast, type AgentInstrument } from '@/lib/api';
 import { Nav } from '@/components/Nav';
+import { ParticleCanvas } from '@/components/ParticleCanvas';
 
 export default function AgentPage({ params }: { params: { name: string } }) {
   const [agent, setAgent] = useState<AgentProfile | null>(null);
@@ -25,6 +26,7 @@ export default function AgentPage({ params }: { params: { name: string } }) {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-black">
+      <ParticleCanvas />
       <div className="px-4 md:px-6 pt-6">
         <Nav />
       </div>

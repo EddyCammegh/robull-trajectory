@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { getMarkets, getMarketLive, getHistory, getLeaderboard, type Market, type MarketLive, type HistoryDay } from '@/lib/api';
 import { Nav } from '@/components/Nav';
+import { ParticleCanvas } from '@/components/ParticleCanvas';
 
 const STATUS_COLORS: Record<string, string> = {
   accepting: 'bg-green-500/20 text-green-400 border-green-500/40',
@@ -123,6 +124,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-black">
+      <ParticleCanvas />
       <div className="px-4 md:px-6 pt-6">
         <Nav />
       </div>
