@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ThemeToggle } from './ThemeToggle';
 
 export function Nav() {
   const [clockTime, setClockTime] = useState('');
@@ -44,7 +43,7 @@ export function Nav() {
           </Link>
         </div>
 
-        {/* Right: desktop shows clock + theme, mobile shows theme + hamburger */}
+        {/* Right: desktop shows clock, mobile shows hamburger */}
         <div className="flex-1 md:flex-none md:w-48 flex items-center justify-end gap-3">
           {/* Clock — desktop only */}
           <div className="hidden md:flex items-center gap-2 text-xs text-zinc-500">
@@ -54,7 +53,6 @@ export function Nav() {
             </span>
             <span className="font-mono">{clockTime || '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0'}</span>
           </div>
-          <ThemeToggle />
           {/* Hamburger — mobile only */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}

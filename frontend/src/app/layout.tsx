@@ -9,21 +9,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark">
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var theme = localStorage.getItem('theme') || 'dark';
-                  document.documentElement.setAttribute('data-theme', theme);
-                } catch(e) {}
-              })();
-            `,
-          }}
-        />
-      </head>
+    <html lang="en" className="dark" data-theme="dark">
       <body className="min-h-screen text-white antialiased" style={{ background: 'transparent' }}>
         {/* Fixed black base layer */}
         <div style={{ position: 'fixed', inset: 0, zIndex: -2, background: '#000' }} />
