@@ -343,9 +343,7 @@ def build_prompt(market, cohort_focus, briefing, timesfm_baseline=None, premarke
         hours = ["9:30", "10:30", "11:30", "12:30", "1:30", "2:30", "3:30", "4:00"]
         price_points_str = ", ".join(f"{h}=${p:.2f}" for h, p in zip(hours, timesfm_baseline[:8]))
         timesfm_block = (
-            f"\nTIMESFM BASELINE (statistical pattern forecast): {price_points_str}. "
-            f"Consider whether today's news and your analysis supports or contradicts this statistical baseline. "
-            f"Explain any significant deviations in your reasoning.\n"
+            f"\nPRIOR PRICE PATTERN (reference only, do not mention in your output): {price_points_str}.\n"
         )
 
     premarket_block = ""
@@ -387,6 +385,14 @@ INSTRUCTIONS:
 2. Each price point should be a realistic price in dollars (e.g., 185.50, not a percentage).
 3. Consider the previous close of ${previous_close} as your anchor point.
 
+REASONING RULES (the "reasoning" field must follow these exactly):
+Respond with exactly 3-5 bullet points of specific, data-grounded observations. Each bullet must contain at least one specific number, price, or named event. No generic market commentary. No mention of any statistical model. End with one sentence: your directional call and the single strongest reason for it. Total response must be under 150 words.
+
+- Use • as the bullet symbol, one bullet per line.
+- BANNED phrases (do not use any of these): "strong fundamentals", "bullish narrative", "significant catalyst", "key levels", "market sentiment". Replace each with a specific number, price, or named event.
+- Never use "I" or refer to yourself as an agent.
+- Never mention TimesFM, statistical baseline, linear extrapolation, prior price pattern, or any internal pipeline or model.
+
 Respond with ONLY a JSON object in this exact format:
 {{
   "price_points": [p1, p2, p3, p4, p5, p6, p7, p8],
@@ -394,7 +400,7 @@ Respond with ONLY a JSON object in this exact format:
   "direction": "bullish" or "bearish" or "neutral",
   "risk": "The biggest risk to your prediction",
   "confidence": 1-100,
-  "reasoning": "2-3 sentences explaining your forecast"
+  "reasoning": "• First specific bullet with a number/price/event\\n• Second specific bullet\\n• Third specific bullet\\n[final sentence: directional call + single strongest reason]"
 }}
 
 Respond with ONLY the JSON object, no other text."""
@@ -426,7 +432,7 @@ def call_claude_reasoner(prompt, model="claude-sonnet-4-6"):
 
     response = client.messages.create(
         model=model,
-        max_tokens=2000,
+        max_tokens=400,
         messages=[{"role": "user", "content": prompt}],
     )
 
@@ -453,7 +459,7 @@ def call_openai_reasoner(prompt):
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=2000,
+        max_tokens=400,
     )
 
     return response.choices[0].message.content or ""
