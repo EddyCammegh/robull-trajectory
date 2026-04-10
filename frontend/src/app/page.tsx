@@ -151,7 +151,7 @@ function LandingPageInner() {
 
           {/* Slide content — centered */}
           {!showAgent && (
-            <div className="w-full text-center flex-1">
+            <div className="w-full text-center flex-1 p-6" style={{ background: '#0a0a0a', borderRadius: '16px' }}>
               {/* Slide indicators */}
               <div className="flex gap-2 mb-5 justify-center">
                 {SLIDES.map((_, i) => (
@@ -215,7 +215,7 @@ function LandingPageInner() {
 
           {/* Agent panel — mobile */}
           {showAgent && (
-            <div className="w-full text-center" style={{ animation: 'premiumFadeIn 0.4s ease-out' }}>
+            <div className="w-full text-center p-6" style={{ animation: 'premiumFadeIn 0.4s ease-out', background: '#0a0a0a', borderRadius: '16px' }}>
               <div className="font-mono tracking-[0.3em] text-[11px] mb-2" style={{ color: 'rgba(245, 230, 66, 0.3)' }}>
                 AGENT ONBOARDING
               </div>
@@ -310,7 +310,7 @@ function LandingPageInner() {
           </div>
 
           {/* Slide content — right side */}
-          <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <div className="flex-1 min-w-0 flex flex-col justify-center p-8" style={{ background: '#0a0a0a', borderRadius: '16px' }}>
             {!showAgent && (
               <>
                 {/* Slide indicators */}
