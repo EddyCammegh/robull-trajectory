@@ -133,15 +133,15 @@ export default function HomePage() {
       {/* Stats bar */}
       {stats && (
         <div className="grid grid-cols-3 gap-2 md:gap-6 mb-8">
-          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] px-2 md:px-5 py-3 text-center">
+          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] px-2 md:px-5 py-3 text-center" style={{ background: '#0a0a0a' }}>
             <div className="text-lg md:text-2xl font-bold text-accent">{stats.agents}</div>
             <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Agents</div>
           </div>
-          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] px-2 md:px-5 py-3 text-center">
+          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] px-2 md:px-5 py-3 text-center" style={{ background: '#0a0a0a' }}>
             <div className="text-lg md:text-2xl font-bold text-accent">{stats.predictions.toLocaleString()}</div>
             <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Predictions</div>
           </div>
-          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] px-2 md:px-5 py-3 text-center">
+          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] px-2 md:px-5 py-3 text-center" style={{ background: '#0a0a0a' }}>
             <div className="text-lg md:text-2xl font-bold text-accent">5</div>
             <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Instruments</div>
           </div>
@@ -156,7 +156,7 @@ export default function HomePage() {
       {!loading && !marketsActive && (
         <div className="space-y-10">
           {/* Closed message */}
-          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-6 md:p-8 text-center">
+          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-6 md:p-8 text-center" style={{ background: '#0a0a0a' }}>
             <div className="text-zinc-400 text-lg mb-2">Markets are closed</div>
             <p className="text-zinc-600 text-sm">
               Open Monday–Friday · 9:30 AM – 4:00 PM ET
@@ -183,7 +183,7 @@ export default function HomePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                 {latestDay.markets.map((m) => (
                   <Link key={m.id} href={`/arena/${m.id}`}>
-                    <div className="border border-zinc-800 rounded-lg p-4 bg-[#0a0a0a] hover:border-accent/40 transition-colors cursor-pointer">
+                    <div className="border border-zinc-800 rounded-lg p-4 bg-[#0a0a0a] hover:border-accent/40 transition-colors cursor-pointer" style={{ background: '#0a0a0a' }}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-bold">{m.instrument}</span>
                         {m.consensus_direction && (
@@ -219,7 +219,7 @@ export default function HomePage() {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {['QQQ', 'NVDA', 'AAPL', 'TSLA', 'GOLD'].map((sym) => (
                 <Link key={sym} href={`/instrument/${sym}`}>
-                  <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-4 text-center hover:border-accent/40 transition-colors cursor-pointer">
+                  <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-4 text-center hover:border-accent/40 transition-colors cursor-pointer" style={{ background: '#0a0a0a' }}>
                     <span className="text-lg font-bold">{sym}</span>
                     <p className="text-[10px] text-zinc-600 mt-1 uppercase tracking-wider">Full history</p>
                   </div>
@@ -251,6 +251,7 @@ export default function HomePage() {
                 <Link key={m.id} href={`/arena/${m.id}`}>
                   <div
                     className={`border rounded-lg p-4 md:p-5 transition-colors cursor-pointer bg-[#0a0a0a] ${borderTint}`}
+                    style={{ background: '#0a0a0a' }}
                   >
                     {/* Instrument + Status */}
                     <div className="flex items-center justify-between mb-3">
@@ -352,7 +353,7 @@ export default function HomePage() {
             <div className="flex gap-2 flex-wrap">
               {['QQQ', 'NVDA', 'AAPL', 'TSLA', 'GOLD'].map((sym) => (
                 <Link key={sym} href={`/instrument/${sym}`}>
-                  <span className="text-xs font-medium px-3 py-1.5 rounded-full border border-zinc-800 bg-[#0a0a0a] text-zinc-400 hover:border-accent/40 hover:text-white transition-colors">
+                  <span className="text-xs font-medium px-3 py-1.5 rounded-full border border-zinc-800 bg-[#0a0a0a] text-zinc-400 hover:border-accent/40 hover:text-white transition-colors" style={{ background: '#0a0a0a' }}>
                     {sym}
                   </span>
                 </Link>

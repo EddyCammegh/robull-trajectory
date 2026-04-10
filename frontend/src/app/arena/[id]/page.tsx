@@ -161,6 +161,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                       ? 'bg-accent/15 text-accent border-accent/40'
                       : 'bg-[#0a0a0a] text-zinc-400 border-zinc-800 hover:border-zinc-600 hover:text-zinc-200'
                   }`}
+                  style={m.id === params.id ? undefined : { background: '#0a0a0a' }}
                 >
                   {m.instrument}
                 </span>
@@ -204,7 +205,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
           {/* Chart + forecasts — 3 cols */}
           <div className="lg:col-span-3 space-y-5">
             {/* Trajectory chart */}
-            <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5">
+            <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5" style={{ background: '#0a0a0a' }}>
               <div className="flex items-center justify-end mb-3">
                 <div className="inline-flex border border-zinc-800 rounded-lg overflow-hidden text-xs">
                   <button
@@ -243,7 +244,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
             </div>
 
             {/* Agent forecast cards */}
-            <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5">
+            <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5" style={{ background: '#0a0a0a' }}>
               <h2 className="text-sm font-medium text-zinc-400 mb-4">
                 Agent Forecasts ({forecasts.length})
               </h2>
@@ -260,6 +261,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                           ? 'border-accent/50 bg-accent/[0.03]'
                           : 'border-zinc-800 hover:border-zinc-700'
                       }`}
+                      style={selectedForecastId === f.id ? undefined : { background: '#0a0a0a' }}
                     >
                       {/* Card header — two rows on mobile, single row on md+ */}
                       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5 md:gap-0 mb-2">
@@ -274,7 +276,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                               {f.agent_name}
                             </Link>
                             {f.model && (
-                              <span className="text-xs text-zinc-600 bg-[#0a0a0a] px-1.5 py-0.5 rounded hidden md:inline">
+                              <span className="text-xs text-zinc-600 bg-[#0a0a0a] px-1.5 py-0.5 rounded hidden md:inline" style={{ background: '#0a0a0a' }}>
                                 {f.model}
                               </span>
                             )}
@@ -291,7 +293,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                         <div className="flex items-center justify-between md:justify-end gap-2 md:gap-3 text-sm pl-5 md:pl-0">
                           <div className="flex items-center gap-2">
                             {f.model && (
-                              <span className="text-xs text-zinc-600 bg-[#0a0a0a] px-1.5 py-0.5 rounded md:hidden">
+                              <span className="text-xs text-zinc-600 bg-[#0a0a0a] px-1.5 py-0.5 rounded md:hidden" style={{ background: '#0a0a0a' }}>
                                 {f.model}
                               </span>
                             )}
@@ -329,6 +331,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                           <span
                             key={i}
                             className="text-xs bg-[#0a0a0a] text-zinc-400 px-2 py-0.5 rounded font-mono"
+                            style={{ background: '#0a0a0a' }}
                           >
                             {session.labels[i] ?? `H${i}`}: ${p.toFixed(2)}
                           </span>
@@ -347,7 +350,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
           {/* Sidebar */}
           <div className="space-y-5">
             {/* Market info */}
-            <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5">
+            <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5" style={{ background: '#0a0a0a' }}>
               <h2 className="text-sm font-medium text-zinc-400 mb-3">Market Info</h2>
               <dl className="space-y-2 text-sm">
                 <InfoRow label="Previous Close" value={
@@ -362,7 +365,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
             </div>
 
             {/* Live leaderboard */}
-            <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5">
+            <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5" style={{ background: '#0a0a0a' }}>
               <h2 className="text-sm font-medium text-zinc-400 mb-3">
                 Live Leaderboard
               </h2>
@@ -413,6 +416,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                         <div
                           key={f.id}
                           className={`py-2 px-2 rounded ${dirTint} ${isFirst ? 'ring-1 ring-accent/30' : ''}`}
+                          style={{ background: '#0a0a0a' }}
                         >
                           <div className="flex items-center justify-between text-sm">
                             <div className="flex items-center gap-2 min-w-0">
@@ -462,7 +466,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
 
             {/* Biggest Bear / Biggest Bull */}
             {(biggestBear || biggestBull) && (
-              <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5 space-y-3">
+              <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5 space-y-3" style={{ background: '#0a0a0a' }}>
                 {biggestBear && (
                   <div>
                     <div className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">Biggest Bear</div>
@@ -490,7 +494,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
 
             {/* Actual prices — show latest price per hour */}
             {actuals.length > 0 && (
-              <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5">
+              <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5" style={{ background: '#0a0a0a' }}>
                 <h2 className="text-sm font-medium text-zinc-400 mb-3">Latest Prices</h2>
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-sm">

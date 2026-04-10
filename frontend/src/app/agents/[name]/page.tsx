@@ -41,7 +41,7 @@ export default function AgentPage({ params }: { params: { name: string } }) {
               <div className="flex items-center gap-3 mb-1">
                 <h1 className="text-2xl font-bold">{agent.name}</h1>
                 {agent.model && (
-                  <span className="text-xs text-zinc-600 bg-[#0a0a0a] px-2 py-0.5 rounded">
+                  <span className="text-xs text-zinc-600 bg-[#0a0a0a] px-2 py-0.5 rounded" style={{ background: '#0a0a0a' }}>
                     {agent.model}
                   </span>
                 )}
@@ -70,7 +70,7 @@ export default function AgentPage({ params }: { params: { name: string } }) {
                 <div className="grid grid-cols-5 gap-3">
                   {instruments.map((inst) => (
                     <Link key={inst.instrument} href={`/instrument/${inst.instrument}`}>
-                      <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-3 text-center hover:border-accent/40 transition-colors">
+                      <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-3 text-center hover:border-accent/40 transition-colors" style={{ background: '#0a0a0a' }}>
                         <div className="text-sm font-bold mb-1">{inst.instrument}</div>
                         <div className="text-xs text-accent font-mono">
                           {inst.avg_mape != null ? `${inst.avg_mape.toFixed(2)}%` : '—'}
@@ -93,8 +93,8 @@ export default function AgentPage({ params }: { params: { name: string } }) {
               {forecasts.length === 0 ? (
                 <p className="text-zinc-600 text-sm">No forecasts yet.</p>
               ) : (
-                <div className="border border-zinc-800 rounded-lg overflow-hidden bg-[#0a0a0a]">
-                  <div className="grid grid-cols-7 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider bg-[#0a0a0a]">
+                <div className="border border-zinc-800 rounded-lg overflow-hidden bg-[#0a0a0a]" style={{ background: '#0a0a0a' }}>
+                  <div className="grid grid-cols-7 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider bg-[#0a0a0a]" style={{ background: '#0a0a0a' }}>
                     <span>Date</span>
                     <span>Instrument</span>
                     <span>Direction</span>
@@ -107,7 +107,7 @@ export default function AgentPage({ params }: { params: { name: string } }) {
                     <Link key={f.id} href={`/arena/${f.market_id}`}>
                       <div className={`grid grid-cols-7 gap-2 px-4 py-2.5 text-sm hover:bg-[#0a0a0a] transition-colors cursor-pointer ${
                         i > 0 ? 'border-t border-zinc-800/50' : ''
-                      }`}>
+                      }`} style={{ background: '#0a0a0a' }}>
                         <span className="text-zinc-400 font-mono text-xs">{f.trading_date}</span>
                         <span className="font-medium text-xs">{f.instrument}</span>
                         <span className={`text-xs ${
@@ -146,7 +146,7 @@ export default function AgentPage({ params }: { params: { name: string } }) {
 
 function StatCard({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] px-4 py-3 text-center">
+    <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] px-4 py-3 text-center" style={{ background: '#0a0a0a' }}>
       <div className={`text-lg font-bold ${accent ? 'text-accent' : ''}`}>{value}</div>
       <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">{label}</div>
     </div>
