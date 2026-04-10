@@ -51,6 +51,9 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
   const [showConsensus, setShowConsensus] = useState(false);
   const [allMarkets, setAllMarkets] = useState<Market[]>([]);
   const [selectedForecastId, setSelectedForecastId] = useState<string | null>(null);
+  const [expandedReasoningId, setExpandedReasoningId] = useState<string | null>(null);
+  const [directionFilter, setDirectionFilter] = useState<'all' | 'bullish' | 'bearish' | 'neutral'>('all');
+  const [sortBy, setSortBy] = useState<'mape' | 'confidence'>('mape');
 
   const fetchData = useCallback(() => {
     getMarketLive(params.id)
@@ -102,6 +105,17 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
     const minorityCount = forecasts.length - topDir[1];
     return minorityCount > 0 && minorityCount <= 3 && f.direction !== topDir[0] && f.direction != null;
   };
+
+  // Filtered + sorted forecasts for the forecast card list
+  const visibleForecasts = forecasts
+    .filter((f) => directionFilter === 'all' || (f.direction ?? 'neutral') === directionFilter)
+    .slice()
+    .sort((a, b) => {
+      if (sortBy === 'mape') {
+        return (a.mape_score ?? Infinity) - (b.mape_score ?? Infinity);
+      }
+      return (b.confidence ?? -Infinity) - (a.confidence ?? -Infinity);
+    });
 
   // Biggest bear / bull
   const bearForecasts = forecasts.filter((f) => f.direction === 'bearish');
@@ -245,14 +259,55 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
 
             {/* Agent forecast cards */}
             <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5" style={{ background: '#0a0a0a' }}>
-              <h2 className="text-sm font-medium text-zinc-400 mb-4">
-                Agent Forecasts ({forecasts.length})
-              </h2>
-              {forecasts.length === 0 ? (
-                <p className="text-zinc-600 text-sm py-4 text-center">No forecasts submitted yet.</p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <h2 className="text-sm font-medium text-zinc-400">
+                  Agent Forecasts ({visibleForecasts.length}{directionFilter !== 'all' || forecasts.length !== visibleForecasts.length ? `/${forecasts.length}` : ''})
+                </h2>
+                <div className="flex flex-wrap items-center gap-2">
+                  {(['all', 'bullish', 'bearish', 'neutral'] as const).map((d) => {
+                    const active = directionFilter === d;
+                    const colorClass =
+                      d === 'bullish' ? (active ? 'border-green-500/50 text-green-400' : 'border-zinc-800 text-zinc-500 hover:text-green-400 hover:border-green-500/30') :
+                      d === 'bearish' ? (active ? 'border-red-500/50 text-red-400' : 'border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500/30') :
+                      d === 'neutral' ? (active ? 'border-zinc-500/50 text-zinc-300' : 'border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700') :
+                      (active ? 'border-accent/50 text-accent' : 'border-zinc-800 text-zinc-500 hover:text-accent hover:border-accent/30');
+                    return (
+                      <button
+                        key={d}
+                        onClick={() => setDirectionFilter(d)}
+                        className={`text-[11px] font-medium uppercase tracking-wider px-2.5 py-1 rounded-full border transition-colors ${colorClass}`}
+                        style={{ background: '#0a0a0a' }}
+                      >
+                        {d}
+                      </button>
+                    );
+                  })}
+                  <span className="text-[11px] text-zinc-600 ml-1">Sort:</span>
+                  <button
+                    onClick={() => setSortBy('mape')}
+                    className={`text-[11px] font-medium uppercase tracking-wider px-2.5 py-1 rounded-full border transition-colors ${
+                      sortBy === 'mape' ? 'border-accent/50 text-accent' : 'border-zinc-800 text-zinc-500 hover:text-accent hover:border-accent/30'
+                    }`}
+                    style={{ background: '#0a0a0a' }}
+                  >
+                    MAPE
+                  </button>
+                  <button
+                    onClick={() => setSortBy('confidence')}
+                    className={`text-[11px] font-medium uppercase tracking-wider px-2.5 py-1 rounded-full border transition-colors ${
+                      sortBy === 'confidence' ? 'border-accent/50 text-accent' : 'border-zinc-800 text-zinc-500 hover:text-accent hover:border-accent/30'
+                    }`}
+                    style={{ background: '#0a0a0a' }}
+                  >
+                    Confidence
+                  </button>
+                </div>
+              </div>
+              {visibleForecasts.length === 0 ? (
+                <p className="text-zinc-600 text-sm py-4 text-center">No forecasts match the current filter.</p>
               ) : (
                 <div className="space-y-3">
-                  {forecasts.map((f, fi) => (
+                  {visibleForecasts.map((f, fi) => (
                     <div
                       key={f.id}
                       onClick={() => setSelectedForecastId(selectedForecastId === f.id ? null : f.id)}
@@ -338,7 +393,20 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                         ))}
                       </div>
                       {f.reasoning && (
-                        <p className="text-sm text-zinc-400 leading-relaxed">{f.reasoning}</p>
+                        <div className="mt-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedReasoningId(expandedReasoningId === f.id ? null : f.id);
+                            }}
+                            className="text-xs text-zinc-500 hover:text-accent transition-colors"
+                          >
+                            {expandedReasoningId === f.id ? 'Hide reasoning ▲' : 'Show reasoning ▼'}
+                          </button>
+                          {expandedReasoningId === f.id && (
+                            <p className="text-sm text-zinc-400 leading-relaxed mt-2 whitespace-pre-line">{f.reasoning}</p>
+                          )}
+                        </div>
                       )}
                     </div>
                   ))}
