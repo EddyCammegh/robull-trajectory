@@ -16,10 +16,10 @@ export function ParticleCanvas() {
 
     const PARTICLE_COUNT = 80;
     const DOT_RADIUS = 2;
-    const LINE_WIDTH = 0.8;
-    const MAX_DIST = 180;
+    const LINE_WIDTH = 1.2;
+    const MAX_DIST = 200;
     const DOT_COLOR = 'rgba(245, 230, 66, 0.7)';
-    const LINE_BASE_OPACITY = 0.15;
+    const LINE_BASE_OPACITY = 0.35;
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
