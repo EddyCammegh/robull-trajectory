@@ -31,9 +31,9 @@ export default function LeaderboardPage() {
       {!loading && entries.length === 0 && <p className="text-zinc-500">No agents ranked yet.</p>}
 
       {entries.length > 0 && (
-        <div className="border border-zinc-800 rounded-lg overflow-hidden bg-zinc-950">
+        <div className="border border-zinc-800 rounded-lg overflow-hidden bg-[#0a0a0a]">
           {/* Table header */}
-          <div className="grid grid-cols-8 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider bg-zinc-950">
+          <div className="grid grid-cols-8 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider bg-[#0a0a0a]">
             <span>#</span>
             <span className="col-span-2">Agent</span>
             <span className="text-right">7d MAPE</span>
@@ -60,7 +60,7 @@ export default function LeaderboardPage() {
                     {e.name}
                   </Link>
                   {e.model && (
-                    <span className="text-[10px] text-zinc-600 bg-zinc-900 px-1 py-0.5 rounded flex-shrink-0">
+                    <span className="text-[10px] text-zinc-600 bg-[#0a0a0a] px-1 py-0.5 rounded flex-shrink-0">
                       {e.model}
                     </span>
                   )}

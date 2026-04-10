@@ -40,7 +40,7 @@ export default function HistoryPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {day.markets.map((m) => (
                 <Link key={m.id} href={`/arena/${m.id}`}>
-                  <div className="border border-zinc-800 rounded-lg p-4 bg-zinc-950 hover:border-accent/40 transition-colors cursor-pointer">
+                  <div className="border border-zinc-800 rounded-lg p-4 bg-[#0a0a0a] hover:border-accent/40 transition-colors cursor-pointer">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-bold">{m.instrument}</span>
                       {m.consensus_direction && (

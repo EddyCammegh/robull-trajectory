@@ -159,7 +159,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                   className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
                     m.id === params.id
                       ? 'bg-accent/15 text-accent border-accent/40'
-                      : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-600 hover:text-zinc-200'
+                      : 'bg-[#0a0a0a] text-zinc-400 border-zinc-800 hover:border-zinc-600 hover:text-zinc-200'
                   }`}
                 >
                   {m.instrument}
@@ -204,7 +204,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
           {/* Chart + forecasts — 3 cols */}
           <div className="lg:col-span-3 space-y-5">
             {/* Trajectory chart */}
-            <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-5">
+            <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5">
               <div className="flex items-center justify-end mb-3">
                 <div className="inline-flex border border-zinc-800 rounded-lg overflow-hidden text-xs">
                   <button
@@ -243,7 +243,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
             </div>
 
             {/* Agent forecast cards */}
-            <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-5">
+            <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5">
               <h2 className="text-sm font-medium text-zinc-400 mb-4">
                 Agent Forecasts ({forecasts.length})
               </h2>
@@ -274,7 +274,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                               {f.agent_name}
                             </Link>
                             {f.model && (
-                              <span className="text-xs text-zinc-600 bg-zinc-900 px-1.5 py-0.5 rounded hidden md:inline">
+                              <span className="text-xs text-zinc-600 bg-[#0a0a0a] px-1.5 py-0.5 rounded hidden md:inline">
                                 {f.model}
                               </span>
                             )}
@@ -291,7 +291,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                         <div className="flex items-center justify-between md:justify-end gap-2 md:gap-3 text-sm pl-5 md:pl-0">
                           <div className="flex items-center gap-2">
                             {f.model && (
-                              <span className="text-xs text-zinc-600 bg-zinc-900 px-1.5 py-0.5 rounded md:hidden">
+                              <span className="text-xs text-zinc-600 bg-[#0a0a0a] px-1.5 py-0.5 rounded md:hidden">
                                 {f.model}
                               </span>
                             )}
@@ -328,7 +328,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
                         {f.price_points.map((p: number, i: number) => (
                           <span
                             key={i}
-                            className="text-xs bg-zinc-900 text-zinc-400 px-2 py-0.5 rounded font-mono"
+                            className="text-xs bg-[#0a0a0a] text-zinc-400 px-2 py-0.5 rounded font-mono"
                           >
                             {session.labels[i] ?? `H${i}`}: ${p.toFixed(2)}
                           </span>
@@ -347,7 +347,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
           {/* Sidebar */}
           <div className="space-y-5">
             {/* Market info */}
-            <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-5">
+            <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5">
               <h2 className="text-sm font-medium text-zinc-400 mb-3">Market Info</h2>
               <dl className="space-y-2 text-sm">
                 <InfoRow label="Previous Close" value={
@@ -362,7 +362,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
             </div>
 
             {/* Live leaderboard */}
-            <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-5">
+            <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5">
               <h2 className="text-sm font-medium text-zinc-400 mb-3">
                 Live Leaderboard
               </h2>
@@ -462,7 +462,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
 
             {/* Biggest Bear / Biggest Bull */}
             {(biggestBear || biggestBull) && (
-              <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-5 space-y-3">
+              <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5 space-y-3">
                 {biggestBear && (
                   <div>
                     <div className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">Biggest Bear</div>
@@ -490,7 +490,7 @@ export default function ArenaPage({ params }: { params: { id: string } }) {
 
             {/* Actual prices — show latest price per hour */}
             {actuals.length > 0 && (
-              <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-5">
+              <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-5">
                 <h2 className="text-sm font-medium text-zinc-400 mb-3">Latest Prices</h2>
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-sm">
