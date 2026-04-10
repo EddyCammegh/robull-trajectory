@@ -59,6 +59,8 @@ function getNextMarketDay(): string {
   return next.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
+const BG = { background: '#0a0a0a' } as const;
+
 export default function HomePage() {
   const [items, setItems] = useState<MarketWithLive[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,25 +127,25 @@ export default function HomePage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-transparent">
       <ParticleCanvas />
-      <div className="px-4 md:px-6 pt-6">
+      <div className="px-4 md:px-6 pt-6" style={BG}>
         <Nav />
       </div>
-      <div className="px-4 md:px-6 pb-6 max-w-6xl mx-auto">
+      <div className="px-4 md:px-6 pb-6 max-w-6xl mx-auto" style={BG}>
 
       {/* Stats bar */}
       {stats && (
-        <div className="grid grid-cols-3 gap-2 md:gap-6 mb-8">
-          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] px-2 md:px-5 py-3 text-center" style={{ background: '#0a0a0a' }}>
-            <div className="text-lg md:text-2xl font-bold text-accent">{stats.agents}</div>
-            <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Agents</div>
+        <div className="grid grid-cols-3 gap-2 md:gap-6 mb-8" style={BG}>
+          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] px-2 md:px-5 py-3 text-center" style={BG}>
+            <div className="text-lg md:text-2xl font-bold text-accent" style={BG}>{stats.agents}</div>
+            <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5" style={BG}>Agents</div>
           </div>
-          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] px-2 md:px-5 py-3 text-center" style={{ background: '#0a0a0a' }}>
-            <div className="text-lg md:text-2xl font-bold text-accent">{stats.predictions.toLocaleString()}</div>
-            <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Predictions</div>
+          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] px-2 md:px-5 py-3 text-center" style={BG}>
+            <div className="text-lg md:text-2xl font-bold text-accent" style={BG}>{stats.predictions.toLocaleString()}</div>
+            <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5" style={BG}>Predictions</div>
           </div>
-          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] px-2 md:px-5 py-3 text-center" style={{ background: '#0a0a0a' }}>
-            <div className="text-lg md:text-2xl font-bold text-accent">5</div>
-            <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">Instruments</div>
+          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] px-2 md:px-5 py-3 text-center" style={BG}>
+            <div className="text-lg md:text-2xl font-bold text-accent" style={BG}>5</div>
+            <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5" style={BG}>Instruments</div>
           </div>
         </div>
       )}
@@ -154,10 +156,10 @@ export default function HomePage() {
 
       {/* Markets closed state */}
       {!loading && !marketsActive && (
-        <div className="space-y-10">
+        <div className="space-y-10" style={BG}>
           {/* Closed message */}
-          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-6 md:p-8 text-center" style={{ background: '#0a0a0a' }}>
-            <div className="text-zinc-400 text-lg mb-2">Markets are closed</div>
+          <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-6 md:p-8 text-center" style={BG}>
+            <div className="text-zinc-400 text-lg mb-2" style={BG}>Markets are closed</div>
             <p className="text-zinc-600 text-sm">
               Open Monday–Friday · 9:30 AM – 4:00 PM ET
             </p>
@@ -171,8 +173,8 @@ export default function HomePage() {
 
           {/* Latest Results */}
           {latestDay && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
+            <div style={BG}>
+              <div className="flex items-center justify-between mb-4" style={BG}>
                 <h2 className="text-sm font-medium text-zinc-400">
                   Latest Results — {latestDay.date}
                 </h2>
@@ -180,11 +182,11 @@ export default function HomePage() {
                   View all history →
                 </Link>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3" style={BG}>
                 {latestDay.markets.map((m) => (
                   <Link key={m.id} href={`/arena/${m.id}`}>
-                    <div className="border border-zinc-800 rounded-lg p-4 bg-[#0a0a0a] hover:border-accent/40 transition-colors cursor-pointer" style={{ background: '#0a0a0a' }}>
-                      <div className="flex items-center justify-between mb-2">
+                    <div className="border border-zinc-800 rounded-lg p-4 bg-[#0a0a0a] hover:border-accent/40 transition-colors cursor-pointer" style={BG}>
+                      <div className="flex items-center justify-between mb-2" style={BG}>
                         <span className="text-sm font-bold">{m.instrument}</span>
                         {m.consensus_direction && (
                           <span className={`text-[10px] font-medium uppercase ${
@@ -197,12 +199,12 @@ export default function HomePage() {
                         )}
                       </div>
                       {m.top_agent && (
-                        <div className="text-xs text-zinc-400 mb-1">
+                        <div className="text-xs text-zinc-400 mb-1" style={BG}>
                           Winner: <span className="text-accent font-medium">{m.top_agent}</span>
                         </div>
                       )}
                       {m.top_mape != null && (
-                        <div className="text-xs text-zinc-500 font-mono">
+                        <div className="text-xs text-zinc-500 font-mono" style={BG}>
                           {m.top_mape.toFixed(2)}% MAPE
                         </div>
                       )}
@@ -214,12 +216,12 @@ export default function HomePage() {
           )}
 
           {/* Browse by Instrument */}
-          <div>
+          <div style={BG}>
             <h2 className="text-sm font-medium text-zinc-400 mb-4">Browse by Instrument</h2>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3" style={BG}>
               {['QQQ', 'NVDA', 'AAPL', 'TSLA', 'GOLD'].map((sym) => (
                 <Link key={sym} href={`/instrument/${sym}`}>
-                  <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-4 text-center hover:border-accent/40 transition-colors cursor-pointer" style={{ background: '#0a0a0a' }}>
+                  <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-4 text-center hover:border-accent/40 transition-colors cursor-pointer" style={BG}>
                     <span className="text-lg font-bold">{sym}</span>
                     <p className="text-[10px] text-zinc-600 mt-1 uppercase tracking-wider">Full history</p>
                   </div>
@@ -233,7 +235,7 @@ export default function HomePage() {
       {/* Markets active state */}
       {marketsActive && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" style={BG}>
             {items.map(({ market: m, consensus }) => {
               const borderTint =
                 consensus?.topDirection === 'bearish'
@@ -251,10 +253,10 @@ export default function HomePage() {
                 <Link key={m.id} href={`/arena/${m.id}`}>
                   <div
                     className={`border rounded-lg p-4 md:p-5 transition-colors cursor-pointer bg-[#0a0a0a] ${borderTint}`}
-                    style={{ background: '#0a0a0a' }}
+                    style={BG}
                   >
                     {/* Instrument + Status */}
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-3" style={BG}>
                       <span className="text-lg font-bold tracking-wide">{m.instrument}</span>
                       <span
                         className={`text-xs font-medium px-2 py-0.5 rounded border uppercase ${STATUS_COLORS[m.status] || ''}`}
@@ -264,7 +266,7 @@ export default function HomePage() {
                     </div>
 
                     {/* Previous close + live price with delta */}
-                    <div className="flex items-center justify-between text-sm text-zinc-400 mb-1">
+                    <div className="flex items-center justify-between text-sm text-zinc-400 mb-1" style={BG}>
                       <span>
                         Prev Close:{' '}
                         <span className="text-white font-medium">
@@ -285,7 +287,7 @@ export default function HomePage() {
 
                     {/* Live price */}
                     {m.live_price != null && (
-                      <div className="text-sm text-zinc-400 mb-1">
+                      <div className="text-sm text-zinc-400 mb-1" style={BG}>
                         Live:{' '}
                         <span className="text-green-400 font-medium">
                           ${Number(m.live_price).toFixed(2)}
@@ -294,15 +296,15 @@ export default function HomePage() {
                     )}
 
                     {/* Forecast count */}
-                    <div className="text-sm text-zinc-400 mb-2">
+                    <div className="text-sm text-zinc-400 mb-2" style={BG}>
                       Forecasts:{' '}
                       <span className="text-white font-medium">{consensus?.total ?? m.submission_count}</span>
                     </div>
 
                     {/* Consensus line */}
                     {consensus && consensus.total > 0 && (
-                      <div className="border-t border-zinc-800 pt-2 mt-1">
-                        <div className="text-xs text-white">
+                      <div className="border-t border-zinc-800 pt-2 mt-1" style={BG}>
+                        <div className="text-xs text-white" style={BG}>
                           {consensus.topCount}/{consensus.total} {consensus.topDirection}
                           {consensus.avgClose != null && (
                             <>
@@ -321,9 +323,9 @@ export default function HomePage() {
 
           {/* Most bearish / bullish callouts */}
           {(mostBearish || mostBullish) && (
-            <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mt-6 text-sm">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mt-6 text-sm" style={BG}>
               {mostBearish && (
-                <div className="flex items-center gap-2 text-red-400">
+                <div className="flex items-center gap-2 text-red-400" style={BG}>
                   <span className="text-zinc-500">Most Bearish Today:</span>
                   <span className="font-medium">
                     {mostBearish.market.instrument}
@@ -334,7 +336,7 @@ export default function HomePage() {
                 </div>
               )}
               {mostBullish && (
-                <div className="flex items-center gap-2 text-green-400">
+                <div className="flex items-center gap-2 text-green-400" style={BG}>
                   <span className="text-zinc-500">Most Bullish Today:</span>
                   <span className="font-medium">
                     {mostBullish.market.instrument}
@@ -348,12 +350,12 @@ export default function HomePage() {
           )}
 
           {/* Instrument archive links */}
-          <div className="mt-8">
+          <div className="mt-8" style={BG}>
             <h3 className="text-xs text-zinc-600 uppercase tracking-wider mb-3">Browse by Instrument</h3>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap" style={BG}>
               {['QQQ', 'NVDA', 'AAPL', 'TSLA', 'GOLD'].map((sym) => (
                 <Link key={sym} href={`/instrument/${sym}`}>
-                  <span className="text-xs font-medium px-3 py-1.5 rounded-full border border-zinc-800 bg-[#0a0a0a] text-zinc-400 hover:border-accent/40 hover:text-white transition-colors" style={{ background: '#0a0a0a' }}>
+                  <span className="text-xs font-medium px-3 py-1.5 rounded-full border border-zinc-800 bg-[#0a0a0a] text-zinc-400 hover:border-accent/40 hover:text-white transition-colors" style={BG}>
                     {sym}
                   </span>
                 </Link>

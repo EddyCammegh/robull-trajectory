@@ -6,14 +6,20 @@ export function ParticleCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    console.log('ParticleCanvas mounted');
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     let animId: number;
-    let particles: { x: number; y: number; vx: number; vy: number; r: number }[] = [];
+    let particles: { x: number; y: number; vx: number; vy: number }[] = [];
+
+    const PARTICLE_COUNT = 80;
+    const DOT_RADIUS = 2;
+    const LINE_WIDTH = 0.8;
+    const MAX_DIST = 180;
+    const DOT_COLOR = 'rgba(245, 230, 66, 0.7)';
+    const LINE_BASE_OPACITY = 0.15;
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -25,18 +31,22 @@ export function ParticleCanvas() {
       ctx.scale(dpr, dpr);
     };
 
+    const randSpeed = () => {
+      const sign = Math.random() < 0.5 ? -1 : 1;
+      return sign * (0.2 + Math.random() * 0.3); // 0.2 - 0.5
+    };
+
     const init = () => {
       resize();
       const w = window.innerWidth;
       const h = window.innerHeight;
-      const count = Math.floor((w * h) / 24000);
-      particles = Array.from({ length: Math.min(count, 60) }, () => ({
+      particles = Array.from({ length: PARTICLE_COUNT }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        r: Math.random() * 0.8 + 1.0,
+        vx: randSpeed(),
+        vy: randSpeed(),
       }));
+      console.log(`ParticleCanvas init: ${particles.length} particles`);
     };
 
     const draw = () => {
@@ -44,7 +54,7 @@ export function ParticleCanvas() {
       const h = window.innerHeight;
       ctx.clearRect(0, 0, w, h);
 
-      // Update positions
+      // Update positions with wrap-around
       for (const p of particles) {
         p.x += p.vx;
         p.y += p.vy;
@@ -54,17 +64,17 @@ export function ParticleCanvas() {
         if (p.y > h) p.y = 0;
       }
 
-      // Draw connections
-      const maxDist = 150;
+      // Draw connections FIRST so dots render on top
+      ctx.lineWidth = LINE_WIDTH;
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < maxDist) {
-            const alpha = (1 - dist / maxDist) * 0.08;
+          if (dist < MAX_DIST) {
+            // Closer = more opaque
+            const alpha = (1 - dist / MAX_DIST) * LINE_BASE_OPACITY;
             ctx.strokeStyle = `rgba(245, 230, 66, ${alpha})`;
-            ctx.lineWidth = 0.8;
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
@@ -73,11 +83,11 @@ export function ParticleCanvas() {
         }
       }
 
-      // Draw particles
+      // Draw dots ON TOP of lines
+      ctx.fillStyle = DOT_COLOR;
       for (const p of particles) {
-        ctx.fillStyle = 'rgba(245, 230, 66, 0.20)';
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, DOT_RADIUS, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -97,7 +107,15 @@ export function ParticleCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 0,
+        pointerEvents: 'none',
+      }}
     />
   );
 }
