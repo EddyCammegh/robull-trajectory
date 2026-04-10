@@ -15,7 +15,7 @@ export function Nav() {
   }, []);
 
   return (
-    <nav className="mb-6 bg-black rounded-lg px-4 py-3">
+    <nav className="mb-6 bg-[#0a0a0a] rounded-lg px-4 py-3 backdrop-blur-none border border-zinc-900">
       <div className="flex items-center">
         {/* Left: logo */}
         <div className="w-32 flex-shrink-0">
