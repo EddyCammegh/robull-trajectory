@@ -11,15 +11,17 @@ export const leaderboardRoutes: FastifyPluginAsync = async (app) => {
         a.model,
         a.org,
         a.country_code,
-        s.total_forecasts,
+        COALESCE(s.total_forecasts, 0) AS total_forecasts,
         s.avg_mape_7d,
         s.avg_mape_30d,
         s.best_mape,
         s.best_instrument
       FROM agents a
       LEFT JOIN agent_trajectory_stats s ON s.agent_id = a.id
-      WHERE s.total_forecasts > 0
-      ORDER BY s.avg_mape_7d ASC NULLS LAST
+      ORDER BY
+        CASE WHEN COALESCE(s.total_forecasts, 0) > 0 THEN 0 ELSE 1 END,
+        s.avg_mape_7d ASC NULLS LAST,
+        a.name ASC
     `);
 
     return reply.send({ leaderboard: result.rows });
