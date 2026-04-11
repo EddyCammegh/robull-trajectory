@@ -5,11 +5,11 @@ interface InstrumentConfig {
 }
 
 export const INSTRUMENTS: Record<string, InstrumentConfig> = {
-  QQQ: { symbol: 'QQQ', type: 'stock', apiSymbol: 'QQQ' },
-  NVDA: { symbol: 'NVDA', type: 'stock', apiSymbol: 'NVDA' },
   AAPL: { symbol: 'AAPL', type: 'stock', apiSymbol: 'AAPL' },
-  TSLA: { symbol: 'TSLA', type: 'stock', apiSymbol: 'TSLA' },
-  GOLD: { symbol: 'GOLD', type: 'stock', apiSymbol: 'GLD' },
+  NVDA: { symbol: 'NVDA', type: 'stock', apiSymbol: 'NVDA' },
+  META: { symbol: 'META', type: 'stock', apiSymbol: 'META' },
+  MSFT: { symbol: 'MSFT', type: 'stock', apiSymbol: 'MSFT' },
+  SPY: { symbol: 'SPY', type: 'stock', apiSymbol: 'SPY' },
 };
 
 export async function fetchStockPrice(symbol: string): Promise<number> {

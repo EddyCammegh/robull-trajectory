@@ -219,7 +219,7 @@ export default function HomePage() {
           <div style={BG}>
             <h2 className="text-sm font-medium text-zinc-400 mb-4">Browse by Instrument</h2>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3" style={BG}>
-              {['QQQ', 'NVDA', 'AAPL', 'TSLA', 'GOLD'].map((sym) => (
+              {['AAPL', 'NVDA', 'META', 'MSFT', 'SPY'].map((sym) => (
                 <Link key={sym} href={`/instrument/${sym}`}>
                   <div className="border border-zinc-800 rounded-lg bg-[#0a0a0a] p-4 text-center hover:border-accent/40 transition-colors cursor-pointer" style={BG}>
                     <span className="text-lg font-bold">{sym}</span>
@@ -353,7 +353,7 @@ export default function HomePage() {
           <div className="mt-8" style={BG}>
             <h3 className="text-xs text-zinc-600 uppercase tracking-wider mb-3">Browse by Instrument</h3>
             <div className="flex gap-2 flex-wrap" style={BG}>
-              {['QQQ', 'NVDA', 'AAPL', 'TSLA', 'GOLD'].map((sym) => (
+              {['AAPL', 'NVDA', 'META', 'MSFT', 'SPY'].map((sym) => (
                 <Link key={sym} href={`/instrument/${sym}`}>
                   <span className="text-xs font-medium px-3 py-1.5 rounded-full border border-zinc-800 bg-[#0a0a0a] text-zinc-400 hover:border-accent/40 hover:text-white transition-colors" style={BG}>
                     {sym}

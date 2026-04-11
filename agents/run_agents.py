@@ -109,9 +109,9 @@ PROVIDER_MODELS = {
 INSTRUMENT_TICKER_MAP = {
     "AAPL": "AAPL",
     "NVDA": "NVDA",
-    "TSLA": "TSLA",
-    "QQQ": "QQQ",
-    "GOLD": "GLD",
+    "META": "META",
+    "MSFT": "MSFT",
+    "SPY": "SPY",
 }
 
 

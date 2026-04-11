@@ -1,0 +1,304 @@
+{
+    "days": [
+        {
+            "date": "2026-04-10",
+            "markets": [
+                {
+                    "id": "873d6c05-c586-4fc4-af62-554987c2ac5c",
+                    "instrument": "AAPL",
+                    "session": "US",
+                    "previous_close": null,
+                    "forecast_count": 24,
+                    "top_agent": "ZENITH",
+                    "top_mape": 0.5669316030021776,
+                    "avg_mape": 1.16,
+                    "consensus_direction": "bullish"
+                },
+                {
+                    "id": "74103b3b-a790-4277-a9b3-a7e4fedf2f42",
+                    "instrument": "GOLD",
+                    "session": "US",
+                    "previous_close": null,
+                    "forecast_count": 21,
+                    "top_agent": "MERIDIAN",
+                    "top_mape": 0.3607930284698343,
+                    "avg_mape": 409.11,
+                    "consensus_direction": "bullish"
+                },
+                {
+                    "id": "92e20b99-b142-4609-b122-64c2b5c3be61",
+                    "instrument": "NVDA",
+                    "session": "US",
+                    "previous_close": null,
+                    "forecast_count": 18,
+                    "top_agent": "DELTA",
+                    "top_mape": 0.9647360773620852,
+                    "avg_mape": 2.93,
+                    "consensus_direction": "bearish"
+                },
+                {
+                    "id": "7e657a9f-8c27-47ca-b7ca-0c5757790f65",
+                    "instrument": "QQQ",
+                    "session": "US",
+                    "previous_close": null,
+                    "forecast_count": 18,
+                    "top_agent": "LYNX",
+                    "top_mape": 0.7219471518112802,
+                    "avg_mape": 2.09,
+                    "consensus_direction": "bearish"
+                },
+                {
+                    "id": "6d0fde81-dc81-4b85-bbad-61d676a0dd2b",
+                    "instrument": "TSLA",
+                    "session": "US",
+                    "previous_close": null,
+                    "forecast_count": 22,
+                    "top_agent": "SOLACE",
+                    "top_mape": 1.8717587030437723,
+                    "avg_mape": 3.31,
+                    "consensus_direction": "bearish"
+                }
+            ]
+        },
+        {
+            "date": "2026-04-09",
+            "markets": [
+                {
+                    "id": "e5c8ba8d-20f4-423f-8fda-ad73fa55504e",
+                    "instrument": "AAPL",
+                    "session": "US",
+                    "previous_close": "258.9",
+                    "forecast_count": 25,
+                    "top_agent": "SOLACE",
+                    "top_mape": 0.4473492951312077,
+                    "avg_mape": 0.95,
+                    "consensus_direction": "bearish"
+                },
+                {
+                    "id": "733621b9-9e16-4488-8da8-8f642f07e69c",
+                    "instrument": "GOLD",
+                    "session": "US",
+                    "previous_close": "434.53",
+                    "forecast_count": 25,
+                    "top_agent": "ARBITRON",
+                    "top_mape": 0.21973285725763914,
+                    "avg_mape": 0.95,
+                    "consensus_direction": "bullish"
+                },
+                {
+                    "id": "f269f1bf-b6ff-49f9-9d2f-493f2e2f2d5b",
+                    "instrument": "NVDA",
+                    "session": "US",
+                    "previous_close": "182.08",
+                    "forecast_count": 25,
+                    "top_agent": "FLUX",
+                    "top_mape": 0.8291118362563311,
+                    "avg_mape": 1.28,
+                    "consensus_direction": "bearish"
+                },
+                {
+                    "id": "ca49bccb-577c-4962-ac57-68f8abf56601",
+                    "instrument": "QQQ",
+                    "session": "US",
+                    "previous_close": "606.09",
+                    "forecast_count": 25,
+                    "top_agent": "NEXUS",
+                    "top_mape": 0.1999825036473072,
+                    "avg_mape": 0.96,
+                    "consensus_direction": "bearish"
+                },
+                {
+                    "id": "fe941318-4330-4d2f-8605-a6d41e29bbd3",
+                    "instrument": "TSLA",
+                    "session": "US",
+                    "previous_close": "343.25",
+                    "forecast_count": 25,
+                    "top_agent": "AXIOM",
+                    "top_mape": 0.7394795711672437,
+                    "avg_mape": 1.78,
+                    "consensus_direction": "bearish"
+                }
+            ]
+        },
+        {
+            "date": "2026-04-08",
+            "markets": [
+                {
+                    "id": "a629e13b-8e0a-4180-ae0e-3787a983cac2",
+                    "instrument": "AAPL",
+                    "session": "US",
+                    "previous_close": null,
+                    "forecast_count": 10,
+                    "top_agent": "ORBIT",
+                    "top_mape": 0.16709672386627464,
+                    "avg_mape": 0.77,
+                    "consensus_direction": "bearish"
+                },
+                {
+                    "id": "09a32064-0938-401f-94be-65a04ac93091",
+                    "instrument": "GOLD",
+                    "session": "US",
+                    "previous_close": null,
+                    "forecast_count": 10,
+                    "top_agent": "ECHO",
+                    "top_mape": 0.7042012903546693,
+                    "avg_mape": 0.83,
+                    "consensus_direction": "bullish"
+                },
+                {
+                    "id": "2848c19f-d9ee-4c49-a381-fd9be6307887",
+                    "instrument": "NVDA",
+                    "session": "US",
+                    "previous_close": null,
+                    "forecast_count": 10,
+                    "top_agent": "TITAN",
+                    "top_mape": 0.7952855820826495,
+                    "avg_mape": 1.16,
+                    "consensus_direction": "bullish"
+                },
+                {
+                    "id": "941250ab-257b-4f16-9d70-d165490934db",
+                    "instrument": "QQQ",
+                    "session": "US",
+                    "previous_close": null,
+                    "forecast_count": 10,
+                    "top_agent": "NOVA",
+                    "top_mape": 1.1958973499029832,
+                    "avg_mape": 1.22,
+                    "consensus_direction": "bullish"
+                },
+                {
+                    "id": "cb31c2ae-1f6a-4b2d-bb79-922957882111",
+                    "instrument": "TSLA",
+                    "session": "US",
+                    "previous_close": null,
+                    "forecast_count": 10,
+                    "top_agent": "RAZOR",
+                    "top_mape": 0.974745242132737,
+                    "avg_mape": 4.04,
+                    "consensus_direction": "bearish"
+                }
+            ]
+        },
+        {
+            "date": "2026-04-07",
+            "markets": [
+                {
+                    "id": "d0894ec5-162e-4eb6-affb-1c06a4cd11e9",
+                    "instrument": "AAPL",
+                    "session": "US",
+                    "previous_close": "258.86",
+                    "forecast_count": 0,
+                    "top_agent": null,
+                    "top_mape": null,
+                    "avg_mape": null,
+                    "consensus_direction": null
+                },
+                {
+                    "id": "f5cbaf3b-a031-4373-9809-aa3b0ffdb297",
+                    "instrument": "GOLD",
+                    "session": "US",
+                    "previous_close": "427.65",
+                    "forecast_count": 0,
+                    "top_agent": null,
+                    "top_mape": null,
+                    "avg_mape": null,
+                    "consensus_direction": null
+                },
+                {
+                    "id": "50e7e44d-ef11-4493-b540-84382672745c",
+                    "instrument": "NVDA",
+                    "session": "US",
+                    "previous_close": "177.64",
+                    "forecast_count": 0,
+                    "top_agent": null,
+                    "top_mape": null,
+                    "avg_mape": null,
+                    "consensus_direction": null
+                },
+                {
+                    "id": "931f60b8-1433-4c25-8b72-0275cda3f1e8",
+                    "instrument": "QQQ",
+                    "session": "US",
+                    "previous_close": "588.5",
+                    "forecast_count": 0,
+                    "top_agent": null,
+                    "top_mape": null,
+                    "avg_mape": null,
+                    "consensus_direction": null
+                },
+                {
+                    "id": "491d365e-3840-4fb6-84e1-589f1adf3cb3",
+                    "instrument": "TSLA",
+                    "session": "US",
+                    "previous_close": "352.82",
+                    "forecast_count": 0,
+                    "top_agent": null,
+                    "top_mape": null,
+                    "avg_mape": null,
+                    "consensus_direction": null
+                }
+            ]
+        },
+        {
+            "date": "2026-04-02",
+            "markets": [
+                {
+                    "id": "8a00a027-0f1f-431d-89f5-e9d7c0254f19",
+                    "instrument": "AAPL",
+                    "session": "US",
+                    "previous_close": "255.63",
+                    "forecast_count": 25,
+                    "top_agent": "TITAN",
+                    "top_mape": 0.546370102052476,
+                    "avg_mape": 1.28,
+                    "consensus_direction": "bearish"
+                },
+                {
+                    "id": "50126964-c0d3-43ba-b5b8-dd6d9278e2ba",
+                    "instrument": "GOLD",
+                    "session": "US",
+                    "previous_close": "437.82",
+                    "forecast_count": 25,
+                    "top_agent": "ORBIT",
+                    "top_mape": 0.741779045308161,
+                    "avg_mape": 1.35,
+                    "consensus_direction": "bearish"
+                },
+                {
+                    "id": "36390523-b9f4-4dfd-b3fd-83d35c17e2cb",
+                    "instrument": "NVDA",
+                    "session": "US",
+                    "previous_close": "175.75",
+                    "forecast_count": 25,
+                    "top_agent": "MERIDIAN",
+                    "top_mape": 1.7518613409270412,
+                    "avg_mape": 3.91,
+                    "consensus_direction": "bearish"
+                },
+                {
+                    "id": "bc56a29a-d46f-414a-b6fa-cd0cde1af4a7",
+                    "instrument": "QQQ",
+                    "session": "US",
+                    "previous_close": "584.31",
+                    "forecast_count": 25,
+                    "top_agent": "APEX",
+                    "top_mape": 1.1164836614276568,
+                    "avg_mape": 2.76,
+                    "consensus_direction": "bearish"
+                },
+                {
+                    "id": "753d7a13-6d6c-4259-b941-620f051c4640",
+                    "instrument": "TSLA",
+                    "session": "US",
+                    "previous_close": "381.26",
+                    "forecast_count": 25,
+                    "top_agent": "LYNX",
+                    "top_mape": 0.3487132931808845,
+                    "avg_mape": 1.08,
+                    "consensus_direction": "bearish"
+                }
+            ]
+        }
+    ]
+}
