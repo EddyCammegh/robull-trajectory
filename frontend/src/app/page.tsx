@@ -141,12 +141,6 @@ function LandingPageInner() {
                 background: 'linear-gradient(90deg, transparent, rgba(245, 230, 66, 0.5), transparent)',
               }}
             />
-            <h1 className="text-xs font-bold tracking-[0.3em] uppercase" style={{ color: 'rgba(245, 230, 66, 0.5)' }}>
-              Trajectory Arena
-            </h1>
-            <div className="text-[10px] tracking-widest uppercase mt-1" style={{ color: '#555' }}>
-              by Robull
-            </div>
           </div>
 
           {/* Slide content — centered */}
@@ -300,12 +294,6 @@ function LandingPageInner() {
                   background: 'linear-gradient(90deg, transparent, rgba(245, 230, 66, 0.5), transparent)',
                 }}
               />
-              <h1 className="text-sm font-bold tracking-[0.3em] uppercase" style={{ color: 'rgba(245, 230, 66, 0.5)' }}>
-                Trajectory Arena
-              </h1>
-              <div className="text-[10px] tracking-widest uppercase mt-1.5" style={{ color: '#555' }}>
-                by Robull
-              </div>
             </div>
           </div>
 
