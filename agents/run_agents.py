@@ -12,38 +12,14 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 ROBULL_API_URL = os.environ.get("ROBULL_API_URL", "https://robull-trajectory-production.up.railway.app")
 POLYGON_API_KEY = os.environ.get("POLYGON_API_KEY", "")
 
-AGENT_KEYS = {
-    # NEWS cohort
-    "KRONOS": "aim_a107bbe70a9cfc8847b37796827b01d012a4d8fd6a6f0df1fa69b8967f303a33",
-    "ATLAS": "aim_91faa412c03eb2cd5f48c05e5acf39182db6c743d96e9a5ed47cfda48411b97d",
-    "CIPHER": "aim_146a48db7dfe90bc5d261fa04f22434ece7eb093a88b76591a6958a17fca7c3b",
-    "MERIDIAN": "aim_6227a079e23acd3ab2c9ce1c5fa69837ef0f5c0c6c07658beb6931071e4bdaf8",
-    "HELIX": "aim_d24f4963b6139febfc99d32a1eff56fc0288e5e3f5b75660276061562b23c6f0",
-    # FUNDAMENTALS cohort
-    "NEXUS": "aim_b2854d740f8e4bd168138ed70af061dab55f1b8b1b0a501133b5e1e03879f515",
-    "VEGA": "aim_8e49895acc5f5117146e3148da924132b944a9b95f33051c0e77b9c05a2ce9ec",
-    "ARBITRON": "aim_7a80d2f873763f62148c070d8c4054bf048240a96da047f3568e2722e44fa852",
-    "PRISM": "aim_4284e6ed68e3b656af4e69a2e0e9e7b4d616a8c5dd4b8756c17b5568e9a84064",
-    "SOLACE": "aim_76f8ba3052e352e0d735830620d27214983f89840c9f727d3c593ebfc8012be1",
-    # OPTIONS cohort
-    "AXIOM": "aim_d33cd00b683692905f98433763c25d5da628eafae00ca2978a9ea02e22d96ab8",
-    "DELTA": "aim_5dea3356651ab94b53ffe2029347c74a401cc5adf73f170e102e91bb10579a07",
-    "QUASAR": "aim_aee74c6fe7af98fac465a325b4f8bbe34ee3a88f59dba64fc8408b5adedbfa08",
-    "FORGE": "aim_3f2d162ac466b655fad0d8abb185c219ae34a7259db9dc7363af88bf036d9ed0",
-    "ONYX": "aim_50dd55398b5b93b7bfda3492c939e5e97b63d412cb900d5e4428b1b076bd12d0",
-    # MACRO cohort
-    "SPECTER": "aim_6129b1803716d60db12cfcb405be9b7baf9169d44d3c98356aaaca9e3653eb9e",
-    "LYNX": "aim_1852c7b7b327debb197ca4a8b66b8f7ac85305719445bacffdcf9b440b5705dd",
-    "TITAN": "aim_461015137bd02cfae3896eb09a69ca471f068dbcdd1b97bf26715077d9361593",
-    "ZENITH": "aim_0d3d13e323e0b12e9aaf2c8168cea214d8a30b9a5cc7648ef1b77c2b8d150c5d",
-    "ECHO": "aim_18f3d1ca324bc1ef65ea9de0080ebd4ef04c0ebe40a94af07ccfbbb48dbff7af",
-    # TECHNICAL cohort
-    "NOVA": "aim_10a18bbccf42f76f5211f9de2889f63cded8984c22ec938228ee3cfb493f45e8",
-    "RAZOR": "aim_d2930af0e39106aa0aa45862ba4747ccedbe8919791d375098bee1d3a6b7c724",
-    "ORBIT": "aim_fa6e3bc49cad2ab2c2bc36399623f01cae94b872e5a01f8671b5c457f980191a",
-    "FLUX": "aim_939d44a5d411bab1a96a7c8ce701e0485e16f8a2ab54319410356e6dff91f4f0",
-    "APEX": "aim_bb2d078220345bb1435df49cc2007b7c784ab368723bc6f3c39a66d544672e47",
-}
+_AGENT_NAMES = [
+    "KRONOS", "ATLAS", "CIPHER", "MERIDIAN", "HELIX",
+    "NEXUS", "VEGA", "ARBITRON", "PRISM", "SOLACE",
+    "AXIOM", "DELTA", "QUASAR", "FORGE", "ONYX",
+    "SPECTER", "LYNX", "TITAN", "ZENITH", "ECHO",
+    "NOVA", "RAZOR", "ORBIT", "FLUX", "APEX",
+]
+AGENT_KEYS = {name: os.environ.get(f"AGENT_KEY_{name}", "") for name in _AGENT_NAMES}
 
 COHORTS = {
     "NEWS": {

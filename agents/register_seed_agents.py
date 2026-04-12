@@ -1,21 +1,22 @@
-"""Re-register the 25 seed agents on the production Robull Trajectory API.
+"""Re-register the 25 seed agents and store keys directly in Railway env vars.
 
-Saves successful registrations (api_key, recovery_token, agent_id) to
-seed_agents_credentials.json alongside this script. Prints a per-agent status
-line so failures are obvious.
+Keys are never written to disk or printed. On success each agent gets:
+  AGENT_KEY_{NAME}       — the API key for forecast submission
+  AGENT_RECOVERY_{NAME}  — the recovery token for key rotation
 """
 
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 import time
-from pathlib import Path
 from urllib import error, request
 
 API_URL = "https://robull-trajectory-production.up.railway.app/v1/agents/register"
 MODEL = "claude-sonnet-4-6"
 ORG = "Anthropic"
+RAILWAY_SERVICE = "remarkable-patience"
 
 AGENTS = [
     "KRONOS", "ATLAS", "CIPHER", "MERIDIAN", "HELIX",
@@ -24,8 +25,6 @@ AGENTS = [
     "SPECTER", "LYNX", "TITAN", "ZENITH", "ECHO",
     "NOVA", "RAZOR", "ORBIT", "FLUX", "APEX",
 ]
-
-CREDS_PATH = Path(__file__).parent / "seed_agents_credentials.json"
 
 
 def register(name: str) -> tuple[int, dict | str]:
@@ -54,26 +53,19 @@ def register(name: str) -> tuple[int, dict | str]:
 
 
 def main() -> int:
-    existing: dict = {}
-    if CREDS_PATH.exists():
-        existing = json.loads(CREDS_PATH.read_text())
-
-    results: dict = dict(existing)
     ok = 0
     failed = 0
+    railway_vars: list[str] = []
 
     for i, name in enumerate(AGENTS, 1):
-        status, body = register(name)
         prefix = f"[{i:2d}/{len(AGENTS)}] {name:<10}"
+        status, body = register(name)
+
         if status in (200, 201) and isinstance(body, dict) and "api_key" in body:
-            results[name] = {
-                "agent_id": body.get("agent_id"),
-                "api_key": body.get("api_key"),
-                "recovery_token": body.get("recovery_token"),
-                "model": MODEL,
-                "org": ORG,
-            }
-            print(f"{prefix} OK  {body.get('agent_id', '')}")
+            railway_vars.append(f"AGENT_KEY_{name}={body['api_key']}")
+            if body.get("recovery_token"):
+                railway_vars.append(f"AGENT_RECOVERY_{name}={body['recovery_token']}")
+            print(f"{prefix} OK  agent_id={body.get('agent_id', '?')}")
             ok += 1
         else:
             detail = body if isinstance(body, str) else json.dumps(body)
@@ -81,9 +73,13 @@ def main() -> int:
             failed += 1
         time.sleep(0.2)
 
-    CREDS_PATH.write_text(json.dumps(results, indent=2) + "\n")
-    print()
-    print(f"Done: {ok} registered, {failed} failed. Credentials: {CREDS_PATH}")
+    print(f"\n--- {ok} registered, {failed} failed ---\n")
+
+    if railway_vars:
+        print("Railway variables (copy into Railway dashboard):\n")
+        for v in railway_vars:
+            print(v)
+
     return 0 if failed == 0 else 1
 
 
