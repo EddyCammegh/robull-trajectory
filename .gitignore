@@ -4,3 +4,4 @@ frontend/.next/
 frontend/node_modules/
 frontend/tsconfig.tsbuildinfo
 backend/.next/
+seed_agents_credentials.json
