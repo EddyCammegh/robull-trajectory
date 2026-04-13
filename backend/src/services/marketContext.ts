@@ -21,6 +21,19 @@ async function fetchVix(): Promise<number | null> {
   }
 }
 
+async function fetchNewsHeadlineCount(ticker: string, key: string): Promise<number | null> {
+  try {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const url = `${POLYGON_BASE}/v2/reference/news?ticker=${ticker}&published_utc.gte=${since}&limit=50&apiKey=${key}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return Array.isArray(data?.results) ? data.results.length : null;
+  } catch (err) {
+    console.error(`Polygon news fetch failed for ${ticker}:`, err);
+    return null;
+  }
+}
+
 async function fetchPolygonPrevClose(ticker: string, key: string): Promise<number | null> {
   try {
     const url = `${POLYGON_BASE}/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=${key}`;
@@ -123,18 +136,45 @@ export async function collectPreMarketContext(): Promise<void> {
 
     const ticker = SYMBOL_MAP[m.instrument] ?? m.instrument;
     const pre = await fetchPremarketBars(ticker, today, polygonKey);
+    const newsCount = await fetchNewsHeadlineCount(ticker, polygonKey);
 
     await upsertMarketContext(m.id, {
       vix_at_submission: vix,
       xlk_premarket_change_pct: xlkPremarketChangePct,
       premarket_volume: pre.totalVolume || null,
+      news_headline_count: newsCount,
     });
   }
 
   console.log(`Pre-market context collected for ${markets.rows.length} markets`);
 }
 
-// Run at 4:00 PM ET. Captures VIX at close and opening gap %.
+// VIX bands and trending threshold for regime classification.
+const VIX_LOW = 13;
+const VIX_HIGH = 25;
+const TRENDING_RATIO = 1.5; // |return| > TRENDING_RATIO × intraday vol → trending
+
+function classifyRegime(
+  vix: number | null,
+  openPrice: number | null,
+  closePrice: number | null,
+  realisedVolPct: number | null
+): string | null {
+  if (vix == null) return null;
+  if (vix >= VIX_HIGH) return 'high_vol';
+  if (vix <= VIX_LOW) return 'low_vol';
+
+  if (openPrice != null && closePrice != null && openPrice !== 0 && realisedVolPct != null) {
+    const returnPct = Math.abs((closePrice - openPrice) / openPrice) * 100;
+    if (returnPct > TRENDING_RATIO * realisedVolPct && returnPct > 0.5) {
+      return 'trending';
+    }
+  }
+
+  return 'normal';
+}
+
+// Run at 4:00 PM ET. Captures VIX at close, opening gap %, and market regime.
 export async function collectCloseContext(): Promise<void> {
   const vix = await fetchVix();
 
@@ -152,9 +192,34 @@ export async function collectCloseContext(): Promise<void> {
         ? ((open - prev) / prev) * 100
         : null;
 
+    // Pull actuals to derive close price and intraday realised vol (% of mean).
+    const actuals = await pool.query(
+      `SELECT actual_price FROM trajectory_actuals
+       WHERE market_id = $1 ORDER BY slot_index ASC`,
+      [m.id]
+    );
+    const prices = actuals.rows
+      .map((r: any) => parseFloat(r.actual_price))
+      .filter((v: number) => !isNaN(v));
+
+    let closePrice: number | null = null;
+    let realisedVolPct: number | null = null;
+    if (prices.length >= 2) {
+      closePrice = prices[prices.length - 1];
+      const mean = prices.reduce((a: number, b: number) => a + b, 0) / prices.length;
+      const variance =
+        prices.reduce((acc: number, v: number) => acc + (v - mean) ** 2, 0) /
+        (prices.length - 1);
+      const std = Math.sqrt(variance);
+      realisedVolPct = mean !== 0 ? (std / mean) * 100 : null;
+    }
+
+    const regime = classifyRegime(vix, open, closePrice, realisedVolPct);
+
     await upsertMarketContext(m.id, {
       vix_at_close: vix,
       opening_gap_pct: openingGapPct,
+      market_regime: regime,
     });
   }
 
