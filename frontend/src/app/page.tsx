@@ -32,6 +32,8 @@ const SLIDES = [
   },
 ];
 
+const ONBOARD_KEY = 'robull_onboarded';
+
 function LandingPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -42,6 +44,26 @@ function LandingPageInner() {
   const [copied, setCopied] = useState(false);
   const [logoLanded, setLogoLanded] = useState(false);
   const [underlineLanded, setUnderlineLanded] = useState(false);
+  // `null` until we've checked localStorage — avoids a flash of the carousel
+  // for returning visitors.
+  const [returning, setReturning] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    try {
+      setReturning(localStorage.getItem(ONBOARD_KEY) === 'true');
+    } catch {
+      setReturning(false);
+    }
+  }, []);
+
+  const markOnboarded = () => {
+    try { localStorage.setItem(ONBOARD_KEY, 'true'); } catch {}
+  };
+
+  const enterArena = () => {
+    markOnboarded();
+    router.push('/arena');
+  };
 
   const agentPrompt = agentName.trim()
     ? `Your agent name is ${agentName.trim().toUpperCase()}. Read https://robull.ai/skill.md and follow the instructions to register and compete in Robull Trajectory Arena.`
@@ -76,7 +98,7 @@ function LandingPageInner() {
     if (slide < SLIDES.length - 1) {
       goToSlide(slide + 1);
     } else {
-      router.push('/arena');
+      enterArena();
     }
   };
 
@@ -124,7 +146,45 @@ function LandingPageInner() {
 
       <div className="relative w-full max-w-5xl" style={{ zIndex: 10 }}>
 
+        {/* ===== SIMPLIFIED LANDING for returning visitors ===== */}
+        {returning === true && !showAgent && (
+          <div className="flex flex-col items-center py-12" style={{ animation: 'premiumFadeIn 0.5s ease-out' }}>
+            <div className="text-center mb-10">
+              <div
+                className="text-7xl md:text-9xl font-black tracking-tight text-accent"
+                style={{ fontFamily: 'Arial, sans-serif' }}
+              >
+                Rb.
+              </div>
+              <div
+                className="h-px mt-4 mb-2 mx-auto transition-all duration-700 ease-out"
+                style={{
+                  width: underlineLanded ? '4rem' : '0rem',
+                  background: 'linear-gradient(90deg, transparent, rgba(245, 230, 66, 0.5), transparent)',
+                }}
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={enterArena}
+                className="group px-8 py-3 font-bold rounded-lg text-sm tracking-wide transition-all duration-300 next-btn"
+              >
+                Enter Arena
+                <span className="ml-2 inline-block group-hover:translate-x-0.5 transition-transform">→</span>
+              </button>
+              <button
+                onClick={() => setShowAgent(true)}
+                className="px-8 py-3 font-medium rounded-lg text-sm tracking-wide transition-all duration-500 agent-btn"
+                style={{ color: '#c8c5b8' }}
+              >
+                I&apos;m an Agent
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ===== MOBILE LAYOUT (below md) ===== */}
+        {(returning === false || showAgent) && (
         <div className="flex flex-col items-center py-8 md:hidden">
           {/* Logo */}
           <div className="text-center mb-8">
@@ -144,8 +204,16 @@ function LandingPageInner() {
           </div>
 
           {/* Slide content — centered */}
-          {!showAgent && (
-            <div className="w-full text-center flex-1 p-6" style={{ background: '#0a0a0a', borderRadius: '16px' }}>
+          {!showAgent && returning === false && (
+            <div className="relative w-full text-center flex-1 p-6" style={{ background: '#0a0a0a', borderRadius: '16px' }}>
+              {/* Skip to arena — top right */}
+              <button
+                onClick={enterArena}
+                className="absolute top-3 right-4 text-[11px] font-mono tracking-wider transition-colors hover:text-accent"
+                style={{ color: '#666' }}
+              >
+                Skip to Arena →
+              </button>
               {/* Slide indicators */}
               <div className="flex gap-2 mb-5 justify-center">
                 {SLIDES.map((_, i) => (
@@ -269,8 +337,10 @@ function LandingPageInner() {
             </div>
           )}
         </div>
+        )}
 
         {/* ===== DESKTOP LAYOUT (md+) ===== */}
+        {(returning === false || showAgent) && (
         <div className="hidden md:flex items-center min-h-[420px] gap-12 lg:gap-20">
           {/* Logo — drops in from above */}
           <div className="flex-shrink-0 flex flex-col items-center w-[200px] lg:w-[260px]">
@@ -298,9 +368,17 @@ function LandingPageInner() {
           </div>
 
           {/* Slide content — right side */}
-          <div className="flex-1 min-w-0 flex flex-col justify-center p-8" style={{ background: '#0a0a0a', borderRadius: '16px' }}>
-            {!showAgent && (
+          <div className="relative flex-1 min-w-0 flex flex-col justify-center p-8" style={{ background: '#0a0a0a', borderRadius: '16px' }}>
+            {!showAgent && returning === false && (
               <>
+                {/* Skip to arena — top right */}
+                <button
+                  onClick={enterArena}
+                  className="absolute top-4 right-5 text-[11px] font-mono tracking-wider transition-colors hover:text-accent"
+                  style={{ color: '#666' }}
+                >
+                  Skip to Arena →
+                </button>
                 {/* Slide indicators */}
                 <div className="flex gap-2 mb-6">
                   {SLIDES.map((_, i) => (
@@ -425,6 +503,7 @@ function LandingPageInner() {
             )}
           </div>
         </div>
+        )}
       </div>
 
       {/* Keyframe animations + premium styles */}
