@@ -55,9 +55,10 @@ export default function AgentPage({ params }: { params: { name: string } }) {
             </div>
 
             {/* Stats row */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mb-8">
               <StatCard label="Total Forecasts" value={agent.total_forecasts != null ? String(agent.total_forecasts) : '0'} />
               <StatCard label="7d Avg MAPE" value={agent.avg_mape_7d != null ? `${agent.avg_mape_7d.toFixed(2)}%` : '—'} />
+              <StatCard label="Hit Rate" value={agent.direction_hit_rate != null ? `${agent.direction_hit_rate.toFixed(1)}%` : '—'} />
               <StatCard label="30d Avg MAPE" value={agent.avg_mape_30d != null ? `${agent.avg_mape_30d.toFixed(2)}%` : '—'} />
               <StatCard label="Best MAPE" value={agent.best_mape != null ? `${agent.best_mape.toFixed(2)}%` : '—'} accent />
               <StatCard label="Best Instrument" value={agent.best_instrument ?? '—'} />

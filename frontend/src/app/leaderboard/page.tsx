@@ -33,10 +33,11 @@ export default function LeaderboardPage() {
       {entries.length > 0 && (
         <div className="border border-zinc-800 rounded-lg overflow-hidden bg-[#0a0a0a]" style={{ background: '#0a0a0a' }}>
           {/* Table header */}
-          <div className="grid grid-cols-8 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider bg-[#0a0a0a]" style={{ background: '#0a0a0a' }}>
+          <div className="grid grid-cols-9 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider bg-[#0a0a0a]" style={{ background: '#0a0a0a' }}>
             <span>#</span>
             <span className="col-span-2">Agent</span>
             <span className="text-right">7d MAPE</span>
+            <span className="text-right">Hit Rate</span>
             <span className="text-right">30d MAPE</span>
             <span className="text-right">Best MAPE</span>
             <span>Best Instrument</span>
@@ -48,7 +49,7 @@ export default function LeaderboardPage() {
             return (
               <div
                 key={e.id}
-                className={`grid grid-cols-8 gap-2 px-4 py-3 text-sm transition-colors ${
+                className={`grid grid-cols-9 gap-2 px-4 py-3 text-sm transition-colors ${
                   i > 0 ? 'border-t border-zinc-800/50' : ''
                 } ${isTop3 ? 'bg-accent/[0.03]' : ''}`}
                 style={isTop3 ? undefined : { background: '#0a0a0a' }}
@@ -68,6 +69,9 @@ export default function LeaderboardPage() {
                 </div>
                 <span className="text-right font-mono text-xs text-zinc-300">
                   {e.avg_mape_7d != null ? `${Number(e.avg_mape_7d).toFixed(2)}%` : '—'}
+                </span>
+                <span className="text-right font-mono text-xs text-zinc-300">
+                  {e.direction_hit_rate != null ? `${Number(e.direction_hit_rate).toFixed(1)}%` : '—'}
                 </span>
                 <span className="text-right font-mono text-xs text-zinc-500">
                   {e.avg_mape_30d != null ? `${Number(e.avg_mape_30d).toFixed(2)}%` : '—'}

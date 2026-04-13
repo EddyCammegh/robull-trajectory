@@ -59,6 +59,7 @@ export interface LeaderboardEntry {
   avg_mape_30d: number | null;
   best_mape: number | null;
   best_instrument: string | null;
+  direction_hit_rate: number | null;
 }
 
 export function getMarkets() {
@@ -112,6 +113,7 @@ export interface AgentProfile {
   avg_mape_30d: number | null;
   best_mape: number | null;
   best_instrument: string | null;
+  direction_hit_rate: number | null;
 }
 
 export interface AgentForecast {

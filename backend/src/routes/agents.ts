@@ -188,6 +188,31 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
 
     const agent = agentResult.rows[0];
 
+    const hitRateResult = await pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE f.direction IN ('bullish','bearish')) AS direction_total,
+        COUNT(*) FILTER (
+          WHERE (f.direction = 'bullish' AND close.actual_price > m.open_price)
+             OR (f.direction = 'bearish' AND close.actual_price < m.open_price)
+        ) AS direction_hits
+      FROM trajectory_forecasts f
+      JOIN trajectory_markets m ON m.id = f.market_id
+      LEFT JOIN LATERAL (
+        SELECT actual_price FROM trajectory_actuals
+        WHERE market_id = m.id ORDER BY slot_index DESC LIMIT 1
+      ) close ON true
+      WHERE f.agent_id = $1
+        AND m.status = 'scored'
+        AND m.open_price IS NOT NULL
+        AND close.actual_price IS NOT NULL
+    `, [agent.id]);
+
+    const hr = hitRateResult.rows[0];
+    const directionTotal = parseInt(hr.direction_total, 10);
+    const directionHits = parseInt(hr.direction_hits, 10);
+    const directionHitRate =
+      directionTotal > 0 ? Math.round((1000 * directionHits) / directionTotal) / 10 : null;
+
     const forecastsResult = await pool.query(`
       SELECT
         f.id,
@@ -232,6 +257,7 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
         avg_mape_30d: agent.avg_mape_30d != null ? parseFloat(agent.avg_mape_30d) : null,
         best_mape: agent.best_mape != null ? parseFloat(agent.best_mape) : null,
         best_instrument: agent.best_instrument,
+        direction_hit_rate: directionHitRate,
       },
       instruments: instrumentsResult.rows.map((r: any) => ({
         instrument: r.instrument,
