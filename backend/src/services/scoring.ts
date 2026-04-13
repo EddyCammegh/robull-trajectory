@@ -21,6 +21,14 @@ export function calculateMAPE(
   return (totalError / validPoints) * 100;
 }
 
+function stdDev(values: number[]): number | null {
+  if (values.length < 2) return null;
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const variance =
+    values.reduce((acc, v) => acc + (v - mean) ** 2, 0) / (values.length - 1);
+  return Math.sqrt(variance);
+}
+
 const FORECAST_SLOTS: Record<string, number[]> = {
   US:       [0, 12, 24, 36, 48, 60, 72, 77],
   CRYPTO:   [0, 36, 72, 108, 144, 180, 216, 252],
@@ -76,6 +84,21 @@ export async function scoreMarket(marketId: string): Promise<void> {
 
   scored.sort((a, b) => a.mape - b.mape);
 
+  // Consensus deviation: std dev of each agent's predicted closing price (final slot)
+  const closingPredictions = forecasts.rows
+    .map((f: any) => {
+      const pp = f.price_points as number[];
+      return pp[pp.length - 1];
+    })
+    .filter((v: any) => typeof v === 'number' && !isNaN(v));
+  const consensusDeviation = stdDev(closingPredictions);
+
+  // Realised volatility: std dev of the 78 actual price bars
+  const actualPrices = actuals.rows
+    .map((r: any) => parseFloat(r.actual_price))
+    .filter((v: number) => !isNaN(v));
+  const realisedVolatility = stdDev(actualPrices);
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -92,8 +115,17 @@ export async function scoreMarket(marketId: string): Promise<void> {
     }
 
     await client.query(
-      `UPDATE trajectory_markets SET status = 'scored' WHERE id = $1`,
-      [marketId]
+      `UPDATE trajectory_markets
+       SET status = 'scored', consensus_deviation = $2
+       WHERE id = $1`,
+      [marketId, consensusDeviation]
+    );
+
+    await client.query(
+      `INSERT INTO market_context (market_id, realised_volatility_at_close)
+       VALUES ($1, $2)
+       ON CONFLICT (market_id) DO UPDATE SET realised_volatility_at_close = EXCLUDED.realised_volatility_at_close`,
+      [marketId, realisedVolatility]
     );
 
     await client.query('COMMIT');

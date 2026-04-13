@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { createDailyMarkets } from './createMarkets.js';
 import { fetchActualPrices } from './fetchActuals.js';
 import { scoreCompletedMarkets } from './scoreMarkets.js';
+import { collectPreMarketContext, collectCloseContext } from '../services/marketContext.js';
 import { pool } from '../db.js';
 
 const NYSE_HOLIDAYS_2026 = [
@@ -38,6 +39,20 @@ export function startCrons(): void {
   cron.schedule('5 10-16 * * 1-5', async () => {
     console.log('Running fetchActualPrices cron');
     await fetchActualPrices();
+  }, { timezone: 'America/New_York' });
+
+  // Pre-market context (VIX, XLK, premarket volume) at 7:00 AM ET
+  cron.schedule('0 7 * * 1-5', async () => {
+    if (!isTradingDay()) { console.log('NYSE holiday — skipping pre-market context'); return; }
+    console.log('Running collectPreMarketContext cron');
+    await collectPreMarketContext();
+  }, { timezone: 'America/New_York' });
+
+  // Close context (VIX at close, opening gap %) at 4:00 PM ET
+  cron.schedule('0 16 * * 1-5', async () => {
+    if (!isTradingDay()) { console.log('NYSE holiday — skipping close context'); return; }
+    console.log('Running collectCloseContext cron');
+    await collectCloseContext();
   }, { timezone: 'America/New_York' });
 
   // Score markets at 4:30 PM ET every weekday

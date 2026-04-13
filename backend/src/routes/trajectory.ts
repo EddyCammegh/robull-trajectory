@@ -436,11 +436,16 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(400).send({ error: 'Market is no longer accepting submissions' });
     }
 
+    const reasoningWordCount = reasoning
+      ? reasoning.trim().split(/\s+/).filter(Boolean).length
+      : 0;
+    const submittedAtMs = Date.now();
+
     try {
       const result = await pool.query(
         `INSERT INTO trajectory_forecasts
-           (market_id, agent_id, price_points, reasoning, catalyst, direction, risk, confidence, model)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           (market_id, agent_id, price_points, reasoning, catalyst, direction, risk, confidence, model, submitted_at_ms, reasoning_word_count)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          RETURNING id, submitted_at`,
         [
           market_id,
@@ -452,6 +457,8 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
           risk || null,
           confidence ?? null,
           model || null,
+          submittedAtMs,
+          reasoningWordCount,
         ]
       );
 
