@@ -177,7 +177,7 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const symbolMap: Record<string, string> = {
-      QQQ: 'QQQ', NVDA: 'NVDA', AAPL: 'AAPL', TSLA: 'TSLA', GOLD: 'GLD',
+      AAPL: 'AAPL', NVDA: 'NVDA', META: 'META', MSFT: 'MSFT', SPY: 'SPY',
     };
 
     const markets = await pool.query(
@@ -531,7 +531,7 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const symbolMap: Record<string, string> = {
-      QQQ: 'QQQ', NVDA: 'NVDA', AAPL: 'AAPL', TSLA: 'TSLA', GOLD: 'GLD',
+      AAPL: 'AAPL', NVDA: 'NVDA', META: 'META', MSFT: 'MSFT', SPY: 'SPY',
     };
 
     const market = await pool.query(

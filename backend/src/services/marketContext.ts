@@ -5,8 +5,7 @@ const POLYGON_BASE = 'https://api.polygon.io';
 const VIX_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX';
 
 const SYMBOL_MAP: Record<string, string> = {
-  QQQ: 'QQQ', NVDA: 'NVDA', AAPL: 'AAPL', TSLA: 'TSLA', GOLD: 'GLD',
-  META: 'META', MSFT: 'MSFT', SPY: 'SPY',
+  AAPL: 'AAPL', NVDA: 'NVDA', META: 'META', MSFT: 'MSFT', SPY: 'SPY',
 };
 
 async function fetchVix(): Promise<number | null> {

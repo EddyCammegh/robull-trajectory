@@ -6,14 +6,14 @@ const POLYGON_URL = process.env.POLYGON_REALTIME === 'true'
   ? 'wss://socket.polygon.io/stocks'
   : 'wss://delayed.polygon.io/stocks';
 
-const SUBSCRIBE_SYMBOLS = ['QQQ', 'NVDA', 'AAPL', 'TSLA', 'GLD'];
+const SUBSCRIBE_SYMBOLS = ['AAPL', 'NVDA', 'META', 'MSFT', 'SPY'];
 
 const SYMBOL_TO_INSTRUMENT: Record<string, string> = {
-  QQQ: 'QQQ',
-  GLD: 'GOLD',
-  NVDA: 'NVDA',
   AAPL: 'AAPL',
-  TSLA: 'TSLA',
+  NVDA: 'NVDA',
+  META: 'META',
+  MSFT: 'MSFT',
+  SPY: 'SPY',
 };
 
 const latestPrices = new Map<string, { price: number; timestamp: number }>();
