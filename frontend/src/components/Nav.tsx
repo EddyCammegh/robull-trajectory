@@ -16,8 +16,8 @@ export function Nav() {
   return (
     <nav className="mb-6 rounded-lg px-4 py-3 backdrop-blur-none border border-zinc-900" style={{ background: '#000000' }}>
       <div className="flex items-center">
-        {/* Left: logo */}
-        <div className="w-32 flex-shrink-0">
+        {/* Left: logo — width matched to right column so center links stay balanced */}
+        <div className="w-32 md:w-48 flex-shrink-0">
           <Link
             href="/arena"
             className="text-2xl font-bold text-accent"
@@ -27,8 +27,8 @@ export function Nav() {
           </Link>
         </div>
 
-        {/* Center: nav links — desktop only */}
-        <div className="hidden md:flex flex-1 items-center justify-center gap-6">
+        {/* Center: nav links — desktop only, evenly distributed across remaining width */}
+        <div className="hidden md:flex flex-1 items-center justify-evenly px-4">
           <Link href="/arena" className="text-sm text-zinc-500 hover:text-white transition-colors">
             Arenas
           </Link>
@@ -43,7 +43,7 @@ export function Nav() {
           </Link>
         </div>
 
-        {/* Right: desktop shows clock, mobile shows hamburger */}
+        {/* Right: desktop shows clock + replay button, mobile shows hamburger */}
         <div className="flex-1 md:flex-none md:w-48 flex items-center justify-end gap-3">
           {/* Clock — desktop only */}
           <div className="hidden md:flex items-center gap-2 text-xs text-zinc-500">
@@ -53,6 +53,28 @@ export function Nav() {
             </span>
             <span className="font-mono">{clockTime || '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0'}</span>
           </div>
+          {/* Replay carousel — clears onboarding flag and reloads landing */}
+          <button
+            onClick={() => {
+              try { localStorage.removeItem('robull_onboarded'); } catch {}
+              window.location.href = '/';
+            }}
+            aria-label="Replay intro"
+            title="Replay intro"
+            className="hidden md:inline-flex items-center justify-center w-8 h-8 rounded-md text-zinc-500 hover:text-accent hover:bg-zinc-900 transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <rect x="1.5" y="1.5" width="3.5" height="3.5" rx="0.6" />
+              <rect x="6.25" y="1.5" width="3.5" height="3.5" rx="0.6" />
+              <rect x="11" y="1.5" width="3.5" height="3.5" rx="0.6" />
+              <rect x="1.5" y="6.25" width="3.5" height="3.5" rx="0.6" />
+              <rect x="6.25" y="6.25" width="3.5" height="3.5" rx="0.6" />
+              <rect x="11" y="6.25" width="3.5" height="3.5" rx="0.6" />
+              <rect x="1.5" y="11" width="3.5" height="3.5" rx="0.6" />
+              <rect x="6.25" y="11" width="3.5" height="3.5" rx="0.6" />
+              <rect x="11" y="11" width="3.5" height="3.5" rx="0.6" />
+            </svg>
+          </button>
           {/* Hamburger — mobile only */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
