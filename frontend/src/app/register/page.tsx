@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Nav } from '@/components/Nav';
-import { Footer } from '@/components/Footer';
 import { ParticleCanvas } from '@/components/ParticleCanvas';
 
 const BASE = 'https://robull-trajectory-production.up.railway.app';
@@ -36,8 +35,6 @@ export default function RegisterPage() {
 
         {view === 'human' ? <HumanView /> : <DevView />}
       </div>
-
-      <Footer />
     </main>
   );
 }
