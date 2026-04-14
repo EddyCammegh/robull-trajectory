@@ -109,10 +109,10 @@ export default function HistoryPage() {
           <>
             {/* Legend */}
             <div className="flex flex-wrap items-center gap-4 mb-6 text-[11px] text-zinc-500">
-              <LegendSwatch className="bg-accent/15 border border-accent/40" label="Has data" />
-              <LegendSwatch className="border border-zinc-800" label="Trading day, no data" />
-              <LegendSwatch className="border border-dashed border-zinc-900 text-zinc-700" label="Weekend" />
-              <LegendSwatch className="border border-zinc-900 bg-zinc-950" label="NYSE holiday" />
+              <LegendSwatch className="bg-accent/15 border border-accent/60" label="Has data" />
+              <LegendSwatch className="border border-accent/30" label="Trading day, no data" />
+              <LegendSwatch className="border border-dashed border-accent/15" label="Weekend" />
+              <LegendSwatch className="border border-accent/20 bg-accent/[0.04]" label="NYSE holiday" />
             </div>
 
             <div className="space-y-10">
@@ -220,15 +220,15 @@ function DayCell({
   data: HistoryDay | undefined;
   isToday: boolean;
 }) {
-  const ringClass = isToday ? 'ring-1 ring-accent/60' : '';
+  const ringClass = isToday ? 'ring-1 ring-accent' : '';
 
   // Weekend — dim, dashed, never clickable.
   if (weekend) {
     return (
       <div
-        className={`aspect-square rounded-md border border-dashed border-zinc-900 flex items-start justify-end p-1.5 ${ringClass}`}
+        className={`aspect-square rounded-md border border-dashed border-accent/15 flex items-start justify-end p-1.5 ${ringClass}`}
       >
-        <span className="text-[11px] font-mono text-zinc-700">{day}</span>
+        <span className="text-[11px] font-mono text-accent/30">{day}</span>
       </div>
     );
   }
@@ -237,49 +237,46 @@ function DayCell({
   if (holiday) {
     return (
       <div
-        className={`aspect-square rounded-md border border-zinc-900 bg-zinc-950 flex flex-col items-end p-1.5 ${ringClass}`}
+        className={`aspect-square rounded-md border border-accent/20 bg-accent/[0.04] flex flex-col items-end p-1.5 ${ringClass}`}
       >
-        <span className="text-[11px] font-mono text-zinc-600">{day}</span>
-        <span className="mt-auto self-start text-[9px] text-zinc-700 truncate w-full">
+        <span className="text-[11px] font-mono text-accent/40">{day}</span>
+        <span className="mt-auto self-start text-[9px] text-accent/40 truncate w-full">
           {HOLIDAY_LABELS_2026[dateStr] ?? 'Holiday'}
         </span>
       </div>
     );
   }
 
-  // Trading day with data — highlighted, clickable.
+  // Trading day with data — highlighted, each instrument is a clickable tag.
   if (data && data.markets.length > 0) {
-    const firstMarket = data.markets[0];
-    const avgMape =
-      data.markets.reduce(
-        (acc, m) => acc + (m.avg_mape ?? 0), 0
-      ) / data.markets.filter((m) => m.avg_mape != null).length || 0;
     return (
-      <Link
-        href={`/arena/${firstMarket.id}`}
-        className={`aspect-square rounded-md border border-accent/40 bg-accent/10 hover:bg-accent/20 hover:border-accent/70 transition-colors flex flex-col p-1.5 ${ringClass}`}
+      <div
+        className={`aspect-square rounded-md border border-accent/60 bg-accent/10 flex flex-col p-1.5 gap-1 overflow-hidden ${ringClass}`}
       >
-        <div className="flex items-start justify-between w-full">
-          <span className="text-[9px] font-mono text-accent/70">
-            {data.markets.length}m
-          </span>
-          <span className="text-[11px] font-mono text-white">{day}</span>
+        <div className="text-[11px] font-mono text-white text-right leading-none">
+          {day}
         </div>
-        {avgMape > 0 && (
-          <span className="mt-auto text-[9px] font-mono text-accent/80">
-            {avgMape.toFixed(2)}%
-          </span>
-        )}
-      </Link>
+        <div className="flex flex-wrap gap-1 content-start">
+          {data.markets.map((m) => (
+            <Link
+              key={m.id}
+              href={`/arena/${m.id}`}
+              className="text-[9px] font-mono px-1 py-px rounded border border-accent/40 text-accent/90 hover:bg-accent hover:text-black transition-colors"
+            >
+              {m.instrument}
+            </Link>
+          ))}
+        </div>
+      </div>
     );
   }
 
   // Trading day, no data — empty / missed.
   return (
     <div
-      className={`aspect-square rounded-md border border-zinc-800 flex items-start justify-end p-1.5 ${ringClass}`}
+      className={`aspect-square rounded-md border border-accent/30 flex items-start justify-end p-1.5 ${ringClass}`}
     >
-      <span className="text-[11px] font-mono text-zinc-600">{day}</span>
+      <span className="text-[11px] font-mono text-accent/40">{day}</span>
     </div>
   );
 }
