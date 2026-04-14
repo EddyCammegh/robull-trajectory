@@ -87,8 +87,18 @@ export default function HistoryPage() {
       m += 1;
       if (m > 11) { m = 0; y += 1; }
     }
-    return out.reverse();
+    return out; // chronological — oldest first
   }, [days]);
+
+  // Selected month index within `months`. Default to the most recent.
+  const [monthIdx, setMonthIdx] = useState(0);
+  useEffect(() => {
+    if (months.length > 0) setMonthIdx(months.length - 1);
+  }, [months.length]);
+
+  const current = months[monthIdx];
+  const canPrev = monthIdx > 0;
+  const canNext = monthIdx < months.length - 1;
 
   const todayStr = useMemo(() => {
     const t = new Date();
@@ -115,17 +125,47 @@ export default function HistoryPage() {
               <LegendSwatch className="border border-accent/20 bg-accent/[0.04]" label="NYSE holiday" />
             </div>
 
-            <div className="space-y-10">
-              {months.map(({ year, month }) => (
-                <MonthGrid
-                  key={`${year}-${month}`}
-                  year={year}
-                  month={month}
-                  dataByDate={dataByDate}
-                  todayStr={todayStr}
-                />
-              ))}
-            </div>
+            {/* Month navigation */}
+            {current && (
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => canPrev && setMonthIdx(monthIdx - 1)}
+                  disabled={!canPrev}
+                  aria-label="Previous month"
+                  className="w-8 h-8 flex items-center justify-center rounded-md border border-accent/30 text-accent/80 hover:bg-accent hover:text-black transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-accent/80"
+                >
+                  ←
+                </button>
+                <select
+                  value={monthIdx}
+                  onChange={(e) => setMonthIdx(parseInt(e.target.value, 10))}
+                  className="bg-black border border-accent/30 text-accent/90 text-sm font-mono px-3 py-1.5 rounded-md hover:border-accent/60 focus:outline-none focus:border-accent transition-colors cursor-pointer"
+                >
+                  {months.map((m, i) => (
+                    <option key={`${m.year}-${m.month}`} value={i} className="bg-black">
+                      {MONTH_NAMES[m.month]} {m.year}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => canNext && setMonthIdx(monthIdx + 1)}
+                  disabled={!canNext}
+                  aria-label="Next month"
+                  className="w-8 h-8 flex items-center justify-center rounded-md border border-accent/30 text-accent/80 hover:bg-accent hover:text-black transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-accent/80"
+                >
+                  →
+                </button>
+              </div>
+            )}
+
+            {current && (
+              <MonthGrid
+                year={current.year}
+                month={current.month}
+                dataByDate={dataByDate}
+                todayStr={todayStr}
+              />
+            )}
           </>
         )}
       </div>
