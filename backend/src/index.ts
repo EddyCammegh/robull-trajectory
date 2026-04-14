@@ -5,6 +5,7 @@ import { runMigrations } from './db.js';
 import { agentsRoutes } from './routes/agents.js';
 import { trajectoryRoutes } from './routes/trajectory.js';
 import { leaderboardRoutes } from './routes/leaderboard.js';
+import { statusRoutes } from './routes/status.js';
 import { startCrons } from './crons/index.js';
 import { startPolygonStream } from './services/polygonStream.js';
 
@@ -80,6 +81,7 @@ async function main() {
   app.register(agentsRoutes, { prefix: '/v1/agents' });
   app.register(trajectoryRoutes, { prefix: '/v1/trajectory' });
   app.register(leaderboardRoutes, { prefix: '/v1/leaderboard' });
+  app.register(statusRoutes, { prefix: '/v1/status' });
 
   startCrons();
   startPolygonStream();
