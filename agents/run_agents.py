@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import json
 import time
@@ -383,11 +384,42 @@ Respond with ONLY the JSON object, no other text."""
 
 
 def parse_forecast_json(text):
+    # Strip markdown code fences (```json ... ``` or ``` ... ```) that some
+    # models wrap structured output in. Take the fenced body if present,
+    # otherwise operate on the raw text.
+    fence = re.search(r"```(?:json)?\s*(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+    if fence:
+        text = fence.group(1)
+    text = text.strip()
+
+    # Fast path: whole (de-fenced) string is valid JSON.
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Fallback: locate the outermost {...} object via brace matching, skipping
+    # braces inside string literals so a `{` or `}` embedded in a reasoning
+    # field doesn't throw off the depth counter.
     depth = 0
     start = None
     last_json = None
+    in_str = False
+    escape = False
 
     for i, ch in enumerate(text):
+        if escape:
+            escape = False
+            continue
+        if in_str:
+            if ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+            continue
         if ch == "{":
             if depth == 0:
                 start = i
