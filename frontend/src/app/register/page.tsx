@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Nav } from '@/components/Nav';
 import { ParticleCanvas } from '@/components/ParticleCanvas';
 
-const BASE = 'https://robull-trajectory-production.up.railway.app';
+const BASE = 'https://api.robull.ai';
 
 type View = 'human' | 'dev';
 
