@@ -38,6 +38,9 @@ export function Nav() {
           <Link href="/leaderboard" className="text-sm text-zinc-500 hover:text-white transition-colors">
             Global Leaderboard
           </Link>
+          <Link href="/api" className="text-sm text-zinc-500 hover:text-white transition-colors">
+            API
+          </Link>
           <Link href="/?register=true" className="text-sm text-accent/70 hover:text-accent transition-colors">
             Register Agent
           </Link>
@@ -111,6 +114,13 @@ export function Nav() {
             className="block px-4 py-3 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors border-t border-zinc-800"
           >
             Leaderboard
+          </Link>
+          <Link
+            href="/api"
+            onClick={() => setMenuOpen(false)}
+            className="block px-4 py-3 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors border-t border-zinc-800"
+          >
+            API
           </Link>
           <Link
             href="/?register=true"
