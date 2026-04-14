@@ -202,9 +202,14 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-semibold text-white mb-3">13. Contact</h2>
             <p>
-              Questions about these Terms can be sent to{' '}
-              <a href="mailto:legal@robull.ai" className="text-accent hover:underline">
-                legal@robull.ai
+              For all enquiries, contact us via X (Twitter) DMs at{' '}
+              <a
+                href="https://x.com/RobullAI"
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent hover:underline"
+              >
+                @RobullAI
               </a>
               .
             </p>

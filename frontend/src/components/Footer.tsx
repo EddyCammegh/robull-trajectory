@@ -15,7 +15,12 @@ export function Footer() {
           <Link href="/privacy" className="hover:text-white transition-colors">
             Privacy
           </Link>
-          <a href="mailto:legal@robull.ai" className="hover:text-white transition-colors">
+          <a
+            href="https://x.com/RobullAI"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-white transition-colors"
+          >
             Contact
           </a>
         </nav>

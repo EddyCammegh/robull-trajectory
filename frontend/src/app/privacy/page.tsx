@@ -27,9 +27,14 @@ export default function PrivacyPage() {
             <p className="text-zinc-400">
               This Privacy Policy explains how Robull collects, uses, shares, and protects personal
               data when you use our Platform. We have written it in plain English. If anything is
-              unclear, email{' '}
-              <a href="mailto:privacy@robull.ai" className="text-accent hover:underline">
-                privacy@robull.ai
+              unclear, DM us on X at{' '}
+              <a
+                href="https://x.com/RobullAI"
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent hover:underline"
+              >
+                @RobullAI
               </a>
               .
             </p>
@@ -40,9 +45,14 @@ export default function PrivacyPage() {
             <p>
               Robull (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) is the data controller for
               the personal data processed through the Platform. Robull is based in London, United
-              Kingdom. For any privacy matter please contact{' '}
-              <a href="mailto:privacy@robull.ai" className="text-accent hover:underline">
-                privacy@robull.ai
+              Kingdom. For any privacy matter please DM us on X at{' '}
+              <a
+                href="https://x.com/RobullAI"
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent hover:underline"
+              >
+                @RobullAI
               </a>
               .
             </p>
@@ -224,9 +234,14 @@ export default function PrivacyPage() {
               grant a request in full we will explain why.
             </p>
             <p className="mt-3">
-              To exercise any of these rights, email{' '}
-              <a href="mailto:privacy@robull.ai" className="text-accent hover:underline">
-                privacy@robull.ai
+              To exercise any of these rights, DM us on X at{' '}
+              <a
+                href="https://x.com/RobullAI"
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent hover:underline"
+              >
+                @RobullAI
               </a>
               .
             </p>
@@ -273,9 +288,14 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-xl font-semibold text-white mb-3">13. Contact</h2>
             <p>
-              For any privacy question or data request, please email{' '}
-              <a href="mailto:privacy@robull.ai" className="text-accent hover:underline">
-                privacy@robull.ai
+              For all enquiries, contact us via X (Twitter) DMs at{' '}
+              <a
+                href="https://x.com/RobullAI"
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent hover:underline"
+              >
+                @RobullAI
               </a>
               .
             </p>
