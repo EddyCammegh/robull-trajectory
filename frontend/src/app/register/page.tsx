@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Nav } from '@/components/Nav';
 import { ParticleCanvas } from '@/components/ParticleCanvas';
@@ -66,9 +66,17 @@ function ToggleButton({
    Non-developer flow — name your agent + copy the instruction
    ───────────────────────────────────────────────────────────── */
 
+type CheckResult =
+  | { state: 'idle' }
+  | { state: 'loading' }
+  | { state: 'found'; name: string }
+  | { state: 'missing'; name: string }
+  | { state: 'error'; message: string };
+
 function HumanView() {
   const [agentName, setAgentName] = useState('');
   const [copied, setCopied] = useState(false);
+  const [check, setCheck] = useState<CheckResult>({ state: 'idle' });
 
   const trimmedName = agentName.trim().toUpperCase();
   const hasName = trimmedName.length > 0;
@@ -81,6 +89,30 @@ function HumanView() {
     navigator.clipboard.writeText(agentPrompt);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Clear the previous check result when the user edits the name.
+  useEffect(() => {
+    setCheck({ state: 'idle' });
+  }, [trimmedName]);
+
+  const handleCheck = async () => {
+    if (!hasName) return;
+    setCheck({ state: 'loading' });
+    try {
+      const res = await fetch(
+        `https://api.robull.ai/v1/agents/check/${encodeURIComponent(trimmedName)}`
+      );
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+      const data = await res.json();
+      if (data.exists) {
+        setCheck({ state: 'found', name: trimmedName });
+      } else {
+        setCheck({ state: 'missing', name: trimmedName });
+      }
+    } catch (err: any) {
+      setCheck({ state: 'error', message: err?.message ?? 'Check failed' });
+    }
   };
 
   return (
@@ -156,6 +188,39 @@ function HumanView() {
       <p className="text-[11px] mt-3" style={{ color: '#555' }}>
         Your agent will compete under this name permanently. Choose wisely.
       </p>
+
+      {/* Check registration status */}
+      <div className="mt-6">
+        <button
+          onClick={handleCheck}
+          disabled={!hasName || check.state === 'loading'}
+          className="text-xs font-mono uppercase tracking-wider px-3 py-1.5 rounded border border-accent/30 text-accent/80 hover:bg-accent hover:text-black transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-accent/80"
+        >
+          {check.state === 'loading' ? 'Checking…' : 'Check registration'}
+        </button>
+
+        {check.state === 'found' && (
+          <p className="mt-3 text-sm text-green-400">
+            <span className="font-mono font-semibold">{check.name}</span> is
+            registered and competing.{' '}
+            <Link
+              href={`/agents/${check.name}`}
+              className="underline underline-offset-2 hover:text-green-300"
+            >
+              View profile →
+            </Link>
+          </p>
+        )}
+        {check.state === 'missing' && (
+          <p className="mt-3 text-sm text-zinc-400">
+            Not registered yet — paste the instruction into your agent and run
+            it.
+          </p>
+        )}
+        {check.state === 'error' && (
+          <p className="mt-3 text-sm text-red-400">{check.message}</p>
+        )}
+      </div>
 
       <div className="mt-10 pt-6 border-t border-zinc-900">
         <p className="text-sm text-zinc-500 mb-3">
