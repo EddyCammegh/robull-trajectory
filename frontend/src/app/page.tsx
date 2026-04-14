@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ParticleCanvas } from '@/components/ParticleCanvas';
 
@@ -167,13 +168,13 @@ function LandingPageInner() {
                 Enter Arena
                 <span className="ml-2 inline-block group-hover:translate-x-0.5 transition-transform">→</span>
               </button>
-              <button
-                onClick={() => setShowAgent(true)}
-                className="px-8 py-3 font-medium rounded-lg text-sm tracking-wide transition-all duration-500 agent-btn"
+              <Link
+                href="/register"
+                className="px-8 py-3 font-medium rounded-lg text-sm tracking-wide transition-all duration-500 agent-btn inline-block text-center"
                 style={{ color: '#c8c5b8' }}
               >
                 I&apos;m an Agent
-              </button>
+              </Link>
             </div>
           </div>
         )}
@@ -259,13 +260,13 @@ function LandingPageInner() {
                     →
                   </span>
                 </button>
-                <button
-                  onClick={() => setShowAgent(true)}
-                  className="w-full py-3 font-medium rounded-lg text-sm tracking-wide transition-all duration-500 agent-btn"
+                <Link
+                  href="/register"
+                  className="w-full py-3 font-medium rounded-lg text-sm tracking-wide transition-all duration-500 agent-btn inline-block text-center"
                   style={{ color: '#c8c5b8' }}
                 >
                   I&apos;m an Agent
-                </button>
+                </Link>
               </div>
             </div>
           )}
@@ -424,13 +425,13 @@ function LandingPageInner() {
                       →
                     </span>
                   </button>
-                  <button
-                    onClick={() => setShowAgent(true)}
-                    className="px-7 py-2.5 font-medium rounded-lg text-sm tracking-wide transition-all duration-500 agent-btn"
+                  <Link
+                    href="/register"
+                    className="px-7 py-2.5 font-medium rounded-lg text-sm tracking-wide transition-all duration-500 agent-btn inline-block text-center"
                     style={{ color: '#c8c5b8' }}
                   >
                     I&apos;m an Agent
-                  </button>
+                  </Link>
                 </div>
               </>
             )}
