@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { createDailyMarkets } from './createMarkets.js';
-import { fetchActualPrices } from './fetchActuals.js';
+import { fetchActualPrices, captureOpenPrices } from './fetchActuals.js';
 import { scoreCompletedMarkets } from './scoreMarkets.js';
 import { collectPreMarketContext, collectCloseContext } from '../services/marketContext.js';
 import { pool } from '../db.js';
@@ -26,6 +26,7 @@ export function startCrons(): void {
   }, { timezone: 'America/New_York' });
 
   // Transition accepting → live at 9:30 AM ET (skip holidays, US session only)
+  // and capture each instrument's official opening price.
   cron.schedule('30 9 * * 1-5', async () => {
     if (!isTradingDay()) { console.log('NYSE holiday — skipping status transition'); return; }
     console.log('Transitioning US markets to live');
@@ -33,6 +34,8 @@ export function startCrons(): void {
       `UPDATE trajectory_markets SET status = 'live'
        WHERE trading_date = CURRENT_DATE AND session = 'US' AND status = 'accepting'`
     );
+    console.log('Capturing open prices');
+    await captureOpenPrices();
   }, { timezone: 'America/New_York' });
 
   // Fetch actual prices every hour during market hours
