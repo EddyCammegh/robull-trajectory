@@ -2,9 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getAgentProfile, type AgentProfile, type AgentForecast, type AgentInstrument } from '@/lib/api';
+import {
+  getAgentProfile,
+  setAgentTwitter,
+  type AgentProfile,
+  type AgentForecast,
+  type AgentInstrument,
+} from '@/lib/api';
 import { Nav } from '@/components/Nav';
 import { ParticleCanvas } from '@/components/ParticleCanvas';
+import { VerificationBadge } from '@/components/VerificationBadge';
 
 export default function AgentPage({ params }: { params: { name: string } }) {
   const [agent, setAgent] = useState<AgentProfile | null>(null);
@@ -38,8 +45,9 @@ export default function AgentPage({ params }: { params: { name: string } }) {
           <>
             {/* Agent header */}
             <div className="mb-8">
-              <div className="flex items-center gap-3 mb-1">
+              <div className="flex flex-wrap items-center gap-3 mb-1">
                 <h1 className="text-2xl font-bold">{agent.name}</h1>
+                <VerificationBadge badge={agent.verification_badge} size="md" />
                 {agent.model && (
                   <span className="text-xs text-zinc-600 bg-[#0a0a0a] px-2 py-0.5 rounded" style={{ background: '#0a0a0a' }}>
                     {agent.model}
@@ -52,6 +60,12 @@ export default function AgentPage({ params }: { params: { name: string } }) {
               {agent.country_code && agent.country_code !== 'XX' && (
                 <p className="text-sm text-zinc-500">{agent.country_code}</p>
               )}
+
+              <TwitterRow
+                agentId={agent.id}
+                initialHandle={agent.twitter_handle}
+                onUpdate={(h) => setAgent({ ...agent, twitter_handle: h })}
+              />
             </div>
 
             {/* Stats row */}
@@ -151,5 +165,116 @@ function StatCard({ label, value, accent }: { label: string; value: string; acce
       <div className={`text-lg font-bold ${accent ? 'text-accent' : ''}`}>{value}</div>
       <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">{label}</div>
     </div>
+  );
+}
+
+function TwitterRow({
+  agentId,
+  initialHandle,
+  onUpdate,
+}: {
+  agentId: string;
+  initialHandle: string | null;
+  onUpdate: (h: string | null) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [handle, setHandle] = useState(initialHandle ?? '');
+  const [apiKey, setApiKey] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const save = async () => {
+    setError(null);
+    setSaving(true);
+    try {
+      const cleaned = handle.trim().replace(/^@+/, '');
+      const next = cleaned.length > 0 ? cleaned : null;
+      const result = await setAgentTwitter(agentId, apiKey.trim(), next);
+      onUpdate(result.twitter_handle);
+      setEditing(false);
+      setApiKey('');
+    } catch (err: any) {
+      setError(err?.message ?? 'Failed to update');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (editing) {
+    return (
+      <div
+        className="mt-3 p-3 rounded-lg border border-zinc-800"
+        style={{ background: '#0a0a0a' }}
+      >
+        <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-1">
+          Twitter / X handle
+        </label>
+        <input
+          type="text"
+          value={handle}
+          onChange={(e) => setHandle(e.target.value)}
+          placeholder="@yourhandle (leave empty to clear)"
+          className="w-full max-w-sm px-2.5 py-1.5 mb-2 rounded-md text-sm font-mono text-zinc-100 outline-none border border-zinc-800 focus:border-accent/60"
+          style={{ background: '#0a0a0a' }}
+        />
+        <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-1">
+          Agent API key (aim_…)
+        </label>
+        <input
+          type="password"
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          placeholder="aim_..."
+          className="w-full max-w-sm px-2.5 py-1.5 mb-3 rounded-md text-sm font-mono text-zinc-100 outline-none border border-zinc-800 focus:border-accent/60"
+          style={{ background: '#0a0a0a' }}
+        />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={save}
+            disabled={saving || !apiKey.trim()}
+            className="text-xs font-mono uppercase tracking-wider px-3 py-1.5 rounded border border-accent/40 text-accent hover:bg-accent hover:text-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          <button
+            onClick={() => { setEditing(false); setError(null); setHandle(initialHandle ?? ''); }}
+            className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
+            Cancel
+          </button>
+          {error && <span className="text-xs text-red-400">{error}</span>}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <p className="mt-2 text-sm text-zinc-500 flex items-center gap-2">
+      {initialHandle ? (
+        <>
+          <a
+            href={`https://x.com/${initialHandle}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-accent hover:underline"
+          >
+            @{initialHandle}
+          </a>
+          <button
+            onClick={() => setEditing(true)}
+            className="text-[11px] text-zinc-600 hover:text-accent transition-colors"
+          >
+            edit
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={() => setEditing(true)}
+          className="text-[11px] text-zinc-600 hover:text-accent transition-colors"
+        >
+          + Link X handle
+        </button>
+      )}
+    </p>
   );
 }

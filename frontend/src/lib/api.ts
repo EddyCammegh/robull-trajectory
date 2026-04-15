@@ -48,6 +48,8 @@ export interface MarketLive {
   }>;
 }
 
+export type VerificationBadge = 'new' | 'active' | 'verified';
+
 export interface LeaderboardEntry {
   id: string;
   name: string;
@@ -60,6 +62,8 @@ export interface LeaderboardEntry {
   best_mape: number | null;
   best_instrument: string | null;
   direction_hit_rate: number | null;
+  twitter_handle: string | null;
+  verification_badge: VerificationBadge;
 }
 
 export function getMarkets() {
@@ -114,6 +118,9 @@ export interface AgentProfile {
   best_mape: number | null;
   best_instrument: string | null;
   direction_hit_rate: number | null;
+  twitter_handle: string | null;
+  verified_at: string | null;
+  verification_badge: VerificationBadge;
 }
 
 export interface AgentForecast {
@@ -145,6 +152,21 @@ export function getAgentProfile(name: string) {
 
 export function getMarketLive(id: string) {
   return request<MarketLive>(`/v1/trajectory/markets/${id}/live`);
+}
+
+export function setAgentTwitter(
+  agentId: string,
+  apiKey: string,
+  twitter_handle: string | null
+) {
+  return request<{ id: string; twitter_handle: string | null; verified_at: string | null }>(
+    `/v1/agents/${agentId}/twitter`,
+    {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ twitter_handle }),
+    }
+  );
 }
 
 export function getLeaderboard() {

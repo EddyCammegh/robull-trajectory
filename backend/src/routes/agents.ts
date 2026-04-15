@@ -174,11 +174,31 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
     const { name } = request.params as { name: string };
 
     const agentResult = await pool.query(`
+      WITH agent_activity AS (
+        SELECT
+          f.agent_id,
+          COUNT(DISTINCT m.trading_date)::int AS total_days,
+          COUNT(DISTINCT m.trading_date) FILTER (
+            WHERE m.trading_date >= CURRENT_DATE - INTERVAL '9 days'
+          )::int AS recent_days
+        FROM trajectory_forecasts f
+        JOIN trajectory_markets m ON m.id = f.market_id
+        GROUP BY f.agent_id
+      )
       SELECT
         a.id, a.name, a.model, a.org, a.country_code,
-        s.total_forecasts, s.avg_mape_7d, s.avg_mape_30d, s.best_mape, s.best_instrument
+        a.twitter_handle, a.verified_at,
+        s.total_forecasts, s.avg_mape_7d, s.avg_mape_30d, s.best_mape, s.best_instrument,
+        COALESCE(act.total_days, 0)  AS total_days,
+        COALESCE(act.recent_days, 0) AS recent_days,
+        CASE
+          WHEN COALESCE(act.recent_days, 0) >= 7 AND a.twitter_handle IS NOT NULL THEN 'verified'
+          WHEN COALESCE(act.total_days, 0)  >= 3 THEN 'active'
+          ELSE 'new'
+        END AS verification_badge
       FROM agents a
       LEFT JOIN agent_trajectory_stats s ON s.agent_id = a.id
+      LEFT JOIN agent_activity act       ON act.agent_id = a.id
       WHERE LOWER(a.name) = LOWER($1)
     `, [name]);
 
@@ -258,6 +278,9 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
         best_mape: agent.best_mape != null ? parseFloat(agent.best_mape) : null,
         best_instrument: agent.best_instrument,
         direction_hit_rate: directionHitRate,
+        twitter_handle: agent.twitter_handle,
+        verified_at: agent.verified_at,
+        verification_badge: agent.verification_badge as 'new' | 'active' | 'verified',
       },
       instruments: instrumentsResult.rows.map((r: any) => ({
         instrument: r.instrument,
@@ -278,6 +301,53 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
         submitted_at: r.submitted_at,
       })),
     });
+  });
+
+  // PATCH /v1/agents/:id/twitter — set or clear the agent's Twitter handle.
+  // Auth: Bearer aim_<key> belonging to the agent being patched.
+  app.patch('/:id/twitter', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const authHeader = request.headers.authorization;
+    if (!authHeader?.startsWith('Bearer aim_')) {
+      return reply.status(401).send({ error: 'Missing or invalid API key' });
+    }
+
+    const apiKey = authHeader.slice(7);
+    const keyHash = hashApiKey(apiKey);
+
+    const agent = await pool.query(
+      'SELECT id FROM agents WHERE id = $1 AND api_key_hash = $2',
+      [id, keyHash]
+    );
+    if (agent.rows.length === 0) {
+      return reply.status(403).send({ error: 'API key does not match this agent' });
+    }
+
+    const body = request.body as { twitter_handle?: string | null };
+    let handle = body.twitter_handle;
+
+    if (handle != null) {
+      // Strip a leading @ and surrounding whitespace, then validate.
+      handle = String(handle).trim().replace(/^@+/, '');
+      if (handle.length === 0) {
+        handle = null; // Treat empty string as a clear.
+      } else if (!/^[A-Za-z0-9_]{1,15}$/.test(handle)) {
+        return reply
+          .status(400)
+          .send({ error: 'twitter_handle must be 1-15 chars of letters, numbers, or underscores' });
+      }
+    }
+
+    const result = await pool.query(
+      `UPDATE agents
+         SET twitter_handle = $1,
+             verified_at = CASE WHEN $1 IS NOT NULL THEN NOW() ELSE NULL END
+       WHERE id = $2
+       RETURNING id, twitter_handle, verified_at`,
+      [handle ?? null, id]
+    );
+
+    return reply.send(result.rows[0]);
   });
 
   // DELETE /v1/agents/:name — delete an agent and all their forecasts
