@@ -33,6 +33,9 @@ const BLOCKED_TERMS = [
   'cock', 'c0ck',
   'twat', 'tw4t',
   'wank', 'w4nk',
+  // Platform + vendor impersonation
+  'robull', 'admin', 'system', 'official',
+  'anthropic', 'openai', 'mistral', 'google', 'xai', 'meta',
 ];
 
 const NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
@@ -354,13 +357,17 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // DELETE /v1/agents/:name — delete an agent and all their forecasts.
-  // Auth: Bearer aim_<key> belonging to the agent being deleted.
+  // Auth: Bearer aim_<key> belonging to the agent being deleted. Returns a
+  // single unified 401 for any auth failure (missing, malformed, mismatched,
+  // or nonexistent agent) so an unauthenticated caller can't enumerate names.
   app.delete('/:name', async (request, reply) => {
     const { name } = request.params as { name: string };
+    const authFailure = () =>
+      reply.status(401).send({ error: 'Invalid API key' });
 
     const authHeader = request.headers.authorization;
     if (!authHeader?.startsWith('Bearer aim_')) {
-      return reply.status(401).send({ error: 'Missing or invalid API key' });
+      return authFailure();
     }
     const apiKey = authHeader.slice(7);
     const keyHash = hashApiKey(apiKey);
@@ -370,12 +377,8 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
       [name]
     );
 
-    if (agent.rows.length === 0) {
-      return reply.status(404).send({ error: 'Agent not found' });
-    }
-
-    if (agent.rows[0].api_key_hash !== keyHash) {
-      return reply.status(403).send({ error: 'API key does not match this agent' });
+    if (agent.rows.length === 0 || agent.rows[0].api_key_hash !== keyHash) {
+      return authFailure();
     }
 
     const agentId = agent.rows[0].id;

@@ -9,7 +9,7 @@ import { statusRoutes } from './routes/status.js';
 import { startCrons } from './crons/index.js';
 import { startPolygonStream } from './services/polygonStream.js';
 
-const app = Fastify({ logger: true });
+const app = Fastify({ logger: true, trustProxy: true });
 
 // ── In-memory rate limiter ──
 
@@ -60,12 +60,26 @@ async function main() {
   app.addHook('onRequest', async (request, reply) => {
     const ip = request.ip;
 
+    const path = request.url.split('?')[0];
+
     // Stricter limit on register: 5 per hour
-    if (request.url.split('?')[0] === '/v1/agents/register' && request.method === 'POST') {
+    if (path === '/v1/agents/register' && request.method === 'POST') {
       const result = checkRate(`register:${ip}`, 5, 60 * 60_000);
       if (!result.allowed) {
         reply.status(429).send({
           error: 'Too many registration attempts. Limit: 5 per hour.',
+          retryAfterMs: result.retryAfterMs,
+        });
+        return;
+      }
+    }
+
+    // Enumeration guard on agent-name checks: 30 req/min per IP.
+    if (path.startsWith('/v1/agents/check/') && request.method === 'GET') {
+      const result = checkRate(`check:${ip}`, 30, 60_000);
+      if (!result.allowed) {
+        reply.status(429).send({
+          error: 'Too many agent-name lookups. Limit: 30 per minute.',
           retryAfterMs: result.retryAfterMs,
         });
         return;
@@ -90,8 +104,21 @@ async function main() {
   app.register(leaderboardRoutes, { prefix: '/v1/leaderboard' });
   app.register(statusRoutes, { prefix: '/v1/status' });
 
-  startCrons();
+  startCrons(app);
   startPolygonStream();
+
+  // Process-level safety nets. Unhandled rejections inside cron callbacks or
+  // the Polygon WS handler are now wrapped, but these catch anything we miss
+  // (incl. DB driver edge cases). We log and keep the process alive on
+  // rejections; on an uncaught *exception* we log and exit so the supervisor
+  // restarts us cleanly.
+  process.on('unhandledRejection', (reason) => {
+    app.log.error({ reason }, 'unhandledRejection');
+  });
+  process.on('uncaughtException', (err) => {
+    app.log.error({ err }, 'uncaughtException');
+    process.exit(1);
+  });
 
   const port = Number(process.env.PORT) || 3001;
   await app.listen({ port, host: '0.0.0.0' });

@@ -23,8 +23,8 @@ async function fetchVix(): Promise<number | null> {
 async function fetchNewsHeadlineCount(ticker: string, key: string): Promise<number | null> {
   try {
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const url = `${POLYGON_BASE}/v2/reference/news?ticker=${ticker}&published_utc.gte=${since}&limit=50&apiKey=${key}`;
-    const res = await fetch(url);
+    const url = `${POLYGON_BASE}/v2/reference/news?ticker=${ticker}&published_utc.gte=${since}&limit=50`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${key}` } });
     const data = await res.json();
     return Array.isArray(data?.results) ? data.results.length : null;
   } catch (err) {
@@ -35,8 +35,8 @@ async function fetchNewsHeadlineCount(ticker: string, key: string): Promise<numb
 
 async function fetchPolygonPrevClose(ticker: string, key: string): Promise<number | null> {
   try {
-    const url = `${POLYGON_BASE}/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=${key}`;
-    const res = await fetch(url);
+    const url = `${POLYGON_BASE}/v2/aggs/ticker/${ticker}/prev?adjusted=true`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${key}` } });
     const data = await res.json();
     return data?.results?.[0]?.c ?? null;
   } catch (err) {
@@ -53,8 +53,8 @@ async function fetchPremarketBars(
   key: string
 ): Promise<{ lastPrice: number | null; totalVolume: number }> {
   try {
-    const url = `${POLYGON_BASE}/v2/aggs/ticker/${ticker}/range/1/minute/${date}/${date}?adjusted=false&sort=asc&limit=50000&apiKey=${key}`;
-    const res = await fetch(url);
+    const url = `${POLYGON_BASE}/v2/aggs/ticker/${ticker}/range/1/minute/${date}/${date}?adjusted=false&sort=asc&limit=50000`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${key}` } });
     const data = await res.json();
     const bars = data?.results ?? [];
 

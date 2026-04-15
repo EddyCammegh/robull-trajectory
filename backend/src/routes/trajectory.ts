@@ -230,8 +230,8 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
       let price: number | null = null;
       const ticker = symbolMap[m.instrument] || m.instrument;
       try {
-        const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=${polygonKey}`;
-        const res = await fetch(url);
+        const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/prev?adjusted=true`;
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${polygonKey}` } });
         const data = await res.json();
         if (data.results?.[0]?.c != null) {
           price = data.results[0].c;
@@ -472,6 +472,13 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(400).send({ error: 'Market is no longer accepting submissions' });
     }
 
+    // Wall-clock deadline: reject at/after 9:30 ET on a trading day regardless
+    // of whether the cron has transitioned the market's status yet. Guards
+    // against cron latency or clock drift letting submissions past the deadline.
+    if (isUSMarketOpen()) {
+      return reply.status(400).send({ error: 'Submission window closed (past 9:30 AM ET)' });
+    }
+
     const reasoningWordCount = reasoning
       ? reasoning.trim().split(/\s+/).filter(Boolean).length
       : 0;
@@ -584,8 +591,8 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     const ticker = symbolMap[instrument] || instrument;
     const date = new Date(trading_date).toISOString().slice(0, 10);
 
-    const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/5/minute/${date}/${date}?adjusted=true&sort=asc&apiKey=${polygonKey}`;
-    const res = await fetch(url);
+    const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/5/minute/${date}/${date}?adjusted=true&sort=asc`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${polygonKey}` } });
     const data = await res.json();
 
     if (!data.results || data.results.length === 0) {

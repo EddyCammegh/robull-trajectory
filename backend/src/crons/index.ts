@@ -1,4 +1,5 @@
 import cron from 'node-cron';
+import type { FastifyInstance } from 'fastify';
 import { createDailyMarkets } from './createMarkets.js';
 import { fetchActualPrices, captureOpenPrices } from './fetchActuals.js';
 import { scoreCompletedMarkets } from './scoreMarkets.js';
@@ -17,53 +18,69 @@ function isTradingDay(): boolean {
   return !NYSE_HOLIDAYS_2026.includes(etDate);
 }
 
-export function startCrons(): void {
+// Wrap a cron body so a thrown promise rejection is logged rather than being
+// swallowed by node-cron (which would leave a silent cron failure).
+function safeCron(
+  app: FastifyInstance,
+  name: string,
+  fn: () => Promise<void>
+): () => Promise<void> {
+  return async () => {
+    try {
+      await fn();
+    } catch (err) {
+      app.log.error({ err, cron: name }, `[cron:${name}] failed`);
+    }
+  };
+}
+
+export function startCrons(app: FastifyInstance): void {
   // Create markets at 5:00 AM ET every weekday (skip holidays)
-  cron.schedule('0 5 * * 1-5', async () => {
-    if (!isTradingDay()) { console.log('NYSE holiday — skipping market creation'); return; }
-    console.log('Running createDailyMarkets cron');
+  cron.schedule('0 5 * * 1-5', safeCron(app, 'createMarkets', async () => {
+    if (!isTradingDay()) { app.log.info('NYSE holiday — skipping market creation'); return; }
+    app.log.info('Running createDailyMarkets cron');
     await createDailyMarkets();
-  }, { timezone: 'America/New_York' });
+  }), { timezone: 'America/New_York' });
 
   // Transition accepting → live at 9:30 AM ET (skip holidays, US session only)
   // and capture each instrument's official opening price.
-  cron.schedule('30 9 * * 1-5', async () => {
-    if (!isTradingDay()) { console.log('NYSE holiday — skipping status transition'); return; }
-    console.log('Transitioning US markets to live');
+  cron.schedule('30 9 * * 1-5', safeCron(app, 'transitionToLive', async () => {
+    if (!isTradingDay()) { app.log.info('NYSE holiday — skipping status transition'); return; }
+    app.log.info('Transitioning US markets to live');
     await pool.query(
       `UPDATE trajectory_markets SET status = 'live'
        WHERE trading_date = CURRENT_DATE AND session = 'US' AND status = 'accepting'`
     );
-    console.log('Capturing open prices');
+    app.log.info('Capturing open prices');
     await captureOpenPrices();
-  }, { timezone: 'America/New_York' });
+  }), { timezone: 'America/New_York' });
 
   // Fetch actual prices every 5 minutes during market hours (REST backstop
   // for the Polygon WebSocket — fills any slot the WS missed).
-  cron.schedule('*/5 9-16 * * 1-5', async () => {
-    console.log('Running fetchActualPrices cron');
+  cron.schedule('*/5 9-16 * * 1-5', safeCron(app, 'fetchActuals', async () => {
+    app.log.info('Running fetchActualPrices cron');
     await fetchActualPrices();
-  }, { timezone: 'America/New_York' });
+  }), { timezone: 'America/New_York' });
 
   // Pre-market context (VIX, XLK, premarket volume) at 7:00 AM ET
-  cron.schedule('0 7 * * 1-5', async () => {
-    if (!isTradingDay()) { console.log('NYSE holiday — skipping pre-market context'); return; }
-    console.log('Running collectPreMarketContext cron');
+  cron.schedule('0 7 * * 1-5', safeCron(app, 'preMarketContext', async () => {
+    if (!isTradingDay()) { app.log.info('NYSE holiday — skipping pre-market context'); return; }
+    app.log.info('Running collectPreMarketContext cron');
     await collectPreMarketContext();
-  }, { timezone: 'America/New_York' });
+  }), { timezone: 'America/New_York' });
 
   // Close context (VIX at close, opening gap %) at 4:00 PM ET
-  cron.schedule('0 16 * * 1-5', async () => {
-    if (!isTradingDay()) { console.log('NYSE holiday — skipping close context'); return; }
-    console.log('Running collectCloseContext cron');
+  cron.schedule('0 16 * * 1-5', safeCron(app, 'closeContext', async () => {
+    if (!isTradingDay()) { app.log.info('NYSE holiday — skipping close context'); return; }
+    app.log.info('Running collectCloseContext cron');
     await collectCloseContext();
-  }, { timezone: 'America/New_York' });
+  }), { timezone: 'America/New_York' });
 
   // Score markets at 4:30 PM ET every weekday
-  cron.schedule('30 16 * * 1-5', async () => {
-    console.log('Running scoreCompletedMarkets cron');
+  cron.schedule('30 16 * * 1-5', safeCron(app, 'scoreMarkets', async () => {
+    app.log.info('Running scoreCompletedMarkets cron');
     await scoreCompletedMarkets();
-  }, { timezone: 'America/New_York' });
+  }), { timezone: 'America/New_York' });
 
-  console.log('Cron jobs scheduled (America/New_York)');
+  app.log.info('Cron jobs scheduled (America/New_York)');
 }
