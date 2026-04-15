@@ -49,6 +49,13 @@ function checkRate(key: string, maxRequests: number, windowMs: number): { allowe
 async function main() {
   await app.register(cors);
 
+  // Generic 500 for any uncaught / rethrown error. Prevents PG error messages,
+  // stack traces, or schema details from leaking to clients.
+  app.setErrorHandler((err, _req, reply) => {
+    app.log.error(err);
+    reply.status(500).send({ error: 'Internal error' });
+  });
+
   // Global rate limit: 100 requests per minute per IP
   app.addHook('onRequest', async (request, reply) => {
     const ip = request.ip;

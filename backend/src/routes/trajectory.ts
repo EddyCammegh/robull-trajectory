@@ -1,9 +1,40 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
+import { timingSafeEqual } from 'crypto';
 import { pool } from '../db.js';
 import { authenticateAgent } from './agents.js';
 import { INSTRUMENTS, fetchPrice } from '../services/prices.js';
 import { getLatestPrice } from '../services/polygonStream.js';
 import { calculateMAPE, scoreMarket, updateAgentStats } from '../services/scoring.js';
+
+// Constant-time equality for the admin bearer check. Using string compare would
+// leak the token length via response-time side channels over enough samples.
+function safeEqual(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a);
+  const bBuf = Buffer.from(b);
+  if (aBuf.length !== bBuf.length) return false;
+  return timingSafeEqual(aBuf, bBuf);
+}
+
+// Returns true and lets the route proceed when the caller presents the admin
+// token. Otherwise writes a 401/403 and returns false — route should bail.
+function requireAdmin(request: FastifyRequest, reply: FastifyReply): boolean {
+  const expected = process.env.ADMIN_TOKEN;
+  if (!expected) {
+    reply.status(503).send({ error: 'Admin endpoints disabled (ADMIN_TOKEN not set)' });
+    return false;
+  }
+  const header = request.headers.authorization;
+  if (!header?.startsWith('Bearer ')) {
+    reply.status(401).send({ error: 'Missing admin token' });
+    return false;
+  }
+  const presented = header.slice(7);
+  if (!safeEqual(presented, expected)) {
+    reply.status(403).send({ error: 'Invalid admin token' });
+    return false;
+  }
+  return true;
+}
 
 const FORECAST_SLOTS: Record<string, number[]> = {
   US:       [0, 12, 24, 36, 48, 60, 72, 77],
@@ -116,7 +147,8 @@ async function scoreReadyMarkets(): Promise<void> {
 
 export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
   // POST /v1/trajectory/markets/create-today — manually create today's markets
-  app.post('/markets/create-today', async (_request, reply) => {
+  app.post('/markets/create-today', async (request, reply) => {
+    if (!requireAdmin(request, reply)) return;
     const today = new Date().toISOString().slice(0, 10);
     const created: Array<{ id: string; instrument: string; previous_close: number | null }> = [];
 
@@ -150,6 +182,7 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
 
   // POST /v1/trajectory/markets/:id/set-status — set a single market's status
   app.post('/markets/:id/set-status', async (request, reply) => {
+    if (!requireAdmin(request, reply)) return;
     const { id } = request.params as { id: string };
     const { status } = request.body as { status: string };
 
@@ -170,7 +203,8 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // POST /v1/trajectory/markets/refresh-prices — refresh previous_close for today's markets
-  app.post('/markets/refresh-prices', async (_request, reply) => {
+  app.post('/markets/refresh-prices', async (request, reply) => {
+    if (!requireAdmin(request, reply)) return;
     const polygonKey = process.env.POLYGON_API_KEY;
     if (!polygonKey) {
       return reply.status(500).send({ error: 'POLYGON_API_KEY not set' });
@@ -220,7 +254,8 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // POST /v1/trajectory/markets/reopen-today — reset today's markets to 'accepting' (no data deleted)
-  app.post('/markets/reopen-today', async (_request, reply) => {
+  app.post('/markets/reopen-today', async (request, reply) => {
+    if (!requireAdmin(request, reply)) return;
     const result = await pool.query(
       `UPDATE trajectory_markets SET status = 'accepting' WHERE trading_date = CURRENT_DATE`
     );
@@ -229,6 +264,7 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
 
   // POST /v1/trajectory/markets/:id/score — manually trigger scoring for a market
   app.post('/markets/:id/score', async (request, reply) => {
+    if (!requireAdmin(request, reply)) return;
     const { id } = request.params as { id: string };
 
     await scoreMarket(id);
@@ -524,6 +560,7 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
 
   // POST /v1/trajectory/markets/:id/backfill-actuals — backfill hourly actuals from Polygon
   app.post('/markets/:id/backfill-actuals', async (request, reply) => {
+    if (!requireAdmin(request, reply)) return;
     const { id } = request.params as { id: string };
     const polygonKey = process.env.POLYGON_API_KEY;
     if (!polygonKey) {
@@ -552,7 +589,7 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     const data = await res.json();
 
     if (!data.results || data.results.length === 0) {
-      return reply.status(404).send({ error: 'No 5-minute data from Polygon', raw: data });
+      return reply.status(404).send({ error: 'No 5-minute data from Polygon' });
     }
 
     const marketOpen = 9 * 60 + 30; // 9:30 AM ET

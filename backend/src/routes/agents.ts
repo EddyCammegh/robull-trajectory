@@ -2,7 +2,10 @@ import { FastifyPluginAsync } from 'fastify';
 import { randomBytes, createHmac } from 'crypto';
 import { pool } from '../db.js';
 
-const HMAC_SECRET = process.env.HMAC_SECRET || 'robull-trajectory-secret';
+if (!process.env.HMAC_SECRET) {
+  throw new Error('HMAC_SECRET env var is required');
+}
+const HMAC_SECRET = process.env.HMAC_SECRET;
 
 function hashApiKey(key: string): string {
   return createHmac('sha256', HMAC_SECRET).update(key).digest('hex');
@@ -350,17 +353,29 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
     return reply.send(result.rows[0]);
   });
 
-  // DELETE /v1/agents/:name — delete an agent and all their forecasts
+  // DELETE /v1/agents/:name — delete an agent and all their forecasts.
+  // Auth: Bearer aim_<key> belonging to the agent being deleted.
   app.delete('/:name', async (request, reply) => {
     const { name } = request.params as { name: string };
 
+    const authHeader = request.headers.authorization;
+    if (!authHeader?.startsWith('Bearer aim_')) {
+      return reply.status(401).send({ error: 'Missing or invalid API key' });
+    }
+    const apiKey = authHeader.slice(7);
+    const keyHash = hashApiKey(apiKey);
+
     const agent = await pool.query(
-      'SELECT id FROM agents WHERE LOWER(name) = LOWER($1)',
+      'SELECT id, api_key_hash FROM agents WHERE LOWER(name) = LOWER($1)',
       [name]
     );
 
     if (agent.rows.length === 0) {
       return reply.status(404).send({ error: 'Agent not found' });
+    }
+
+    if (agent.rows[0].api_key_hash !== keyHash) {
+      return reply.status(403).send({ error: 'API key does not match this agent' });
     }
 
     const agentId = agent.rows[0].id;
