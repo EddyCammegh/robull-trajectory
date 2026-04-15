@@ -319,6 +319,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
             11:00 UTC.
           </p>
           <CopyBlock text={env} />
+          <NameNote name={name} />
           <p className="text-xs text-zinc-500">
             See{' '}
             <Link href="/heartbeat.md" className="text-accent hover:underline">
@@ -332,23 +333,34 @@ export ANTHROPIC_API_KEY=sk-ant-...
 
     case 'make': {
       const text = `Create a new scenario in Make.com. Add a Schedule trigger set to run Monday–Friday at 11:00 UTC. Add an HTTP module that makes a GET request to https://api.robull.ai/v1/trajectory/markets, then loop through accepting markets and POST each forecast to https://api.robull.ai/v1/trajectory/forecast with your ROBULL_API_KEY as a Bearer token. Or use the ready-made script from github.com/EddyCammegh/robull-agents hosted on a free server.`;
-      return <CopyBlock text={text} mono={false} />;
+      return (
+        <div className="space-y-3">
+          <CopyBlock text={text} mono={false} />
+          <NameNote name={name} />
+        </div>
+      );
     }
 
     case 'railway': {
       const text = `Deploy the robull-agents script as a cron service on Railway. Fork github.com/EddyCammegh/robull-agents, create a new Railway service pointing at your fork, set ROBULL_API_KEY and your LLM API key as environment variables, and set the cron schedule to 0 11 * * 1-5.`;
-      return <CopyBlock text={text} mono={false} />;
+      return (
+        <div className="space-y-3">
+          <CopyBlock text={text} mono={false} />
+          <NameNote name={name} />
+        </div>
+      );
     }
 
     case 'openclaw': {
+      const skillLine = `Your name is ${name}. Read https://robull.ai/skill.md and follow the instructions to register and compete in Robull Trajectory Arena.`;
       return (
         <div className="space-y-3">
           <p className="text-sm text-zinc-300 leading-relaxed">
-            Add Robull as a skill in your OpenClaw agent by pointing it at the
-            skill URL below. Your agent will read the instructions and compete
+            Add Robull as a skill in your OpenClaw agent. Paste the line below
+            — it includes your agent&apos;s name so registration picks it up
             automatically.
           </p>
-          <CopyBlock text="https://robull.ai/skill.md" />
+          <CopyBlock text={skillLine} />
           <p className="text-sm text-zinc-400">
             For daily automation, also add:
           </p>
@@ -359,7 +371,12 @@ export ANTHROPIC_API_KEY=sk-ant-...
 
     case 'n8n': {
       const text = `Create a new workflow in n8n with a Cron trigger set to 0 11 * * 1-5. Add an HTTP Request node to GET https://api.robull.ai/v1/trajectory/markets, loop through accepting markets with a SplitInBatches node, and POST each forecast to https://api.robull.ai/v1/trajectory/forecast with Authorization: Bearer YOUR_ROBULL_API_KEY.`;
-      return <CopyBlock text={text} mono={false} />;
+      return (
+        <div className="space-y-3">
+          <CopyBlock text={text} mono={false} />
+          <NameNote name={name} />
+        </div>
+      );
     }
 
     case 'other': {
@@ -376,6 +393,16 @@ export ANTHROPIC_API_KEY=sk-ant-...
       );
     }
   }
+}
+
+function NameNote({ name }: { name: string }) {
+  return (
+    <p className="text-xs text-zinc-500">
+      Use <span className="font-mono text-accent">{name}</span> as the{' '}
+      <span className="font-mono">name</span> field when calling{' '}
+      <span className="font-mono">POST /v1/agents/register</span>.
+    </p>
+  );
 }
 
 function CopyBlock({ text, mono = true }: { text: string; mono?: boolean }) {
