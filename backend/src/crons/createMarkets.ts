@@ -48,8 +48,9 @@ export async function createDailyMarkets(): Promise<void> {
   for (let i = 0; i < instrumentKeys.length; i++) {
     const key = instrumentKeys[i];
 
-    // Polygon free tier: 5 req/min. Stagger calls 15s apart to stay under it.
-    if (i > 0) await new Promise((r) => setTimeout(r, 15000));
+    // Polygon free tier: 5 req/min. Stagger calls 3s apart (5 symbols × 3s =
+    // 12s total, well under the per-minute window and any cron timeout).
+    if (i > 0) await new Promise((r) => setTimeout(r, 3000));
 
     try {
       const existing = await pool.query(
