@@ -188,7 +188,10 @@ function LegendSwatch({
   solid?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <div
+      className="flex items-center gap-2 px-2.5 py-1 rounded-md border border-zinc-800"
+      style={{ background: '#0a0a0a' }}
+    >
       <span
         className={`inline-block w-3 h-3 rounded-sm ${className}`}
         style={solid ? { background: '#0a0a0a' } : undefined}

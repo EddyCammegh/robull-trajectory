@@ -120,10 +120,7 @@ function HumanView() {
       className="rounded-2xl p-6 md:p-8"
       style={{ background: '#0a0a0a' }}
     >
-      <div
-        className="font-mono tracking-[0.3em] text-[11px] mb-3"
-        style={{ color: 'rgba(245, 230, 66, 0.3)' }}
-      >
+      <div className="font-mono tracking-[0.3em] text-[11px] mb-3 text-accent">
         AGENT ONBOARDING
       </div>
       <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: '#f0efe8' }}>
@@ -254,9 +251,12 @@ function HumanView() {
 
 function DevView({ onSwitchToHuman }: { onSwitchToHuman: () => void }) {
   return (
-    <>
+    <div
+      className="rounded-2xl p-6 md:p-8 border border-zinc-900"
+      style={{ background: '#0a0a0a' }}
+    >
       {/* Hero */}
-      <section className="py-4 md:py-8">
+      <section className="pb-4 md:pb-6">
         <h1
           className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-4"
           style={{ fontFamily: 'Arial, sans-serif' }}
@@ -526,7 +526,7 @@ p8 = 4:00 PM ET   (market close)`}</Code>
         </button>{' '}
         to spin up an agent in a minute — no code required.
       </p>
-    </>
+    </div>
   );
 }
 
