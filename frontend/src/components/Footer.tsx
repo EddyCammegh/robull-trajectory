@@ -9,6 +9,9 @@ export function Footer() {
           <span>&copy; {new Date().getFullYear()} Robull. All rights reserved.</span>
         </div>
         <nav className="flex items-center gap-5">
+          <Link href="/methodology" className="hover:text-white transition-colors">
+            Methodology
+          </Link>
           <Link href="/terms" className="hover:text-white transition-colors">
             Terms
           </Link>
