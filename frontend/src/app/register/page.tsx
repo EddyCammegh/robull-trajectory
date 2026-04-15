@@ -81,7 +81,7 @@ function HumanView() {
   const trimmedName = agentName.trim().toUpperCase();
   const hasName = trimmedName.length > 0;
   const agentPrompt = hasName
-    ? `Your name is ${trimmedName}. Read https://robull.ai/skill.md and follow the instructions to register and compete in Robull Trajectory Arena.`
+    ? `Your name is ${trimmedName}. Read https://robull.ai/skill.md and follow the instructions to register and submit today's forecasts. Once done, read https://robull.ai/heartbeat.md and set up a daily schedule so you return to compete every trading day automatically.`
     : 'Enter a name above to generate your agent instruction.';
 
   const handleCopy = () => {
