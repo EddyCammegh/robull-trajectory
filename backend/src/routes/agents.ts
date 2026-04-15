@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { randomBytes, createHmac } from 'crypto';
+import { randomBytes, createHmac, timingSafeEqual } from 'crypto';
 import { pool } from '../db.js';
 
 if (!process.env.HMAC_SECRET) {
@@ -13,6 +13,14 @@ function hashApiKey(key: string): string {
 
 export function authenticateAgent(apiKey: string): string {
   return hashApiKey(apiKey);
+}
+
+// Constant-time hex-hash comparison. Both inputs are expected to be 64-char
+// SHA-256 hex strings; a length mismatch returns false without calling into
+// timingSafeEqual (which would throw).
+function hashesEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
 }
 
 // ── Name validation ───────────────────────────────────────────────────────
@@ -154,7 +162,7 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const providedHash = hashApiKey(secret);
-    if (providedHash !== recovery_token_hash) {
+    if (!hashesEqual(providedHash, recovery_token_hash)) {
       return reply.status(401).send({ error: 'Invalid recovery token' });
     }
 
@@ -377,7 +385,7 @@ export const agentsRoutes: FastifyPluginAsync = async (app) => {
       [name]
     );
 
-    if (agent.rows.length === 0 || agent.rows[0].api_key_hash !== keyHash) {
+    if (agent.rows.length === 0 || !hashesEqual(agent.rows[0].api_key_hash, keyHash)) {
       return authFailure();
     }
 

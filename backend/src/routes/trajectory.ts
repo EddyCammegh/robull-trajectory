@@ -231,7 +231,10 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
       const ticker = symbolMap[m.instrument] || m.instrument;
       try {
         const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/prev?adjusted=true`;
-        const res = await fetch(url, { headers: { Authorization: `Bearer ${polygonKey}` } });
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${polygonKey}` },
+          signal: AbortSignal.timeout(10_000),
+        });
         const data = await res.json();
         if (data.results?.[0]?.c != null) {
           price = data.results[0].c;
@@ -592,7 +595,10 @@ export const trajectoryRoutes: FastifyPluginAsync = async (app) => {
     const date = new Date(trading_date).toISOString().slice(0, 10);
 
     const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/5/minute/${date}/${date}?adjusted=true&sort=asc`;
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${polygonKey}` } });
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${polygonKey}` },
+      signal: AbortSignal.timeout(10_000),
+    });
     const data = await res.json();
 
     if (!data.results || data.results.length === 0) {

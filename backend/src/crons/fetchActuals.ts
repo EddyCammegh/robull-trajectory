@@ -26,7 +26,10 @@ export async function captureOpenPrices(): Promise<void> {
 
     try {
       const url = `https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers/${m.instrument}`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${polygonKey}` } });
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${polygonKey}` },
+        signal: AbortSignal.timeout(10_000),
+      });
       const data = await res.json();
       const snap = data?.ticker;
       const price: number | null =

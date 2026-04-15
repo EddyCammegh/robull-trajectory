@@ -17,7 +17,10 @@ async function fetchPolygonPrevClose(
 ): Promise<number | null> {
   try {
     const url = `${POLYGON_BASE}/v2/aggs/ticker/${ticker}/prev?adjusted=true`;
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(10_000),
+    });
     const data = await res.json();
     const price = data?.results?.[0]?.c;
     return typeof price === 'number' ? price : null;

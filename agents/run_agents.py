@@ -298,13 +298,34 @@ def call_haiku_researcher(prompt):
     return "\n".join(text_parts)
 
 
+# Retry on rate limits, overloads (529), transient 5xx, timeouts, and network
+# errors. Exponential backoff capped at 60s. Only reraises after 4 attempts.
+_ANTHROPIC_RETRYABLE = (
+    anthropic.RateLimitError,
+    anthropic.APIStatusError,
+    anthropic.APIConnectionError,
+    anthropic.APITimeoutError,
+)
+
+_OPENAI_RETRYABLE = (
+    openai.RateLimitError,
+    openai.APIStatusError,
+    openai.APIConnectionError,
+    openai.APITimeoutError,
+)
+
+
 def call_haiku_researcher_with_retry(prompt):
-    try:
-        return call_haiku_researcher(prompt)
-    except anthropic.RateLimitError:
-        print("    Rate limited (429), waiting 60s and retrying...")
-        time.sleep(60)
-        return call_haiku_researcher(prompt)
+    last_exc = None
+    for attempt in range(4):
+        try:
+            return call_haiku_researcher(prompt)
+        except _ANTHROPIC_RETRYABLE as e:
+            last_exc = e
+            wait = min(60, 5 * (2 ** attempt))
+            print(f"    {type(e).__name__} — retrying in {wait}s (attempt {attempt + 1}/4)")
+            time.sleep(wait)
+    raise RuntimeError(f"call_haiku_researcher: gave up after 4 attempts") from last_exc
 
 
 # ── Phase 2: Reasoning ──
@@ -440,7 +461,7 @@ def call_claude_reasoner(prompt, model="claude-sonnet-4-6"):
 
     response = client.messages.create(
         model=model,
-        max_tokens=400,
+        max_tokens=800,
         messages=[{"role": "user", "content": prompt}],
     )
 
@@ -453,12 +474,16 @@ def call_claude_reasoner(prompt, model="claude-sonnet-4-6"):
 
 
 def call_claude_reasoner_with_retry(prompt, model="claude-sonnet-4-6"):
-    try:
-        return call_claude_reasoner(prompt, model)
-    except anthropic.RateLimitError:
-        print("    Rate limited (429), waiting 60s and retrying...")
-        time.sleep(60)
-        return call_claude_reasoner(prompt, model)
+    last_exc = None
+    for attempt in range(4):
+        try:
+            return call_claude_reasoner(prompt, model)
+        except _ANTHROPIC_RETRYABLE as e:
+            last_exc = e
+            wait = min(60, 5 * (2 ** attempt))
+            print(f"    {type(e).__name__} — retrying in {wait}s (attempt {attempt + 1}/4)")
+            time.sleep(wait)
+    raise RuntimeError(f"call_claude_reasoner: gave up after 4 attempts") from last_exc
 
 
 def call_openai_reasoner(prompt):
@@ -467,19 +492,23 @@ def call_openai_reasoner(prompt):
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=400,
+        max_tokens=800,
     )
 
     return response.choices[0].message.content or ""
 
 
 def call_openai_reasoner_with_retry(prompt):
-    try:
-        return call_openai_reasoner(prompt)
-    except openai.RateLimitError:
-        print("    Rate limited (429), waiting 60s and retrying...")
-        time.sleep(60)
-        return call_openai_reasoner(prompt)
+    last_exc = None
+    for attempt in range(4):
+        try:
+            return call_openai_reasoner(prompt)
+        except _OPENAI_RETRYABLE as e:
+            last_exc = e
+            wait = min(60, 5 * (2 ** attempt))
+            print(f"    {type(e).__name__} — retrying in {wait}s (attempt {attempt + 1}/4)")
+            time.sleep(wait)
+    raise RuntimeError(f"call_openai_reasoner: gave up after 4 attempts") from last_exc
 
 
 def run_agent(agent_name, api_key, market, cohort_focus, briefing, provider="sonnet", timesfm_baseline=None, premarket_baseline=None):

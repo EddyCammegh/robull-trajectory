@@ -11,6 +11,18 @@ import { startPolygonStream } from './services/polygonStream.js';
 
 const app = Fastify({ logger: true, trustProxy: true });
 
+// Process-level safety nets registered first, so any async startup error or
+// rejection during cron/WS wiring gets logged instead of disappearing.
+// `unhandledRejection`: log and keep running.
+// `uncaughtException`: log and exit so the supervisor restarts cleanly.
+process.on('unhandledRejection', (reason) => {
+  app.log.error({ reason }, 'unhandledRejection');
+});
+process.on('uncaughtException', (err) => {
+  app.log.error({ err }, 'uncaughtException');
+  process.exit(1);
+});
+
 // ── In-memory rate limiter ──
 
 interface RateBucket {
@@ -106,19 +118,6 @@ async function main() {
 
   startCrons(app);
   startPolygonStream();
-
-  // Process-level safety nets. Unhandled rejections inside cron callbacks or
-  // the Polygon WS handler are now wrapped, but these catch anything we miss
-  // (incl. DB driver edge cases). We log and keep the process alive on
-  // rejections; on an uncaught *exception* we log and exit so the supervisor
-  // restarts us cleanly.
-  process.on('unhandledRejection', (reason) => {
-    app.log.error({ reason }, 'unhandledRejection');
-  });
-  process.on('uncaughtException', (err) => {
-    app.log.error({ err }, 'uncaughtException');
-    process.exit(1);
-  });
 
   const port = Number(process.env.PORT) || 3001;
   await app.listen({ port, host: '0.0.0.0' });
