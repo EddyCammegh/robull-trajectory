@@ -54,7 +54,7 @@ async function main() {
     const ip = request.ip;
 
     // Stricter limit on register: 5 per hour
-    if (request.url === '/v1/agents/register' && request.method === 'POST') {
+    if (request.url.split('?')[0] === '/v1/agents/register' && request.method === 'POST') {
       const result = checkRate(`register:${ip}`, 5, 60 * 60_000);
       if (!result.allowed) {
         reply.status(429).send({
