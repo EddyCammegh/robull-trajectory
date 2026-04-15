@@ -1,9 +1,20 @@
 import { FastifyPluginAsync } from 'fastify';
 import { pool } from '../db.js';
 
+// 60s in-memory TTL cache. The status payload is small and the DB query set is
+// non-trivial (4 parallel queries including an agent-join aggregate); caching
+// for a minute protects against thundering-herd during launch-day traffic.
+const CACHE_TTL_MS = 60_000;
+let statusCache: { payload: unknown; expiresAt: number } | null = null;
+
 export const statusRoutes: FastifyPluginAsync = async (app) => {
   // GET /v1/status — public session summary for today
   app.get('/', async (_request, reply) => {
+    const now = Date.now();
+    if (statusCache && statusCache.expiresAt > now) {
+      return reply.send(statusCache.payload);
+    }
+
     // One query per shape: keeps each result set easy to project. All five are
     // small (bounded by the 5 US instruments or a LIMIT 5), so the extra round
     // trips cost is negligible compared to a giant UNION ALL.
@@ -89,7 +100,7 @@ export const statusRoutes: FastifyPluginAsync = async (app) => {
 
     const totalForecasts = markets.reduce((sum, m) => sum + m.forecast_count, 0);
 
-    return reply.send({
+    const payload = {
       trading_date: tradingDate,
       total_forecasts: totalForecasts,
       markets,
@@ -100,6 +111,9 @@ export const statusRoutes: FastifyPluginAsync = async (app) => {
         org: r.org,
         forecast_count: r.forecast_count,
       })),
-    });
+    };
+
+    statusCache = { payload, expiresAt: Date.now() + CACHE_TTL_MS };
+    return reply.send(payload);
   });
 };

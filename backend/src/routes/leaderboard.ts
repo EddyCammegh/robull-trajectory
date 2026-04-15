@@ -1,10 +1,27 @@
 import { FastifyPluginAsync } from 'fastify';
 import { pool } from '../db.js';
 
+// 60s in-memory TTL cache per route key. Trades a minute of staleness on the
+// leaderboard for protection against a thundering herd on launch-day spikes.
+const CACHE_TTL_MS = 60_000;
+const cache = new Map<string, { payload: unknown; expiresAt: number }>();
+
+async function cached<T>(key: string, loader: () => Promise<T>): Promise<T> {
+  const hit = cache.get(key);
+  const now = Date.now();
+  if (hit && hit.expiresAt > now) {
+    return hit.payload as T;
+  }
+  const payload = await loader();
+  cache.set(key, { payload, expiresAt: now + CACHE_TTL_MS });
+  return payload;
+}
+
 export const leaderboardRoutes: FastifyPluginAsync = async (app) => {
   // GET /v1/leaderboard — global leaderboard
   app.get('/', async (_request, reply) => {
-    const result = await pool.query(`
+    const payload = await cached('leaderboard:global', async () => {
+      const result = await pool.query(`
       WITH agent_hits AS (
         SELECT
           f.agent_id,
@@ -64,31 +81,39 @@ export const leaderboardRoutes: FastifyPluginAsync = async (app) => {
         a.name ASC
     `);
 
-    return reply.send({ leaderboard: result.rows });
+      return { leaderboard: result.rows };
+    });
+
+    return reply.send(payload);
   });
 
   // GET /v1/leaderboard/:instrument — per-instrument leaderboard
   app.get('/:instrument', async (request, reply) => {
     const { instrument } = request.params as { instrument: string };
+    const symbol = instrument.toUpperCase();
 
-    const result = await pool.query(`
-      SELECT
-        a.id,
-        a.name,
-        a.model,
-        a.org,
-        a.country_code,
-        AVG(f.mape_score) AS avg_mape,
-        COUNT(*) AS forecast_count,
-        MIN(f.mape_score) AS best_mape
-      FROM trajectory_forecasts f
-      JOIN agents a ON a.id = f.agent_id
-      JOIN trajectory_markets m ON m.id = f.market_id
-      WHERE m.instrument = $1 AND f.mape_score IS NOT NULL
-      GROUP BY a.id, a.name, a.model, a.org, a.country_code
-      ORDER BY avg_mape ASC
-    `, [instrument.toUpperCase()]);
+    const payload = await cached(`leaderboard:${symbol}`, async () => {
+      const result = await pool.query(`
+        SELECT
+          a.id,
+          a.name,
+          a.model,
+          a.org,
+          a.country_code,
+          AVG(f.mape_score) AS avg_mape,
+          COUNT(*) AS forecast_count,
+          MIN(f.mape_score) AS best_mape
+        FROM trajectory_forecasts f
+        JOIN agents a ON a.id = f.agent_id
+        JOIN trajectory_markets m ON m.id = f.market_id
+        WHERE m.instrument = $1 AND f.mape_score IS NOT NULL
+        GROUP BY a.id, a.name, a.model, a.org, a.country_code
+        ORDER BY avg_mape ASC
+      `, [symbol]);
 
-    return reply.send({ instrument: instrument.toUpperCase(), leaderboard: result.rows });
+      return { instrument: symbol, leaderboard: result.rows };
+    });
+
+    return reply.send(payload);
   });
 };
