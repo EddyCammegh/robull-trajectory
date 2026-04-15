@@ -119,10 +119,10 @@ export default function HistoryPage() {
           <>
             {/* Legend */}
             <div className="flex flex-wrap items-center gap-4 mb-6 text-[11px] text-zinc-500">
-              <LegendSwatch className="bg-accent/15 border border-accent/60" label="Has data" />
-              <LegendSwatch className="border border-accent/30" label="Trading day, no data" />
-              <LegendSwatch className="border border-dashed border-accent/15" label="Weekend" />
-              <LegendSwatch className="border border-accent/20 bg-accent/[0.04]" label="NYSE holiday" />
+              <LegendSwatch className="border border-accent" label="Has data" solid />
+              <LegendSwatch className="border border-accent/30" label="Trading day, no data" solid />
+              <LegendSwatch className="border border-dashed border-accent/15" label="Weekend" solid />
+              <LegendSwatch className="border border-accent/20" label="NYSE holiday" solid />
             </div>
 
             {/* Month navigation */}
@@ -139,10 +139,15 @@ export default function HistoryPage() {
                 <select
                   value={monthIdx}
                   onChange={(e) => setMonthIdx(parseInt(e.target.value, 10))}
-                  className="bg-black border border-accent/30 text-accent/90 text-sm font-mono px-3 py-1.5 rounded-md hover:border-accent/60 focus:outline-none focus:border-accent transition-colors cursor-pointer"
+                  className="border border-accent/30 text-accent/90 text-sm font-mono px-3 py-1.5 rounded-md hover:border-accent/60 focus:outline-none focus:border-accent transition-colors cursor-pointer"
+                  style={{ background: '#0a0a0a' }}
                 >
                   {months.map((m, i) => (
-                    <option key={`${m.year}-${m.month}`} value={i} className="bg-black">
+                    <option
+                      key={`${m.year}-${m.month}`}
+                      value={i}
+                      style={{ background: '#0a0a0a' }}
+                    >
                       {MONTH_NAMES[m.month]} {m.year}
                     </option>
                   ))}
@@ -173,10 +178,21 @@ export default function HistoryPage() {
   );
 }
 
-function LegendSwatch({ className, label }: { className: string; label: string }) {
+function LegendSwatch({
+  className,
+  label,
+  solid,
+}: {
+  className: string;
+  label: string;
+  solid?: boolean;
+}) {
   return (
     <div className="flex items-center gap-2">
-      <span className={`inline-block w-3 h-3 rounded-sm ${className}`} />
+      <span
+        className={`inline-block w-3 h-3 rounded-sm ${className}`}
+        style={solid ? { background: '#0a0a0a' } : undefined}
+      />
       <span>{label}</span>
     </div>
   );
@@ -267,17 +283,19 @@ function DayCell({
     return (
       <div
         className={`aspect-square rounded-md border border-dashed border-accent/15 flex items-start justify-end p-1.5 ${ringClass}`}
+        style={{ background: '#0a0a0a' }}
       >
         <span className="text-[11px] font-mono text-accent/30">{day}</span>
       </div>
     );
   }
 
-  // NYSE holiday — distinct fill, label.
+  // NYSE holiday — distinct border, label.
   if (holiday) {
     return (
       <div
-        className={`aspect-square rounded-md border border-accent/20 bg-accent/[0.04] flex flex-col items-end p-1.5 ${ringClass}`}
+        className={`aspect-square rounded-md border border-accent/20 flex flex-col items-end p-1.5 ${ringClass}`}
+        style={{ background: '#0a0a0a' }}
       >
         <span className="text-[11px] font-mono text-accent/40">{day}</span>
         <span className="mt-auto self-start text-[9px] text-accent/40 truncate w-full">
@@ -287,11 +305,12 @@ function DayCell({
     );
   }
 
-  // Trading day with data — highlighted, each instrument is a clickable tag.
+  // Trading day with data — solid fill + strong accent border + instrument tags.
   if (data && data.markets.length > 0) {
     return (
       <div
-        className={`aspect-square rounded-md border border-accent/60 bg-accent/10 flex flex-col p-1.5 gap-1 overflow-hidden ${ringClass}`}
+        className={`aspect-square rounded-md border border-accent flex flex-col p-1.5 gap-1 overflow-hidden ${ringClass}`}
+        style={{ background: '#0a0a0a' }}
       >
         <div className="text-[11px] font-mono text-white text-right leading-none">
           {day}
@@ -302,6 +321,7 @@ function DayCell({
               key={m.id}
               href={`/arena/${m.id}`}
               className="text-[9px] font-mono px-1 py-px rounded border border-accent/40 text-accent/90 hover:bg-accent hover:text-black transition-colors"
+              style={{ background: '#0a0a0a' }}
             >
               {m.instrument}
             </Link>
@@ -315,6 +335,7 @@ function DayCell({
   return (
     <div
       className={`aspect-square rounded-md border border-accent/30 flex items-start justify-end p-1.5 ${ringClass}`}
+      style={{ background: '#0a0a0a' }}
     >
       <span className="text-[11px] font-mono text-accent/40">{day}</span>
     </div>

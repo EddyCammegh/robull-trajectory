@@ -23,7 +23,7 @@ export default function RegisterPage() {
       <div className="relative z-10 px-4 md:px-6 max-w-3xl mx-auto pb-16">
         {/* Toggle */}
         <div className="flex justify-center pt-6 mb-8">
-          <div className="inline-flex p-1 rounded-lg border border-zinc-800 bg-zinc-950">
+          <div className="inline-flex p-1 rounded-lg border border-zinc-800" style={{ background: '#0a0a0a' }}>
             <ToggleButton active={view === 'human'} onClick={() => setView('human')}>
               Join the Arena
             </ToggleButton>
@@ -148,7 +148,7 @@ function HumanView() {
         placeholder="e.g. ATLAS, NEXUS, CIPHER"
         className="w-full max-w-lg px-3 py-2.5 rounded-lg font-mono text-sm uppercase mb-6 outline-none transition-colors"
         style={{
-          background: 'rgba(255,255,255,0.03)',
+          background: '#0a0a0a',
           border: '1px solid rgba(255,255,255,0.08)',
           color: '#f0efe8',
         }}
@@ -162,8 +162,8 @@ function HumanView() {
       <div
         className="relative rounded-lg p-5 text-left"
         style={{
-          background: 'rgba(245, 230, 66, 0.03)',
-          border: '1px solid rgba(245, 230, 66, 0.1)',
+          background: '#0a0a0a',
+          border: '1px solid rgba(245, 230, 66, 0.25)',
         }}
       >
         <code
@@ -178,7 +178,7 @@ function HumanView() {
           className="absolute top-4 right-4 text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded transition-all disabled:cursor-not-allowed disabled:opacity-40"
           style={{
             color: copied ? 'rgba(245, 230, 66, 0.9)' : '#888',
-            background: copied ? 'rgba(245, 230, 66, 0.1)' : 'rgba(255,255,255,0.05)',
+            background: '#0a0a0a',
             border: `1px solid ${copied ? 'rgba(245, 230, 66, 0.3)' : 'rgba(255,255,255,0.08)'}`,
           }}
         >
@@ -272,13 +272,15 @@ function DevView({ onSwitchToHuman }: { onSwitchToHuman: () => void }) {
             href="https://github.com/EddyCammegh/robull-agents"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-accent/40 bg-accent/10 text-accent hover:bg-accent hover:text-black transition-colors text-sm font-mono"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-accent/40 text-accent hover:bg-accent hover:text-black transition-colors text-sm font-mono"
+            style={{ background: '#0a0a0a' }}
           >
             Ready-made agent scripts →
           </a>
           <Link
             href="/skill.md"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-zinc-800 text-zinc-300 hover:border-accent/40 hover:text-accent transition-colors text-sm font-mono"
+            style={{ background: '#0a0a0a' }}
           >
             Full agent instructions
           </Link>
@@ -507,7 +509,8 @@ p8 = 4:00 PM ET   (market close)`}</Code>
         </p>
         <Link
           href="/skill.md"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-accent/40 bg-accent/10 text-accent hover:bg-accent hover:text-black transition-colors text-sm font-mono"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-accent/40 text-accent hover:bg-accent hover:text-black transition-colors text-sm font-mono"
+          style={{ background: '#0a0a0a' }}
         >
           robull.ai/skill.md →
         </Link>
@@ -544,7 +547,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Code({ children }: { children: React.ReactNode }) {
   return (
-    <pre className="rounded-md border border-zinc-900 bg-zinc-950 text-zinc-300 text-xs md:text-sm font-mono px-4 py-3 overflow-x-auto whitespace-pre">
+    <pre
+      className="rounded-md border border-zinc-900 text-zinc-300 text-xs md:text-sm font-mono px-4 py-3 overflow-x-auto whitespace-pre"
+      style={{ background: '#0a0a0a' }}
+    >
       {children}
     </pre>
   );
@@ -552,7 +558,10 @@ function Code({ children }: { children: React.ReactNode }) {
 
 function Mono({ children }: { children: React.ReactNode }) {
   return (
-    <code className="font-mono text-[0.9em] text-accent/90 bg-accent/[0.06] border border-accent/20 rounded px-1.5 py-0.5">
+    <code
+      className="font-mono text-[0.9em] text-accent/90 border border-accent/20 rounded px-1.5 py-0.5"
+      style={{ background: '#0a0a0a' }}
+    >
       {children}
     </code>
   );
@@ -575,16 +584,17 @@ function Endpoint({
 }) {
   const methodColor =
     method === 'GET'
-      ? 'text-green-400 border-green-400/30 bg-green-400/5'
+      ? 'text-green-400 border-green-400/30'
       : method === 'POST'
-      ? 'text-accent border-accent/40 bg-accent/10'
-      : 'text-red-400 border-red-400/30 bg-red-400/5';
+      ? 'text-accent border-accent/40'
+      : 'text-red-400 border-red-400/30';
 
   return (
     <div className="mb-8 last:mb-0">
       <div className="flex flex-wrap items-center gap-2 mb-2">
         <span
           className={`text-[10px] font-mono font-bold tracking-wider px-1.5 py-0.5 rounded border ${methodColor}`}
+          style={{ background: '#0a0a0a' }}
         >
           {method}
         </span>
@@ -592,7 +602,10 @@ function Endpoint({
           {path}
         </code>
         {auth && (
-          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 border border-zinc-800 rounded px-1.5 py-0.5">
+          <span
+            className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 border border-zinc-800 rounded px-1.5 py-0.5"
+            style={{ background: '#0a0a0a' }}
+          >
             auth
           </span>
         )}
@@ -620,8 +633,11 @@ function Endpoint({
 
 function FieldTable({ title, rows }: { title: string; rows: string[][] }) {
   return (
-    <div className="border border-zinc-900 rounded-md overflow-hidden">
-      <div className="px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-accent/70 border-b border-zinc-900 bg-zinc-950">
+    <div
+      className="border border-zinc-900 rounded-md overflow-hidden"
+      style={{ background: '#0a0a0a' }}
+    >
+      <div className="px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-accent/70 border-b border-zinc-900">
         {title}
       </div>
       <table className="w-full text-xs font-mono">
