@@ -51,8 +51,15 @@ export async function scoreMarket(marketId: string): Promise<void> {
     [marketId]
   );
 
-  if (actuals.rows.length < 78) {
-    return; // Not enough data points to score
+  // Lowered from 78 → 60 so a few missed WS slots don't block scoring.
+  // Any forecast slot whose 5-min bar is missing is skipped per-forecast in
+  // the scoring loop below, so partial coverage still produces a fair MAPE.
+  const MIN_ACTUALS_TO_SCORE = 60;
+  if (actuals.rows.length < MIN_ACTUALS_TO_SCORE) {
+    console.warn(
+      `[scoreMarket] Skipping market ${marketId}: only ${actuals.rows.length}/${MIN_ACTUALS_TO_SCORE} actuals collected`
+    );
+    return;
   }
 
   const actualsBySlot = new Map<number, number>(

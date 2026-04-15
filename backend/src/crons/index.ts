@@ -38,8 +38,9 @@ export function startCrons(): void {
     await captureOpenPrices();
   }, { timezone: 'America/New_York' });
 
-  // Fetch actual prices every hour during market hours
-  cron.schedule('5 10-16 * * 1-5', async () => {
+  // Fetch actual prices every 5 minutes during market hours (REST backstop
+  // for the Polygon WebSocket — fills any slot the WS missed).
+  cron.schedule('*/5 9-16 * * 1-5', async () => {
     console.log('Running fetchActualPrices cron');
     await fetchActualPrices();
   }, { timezone: 'America/New_York' });

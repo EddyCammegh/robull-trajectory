@@ -61,14 +61,16 @@ function connect(apiKey: string): void {
     for (const msg of messages) {
       if (msg.ev === 'status') {
         if (msg.status === 'auth_success') {
-          const subs = SUBSCRIBE_SYMBOLS.map((s) => `A.${s}`).join(',');
+          // AM.* = per-minute aggregates. ~60x fewer messages than A.* (per-second)
+          // and still 12x oversamples the 5-min slot grid.
+          const subs = SUBSCRIBE_SYMBOLS.map((s) => `AM.${s}`).join(',');
           ws!.send(JSON.stringify({ action: 'subscribe', params: subs }));
           console.log(`Polygon subscribed to: ${subs}`);
         }
         continue;
       }
 
-      if (msg.ev === 'A') {
+      if (msg.ev === 'AM') {
         handleAggregate(msg);
       }
     }
@@ -101,26 +103,17 @@ async function handleAggregate(msg: {
   const price = msg.c;
   latestPrices.set(instrument, { price, timestamp: msg.t });
 
-  console.log('[Polygon] Price received for', instrument, '- ET time:', new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: 'numeric', hour12: false }).format(new Date()), '- market status:', getMarketStatus());
-
   const { isOpen } = getMarketStatus();
-  if (!isOpen) {
-    console.log(`[Polygon] Market closed, skipping store for ${instrument} ($${price})`);
-    return;
-  }
+  if (!isOpen) return;
 
   try {
     const market = await pool.query(
-      `SELECT id, created_at FROM trajectory_markets
+      `SELECT id FROM trajectory_markets
        WHERE instrument = $1 AND trading_date = CURRENT_DATE AND status IN ('accepting', 'live')`,
       [instrument]
     );
 
-    if (market.rows.length === 0) {
-      console.log(`[Polygon] No live market found for ${instrument} today`);
-      return;
-    }
-    console.log(`[Polygon] Found ${market.rows.length} market(s) for ${instrument}:`, market.rows.map((r: any) => r.id));
+    if (market.rows.length === 0) return;
 
     const marketRow = market.rows[0];
     const now = new Date();
@@ -134,7 +127,6 @@ async function handleAggregate(msg: {
 
     const slotIndex = Math.min(Math.floor((etMinutes - marketOpen) / 5), 77);
 
-    console.log(`[Polygon] Upserting actual: market=${marketRow.id} slot=${slotIndex} price=$${price} instrument=${instrument}`);
     await pool.query(
       `INSERT INTO trajectory_actuals (market_id, slot_index, actual_price)
        VALUES ($1, $2, $3)
