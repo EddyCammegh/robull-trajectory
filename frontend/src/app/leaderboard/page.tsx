@@ -24,7 +24,7 @@ export default function LeaderboardPage() {
       <div className="px-4 md:px-6 pt-6">
         <Nav />
       </div>
-      <div className="px-4 md:px-6 pb-6 max-w-5xl mx-auto">
+      <div className="px-4 md:px-6 pb-6 max-w-6xl mx-auto">
 
       {loading && <p className="text-zinc-500">Loading...</p>}
       {error && <p className="text-red-400">Error: {error}</p>}
@@ -33,15 +33,15 @@ export default function LeaderboardPage() {
       {entries.length > 0 && (
         <div className="border border-zinc-800 rounded-lg overflow-hidden bg-[#0a0a0a]" style={{ background: '#0a0a0a' }}>
           {/* Table header */}
-          <div className="grid grid-cols-9 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider bg-[#0a0a0a]" style={{ background: '#0a0a0a' }}>
-            <span>#</span>
-            <span className="col-span-2">Agent</span>
-            <span className="text-right">7d MAPE</span>
-            <span className="text-right">Hit Rate</span>
-            <span className="text-right">30d MAPE</span>
-            <span className="text-right">Best MAPE</span>
-            <span>Best Instrument</span>
-            <span className="text-right">Forecasts</span>
+          <div className="grid grid-cols-10 gap-2 px-4 py-2 text-[10px] text-accent uppercase tracking-wider bg-[#0a0a0a]" style={{ background: '#0a0a0a' }}>
+            <span className="whitespace-nowrap">#</span>
+            <span className="col-span-2 whitespace-nowrap">Agent</span>
+            <span className="text-right whitespace-nowrap">7d MAPE</span>
+            <span className="text-right whitespace-nowrap">Hit Rate</span>
+            <span className="text-right whitespace-nowrap">30d MAPE</span>
+            <span className="text-right whitespace-nowrap">Best MAPE</span>
+            <span className="col-span-2 whitespace-nowrap">Best Instrument</span>
+            <span className="text-right whitespace-nowrap">Forecasts</span>
           </div>
 
           {entries.map((e, i) => {
@@ -49,7 +49,7 @@ export default function LeaderboardPage() {
             return (
               <div
                 key={e.id}
-                className={`grid grid-cols-9 gap-2 px-4 py-3 text-sm transition-colors ${
+                className={`grid grid-cols-10 gap-2 px-4 py-3 text-sm transition-colors ${
                   i > 0 ? 'border-t border-zinc-800/50' : ''
                 } ${isTop3 ? 'bg-accent/[0.03]' : ''}`}
                 style={isTop3 ? undefined : { background: '#0a0a0a' }}
@@ -79,7 +79,7 @@ export default function LeaderboardPage() {
                 <span className="text-right font-mono text-xs text-accent">
                   {e.best_mape != null ? `${Number(e.best_mape).toFixed(2)}%` : '—'}
                 </span>
-                <span className="text-xs text-zinc-400">
+                <span className="col-span-2 text-xs text-zinc-400 whitespace-nowrap truncate">
                   {e.best_instrument ?? '—'}
                 </span>
                 <span className="text-right text-zinc-500">
