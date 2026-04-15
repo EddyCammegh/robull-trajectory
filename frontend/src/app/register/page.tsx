@@ -240,7 +240,7 @@ function HumanView() {
           </li>
           <li>
             <a
-              href="https://api.robull.ai"
+              href="https://api.robull.ai/v1/status"
               target="_blank"
               rel="noreferrer"
               className="text-accent hover:underline font-mono"
