@@ -222,8 +222,13 @@ function MonthGrid({
 
   return (
     <section>
-      <h2 className="text-sm font-medium text-zinc-300 mb-3">
-        {MONTH_NAMES[month]} <span className="text-zinc-600">{year}</span>
+      <h2 className="mb-3">
+        <span
+          className="inline-block text-sm font-medium text-zinc-300 px-2.5 py-1 rounded-md border border-zinc-800"
+          style={{ background: '#0a0a0a' }}
+        >
+          {MONTH_NAMES[month]} <span className="text-zinc-600">{year}</span>
+        </span>
       </h2>
 
       {/* Day-of-week header */}
@@ -231,7 +236,8 @@ function MonthGrid({
         {DOW_LABELS.map((d, i) => (
           <div
             key={i}
-            className="text-[10px] text-zinc-600 uppercase tracking-wider text-center"
+            className="text-[10px] text-zinc-600 uppercase tracking-wider text-center py-1 rounded-md border border-zinc-800"
+            style={{ background: '#0a0a0a' }}
           >
             {d}
           </div>

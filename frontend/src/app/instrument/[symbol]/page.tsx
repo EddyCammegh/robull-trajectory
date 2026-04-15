@@ -32,15 +32,21 @@ export default function InstrumentPage({ params }: { params: { symbol: string } 
 
       {/* Stats bar */}
       {(bestMape != null || avgMape != null) && (
-        <div className="flex gap-6 mb-8 text-sm">
+        <div className="flex flex-wrap gap-3 mb-8 text-sm">
           {bestMape != null && (
-            <div>
+            <div
+              className="px-3 py-1.5 rounded-md border border-zinc-800"
+              style={{ background: '#0a0a0a' }}
+            >
               <span className="text-zinc-500">Best MAPE</span>{' '}
               <span className="text-accent font-mono font-medium">{bestMape.toFixed(2)}%</span>
             </div>
           )}
           {avgMape != null && (
-            <div>
+            <div
+              className="px-3 py-1.5 rounded-md border border-zinc-800"
+              style={{ background: '#0a0a0a' }}
+            >
               <span className="text-zinc-500">Avg Winner MAPE</span>{' '}
               <span className="text-white font-mono font-medium">{avgMape.toFixed(2)}%</span>
             </div>
@@ -53,9 +59,15 @@ export default function InstrumentPage({ params }: { params: { symbol: string } 
       {!loading && days.length === 0 && <p className="text-zinc-500">No scored days yet.</p>}
 
       {days.length > 0 && (
-        <div className="border border-zinc-800 rounded-lg overflow-hidden">
+        <div
+          className="border border-zinc-800 rounded-lg overflow-hidden"
+          style={{ background: '#0a0a0a' }}
+        >
           {/* Table header */}
-          <div className="grid grid-cols-6 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider bg-zinc-900/50">
+          <div
+            className="grid grid-cols-6 gap-2 px-4 py-2 text-[10px] text-zinc-600 uppercase tracking-wider"
+            style={{ background: '#0a0a0a' }}
+          >
             <span>Date</span>
             <span>Winner</span>
             <span className="text-right">Best MAPE</span>
@@ -71,9 +83,12 @@ export default function InstrumentPage({ params }: { params: { symbol: string } 
 
             return (
               <Link key={d.market_id} href={`/arena/${d.market_id}`}>
-                <div className={`grid grid-cols-6 gap-2 px-4 py-3 text-sm hover:bg-zinc-900/50 transition-colors cursor-pointer ${
-                  i === 0 ? '' : 'border-t border-zinc-800/50'
-                }`}>
+                <div
+                  className={`grid grid-cols-6 gap-2 px-4 py-3 text-sm hover:bg-zinc-900 transition-colors cursor-pointer ${
+                    i === 0 ? '' : 'border-t border-zinc-800/50'
+                  }`}
+                  style={{ background: '#0a0a0a' }}
+                >
                   <span className="text-zinc-400 font-mono text-xs">{d.trading_date}</span>
                   <span className="text-accent font-medium truncate">{d.top_agent ?? '—'}</span>
                   <span className="text-right font-mono text-xs text-zinc-300">
