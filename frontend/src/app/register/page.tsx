@@ -13,7 +13,7 @@ export default function RegisterPage() {
   const [view, setView] = useState<View>('human');
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-black text-zinc-300">
+    <main className="min-h-screen overflow-x-hidden bg-transparent text-zinc-300">
       <ParticleCanvas />
 
       <div className="px-4 md:px-6 pt-6 relative z-10">

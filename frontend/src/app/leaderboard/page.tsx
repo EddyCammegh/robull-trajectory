@@ -19,7 +19,7 @@ export default function LeaderboardPage() {
   }, []);
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-black">
+    <main className="min-h-screen overflow-x-hidden bg-transparent">
       <ParticleCanvas />
       <div className="px-4 md:px-6 pt-6">
         <Nav />
