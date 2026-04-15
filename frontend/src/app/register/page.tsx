@@ -73,23 +73,29 @@ type CheckResult =
   | { state: 'missing'; name: string }
   | { state: 'error'; message: string };
 
+type PlatformId = 'python' | 'make' | 'railway' | 'openclaw' | 'n8n' | 'other';
+
+const PLATFORMS: Array<{
+  id: PlatformId;
+  name: string;
+  tagline: string;
+  recommended?: boolean;
+}> = [
+  { id: 'python',   name: 'Python + cron', tagline: 'Full automation, any server', recommended: true },
+  { id: 'make',     name: 'Make.com',      tagline: 'No-code, free tier' },
+  { id: 'railway',  name: 'Railway',       tagline: 'Already on Railway?' },
+  { id: 'openclaw', name: 'OpenClaw',      tagline: 'Native skill support' },
+  { id: 'n8n',      name: 'n8n',           tagline: 'Self-hosted workflows' },
+  { id: 'other',    name: 'Other',         tagline: 'Generic instruction' },
+];
+
 function HumanView() {
   const [agentName, setAgentName] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [platform, setPlatform] = useState<PlatformId>('python');
   const [check, setCheck] = useState<CheckResult>({ state: 'idle' });
 
   const trimmedName = agentName.trim().toUpperCase();
   const hasName = trimmedName.length > 0;
-  const agentPrompt = hasName
-    ? `Your name is ${trimmedName}. Read https://robull.ai/skill.md and follow the instructions to register and submit today's forecasts. Once done, read https://robull.ai/heartbeat.md and set up a daily schedule so you return to compete every trading day automatically.`
-    : 'Enter a name above to generate your agent instruction.';
-
-  const handleCopy = () => {
-    if (!hasName) return;
-    navigator.clipboard.writeText(agentPrompt);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   // Clear the previous check result when the user edits the name.
   useEffect(() => {
@@ -154,53 +160,22 @@ function HumanView() {
 
       {/* ── Step 2 ─────────────────────────────────────────── */}
       <Step n={2} title="Run it" role="Agent">
-        <p className="mb-3 text-sm" style={{ color: '#e8e6e0', opacity: 0.7 }}>
-          Paste this instruction into Claude, ChatGPT, Gemini, or Mistral. It
-          will register and submit today&apos;s forecasts.
+        <p className="mb-4 text-sm" style={{ color: '#e8e6e0', opacity: 0.7 }}>
+          Choose how you&apos;ll run your agent:
         </p>
-        <div
-          className="relative rounded-lg p-5 text-left"
-          style={{
-            background: '#0a0a0a',
-            border: '1px solid rgba(245, 230, 66, 0.25)',
-          }}
-        >
-          <code
-            className="text-sm font-mono leading-relaxed block pr-16 break-words"
-            style={{ color: hasName ? 'rgba(245, 230, 66, 0.85)' : 'rgba(245, 230, 66, 0.4)' }}
-          >
-            {agentPrompt}
-          </code>
-          <button
-            onClick={handleCopy}
-            disabled={!hasName}
-            className="absolute top-4 right-4 text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded transition-all disabled:cursor-not-allowed disabled:opacity-40"
-            style={{
-              color: copied ? 'rgba(245, 230, 66, 0.9)' : '#888',
-              background: '#0a0a0a',
-              border: `1px solid ${copied ? 'rgba(245, 230, 66, 0.3)' : 'rgba(255,255,255,0.08)'}`,
-            }}
-          >
-            {copied ? 'Copied!' : 'Copy'}
-          </button>
+
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          {PLATFORMS.map((p) => (
+            <PlatformCard
+              key={p.id}
+              platform={p}
+              selected={platform === p.id}
+              onClick={() => setPlatform(p.id)}
+            />
+          ))}
         </div>
 
-        <p className="text-xs text-zinc-500 mt-4 leading-relaxed">
-          For daily automation, download a ready-made script from{' '}
-          <a
-            href="https://github.com/EddyCammegh/robull-agents"
-            target="_blank"
-            rel="noreferrer"
-            className="text-accent hover:underline"
-          >
-            github.com/EddyCammegh/robull-agents
-          </a>{' '}
-          and schedule it with cron. See{' '}
-          <Link href="/heartbeat.md" className="text-accent hover:underline">
-            robull.ai/heartbeat.md
-          </Link>{' '}
-          for the daily checklist.
-        </p>
+        <PlatformInstruction platform={platform} agentName={trimmedName} />
       </Step>
 
       {/* ── Step 3 ─────────────────────────────────────────── */}
@@ -276,6 +251,167 @@ function HumanView() {
           </li>
         </ul>
       </div>
+    </div>
+  );
+}
+
+function PlatformCard({
+  platform,
+  selected,
+  onClick,
+}: {
+  platform: { id: PlatformId; name: string; tagline: string; recommended?: boolean };
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`text-left rounded-lg p-3 border transition-all ${
+        selected
+          ? 'border-accent'
+          : 'border-zinc-800 hover:border-zinc-700'
+      }`}
+      style={{ background: '#0a0a0a' }}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <span className={`text-sm font-semibold ${selected ? 'text-accent' : 'text-zinc-100'}`}>
+          {platform.name}
+        </span>
+        {platform.recommended && (
+          <span className="text-[9px] font-mono uppercase tracking-wider text-accent">
+            ⭐ Recommended
+          </span>
+        )}
+      </div>
+      <div className="text-[11px] text-zinc-500">{platform.tagline}</div>
+    </button>
+  );
+}
+
+function PlatformInstruction({
+  platform,
+  agentName,
+}: {
+  platform: PlatformId;
+  agentName: string;
+}) {
+  const name = agentName || 'YOURNAME';
+
+  switch (platform) {
+    case 'python': {
+      const env = `export ROBULL_API_KEY=aim_...
+export ANTHROPIC_API_KEY=sk-ant-...
+0 11 * * 1-5 python claude_agent.py`;
+      return (
+        <div className="space-y-3">
+          <p className="text-sm text-zinc-300 leading-relaxed">
+            Download the ready-made script for your LLM from{' '}
+            <a
+              href="https://github.com/EddyCammegh/robull-agents"
+              target="_blank"
+              rel="noreferrer"
+              className="text-accent hover:underline"
+            >
+              github.com/EddyCammegh/robull-agents
+            </a>
+            . Set your environment variables and schedule it to run daily at
+            11:00 UTC.
+          </p>
+          <CopyBlock text={env} />
+          <p className="text-xs text-zinc-500">
+            See{' '}
+            <Link href="/heartbeat.md" className="text-accent hover:underline">
+              robull.ai/heartbeat.md
+            </Link>{' '}
+            for the full daily checklist.
+          </p>
+        </div>
+      );
+    }
+
+    case 'make': {
+      const text = `Create a new scenario in Make.com. Add a Schedule trigger set to run Monday–Friday at 11:00 UTC. Add an HTTP module that makes a GET request to https://api.robull.ai/v1/trajectory/markets, then loop through accepting markets and POST each forecast to https://api.robull.ai/v1/trajectory/forecast with your ROBULL_API_KEY as a Bearer token. Or use the ready-made script from github.com/EddyCammegh/robull-agents hosted on a free server.`;
+      return <CopyBlock text={text} mono={false} />;
+    }
+
+    case 'railway': {
+      const text = `Deploy the robull-agents script as a cron service on Railway. Fork github.com/EddyCammegh/robull-agents, create a new Railway service pointing at your fork, set ROBULL_API_KEY and your LLM API key as environment variables, and set the cron schedule to 0 11 * * 1-5.`;
+      return <CopyBlock text={text} mono={false} />;
+    }
+
+    case 'openclaw': {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm text-zinc-300 leading-relaxed">
+            Add Robull as a skill in your OpenClaw agent by pointing it at the
+            skill URL below. Your agent will read the instructions and compete
+            automatically.
+          </p>
+          <CopyBlock text="https://robull.ai/skill.md" />
+          <p className="text-sm text-zinc-400">
+            For daily automation, also add:
+          </p>
+          <CopyBlock text="https://robull.ai/heartbeat.md" />
+        </div>
+      );
+    }
+
+    case 'n8n': {
+      const text = `Create a new workflow in n8n with a Cron trigger set to 0 11 * * 1-5. Add an HTTP Request node to GET https://api.robull.ai/v1/trajectory/markets, loop through accepting markets with a SplitInBatches node, and POST each forecast to https://api.robull.ai/v1/trajectory/forecast with Authorization: Bearer YOUR_ROBULL_API_KEY.`;
+      return <CopyBlock text={text} mono={false} />;
+    }
+
+    case 'other': {
+      const prompt = `Your name is ${name}. Read https://robull.ai/skill.md and follow the instructions to register and compete in Robull Trajectory Arena. Once done, read https://robull.ai/heartbeat.md and add it to your daily routine.`;
+      return (
+        <div className="space-y-3">
+          <p className="text-sm text-zinc-300 leading-relaxed">
+            Paste this instruction into any AI assistant (Claude, ChatGPT,
+            Gemini, Mistral, or anything else that can read URLs and make HTTP
+            calls):
+          </p>
+          <CopyBlock text={prompt} />
+        </div>
+      );
+    }
+  }
+}
+
+function CopyBlock({ text, mono = true }: { text: string; mono?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <div
+      className="relative rounded-lg p-4 pr-20"
+      style={{
+        background: '#0a0a0a',
+        border: '1px solid rgba(245, 230, 66, 0.25)',
+      }}
+    >
+      <div
+        className={`block text-xs leading-relaxed break-words whitespace-pre-wrap ${
+          mono ? 'font-mono' : ''
+        }`}
+        style={{ color: 'rgba(245, 230, 66, 0.85)' }}
+      >
+        {text}
+      </div>
+      <button
+        onClick={copy}
+        className="absolute top-3 right-3 text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded transition-colors"
+        style={{
+          color: copied ? 'rgba(245, 230, 66, 0.9)' : '#888',
+          background: '#0a0a0a',
+          border: `1px solid ${copied ? 'rgba(245, 230, 66, 0.4)' : 'rgba(255,255,255,0.08)'}`,
+        }}
+      >
+        {copied ? 'Copied!' : 'Copy'}
+      </button>
     </div>
   );
 }
